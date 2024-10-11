@@ -1,26 +1,31 @@
 package app
 
 import (
-	"github.com/ShelbyKS/Roamly-backend/internal/database/storage"
-	"github.com/ShelbyKS/Roamly-backend/internal/service"
-	"github.com/ShelbyKS/Roamly-backend/internal/handler"
-	"github.com/gin-gonic/gin"
-	"gorm.io/gorm"
 	"log"
+
+	"github.com/gin-gonic/gin"
+	"github.com/sirupsen/logrus"
+	"gorm.io/gorm"
+
+	"github.com/ShelbyKS/Roamly-backend/app/config"
+	"github.com/ShelbyKS/Roamly-backend/internal/database/storage"
+	"github.com/ShelbyKS/Roamly-backend/internal/handler"
+	"github.com/ShelbyKS/Roamly-backend/internal/service"
 )
 
 type Roamly struct {
-	//config
-	//logger
+	config *config.Config
+	logger *logrus.Logger
 }
 
-func New() (*Roamly, error) {
-	return &Roamly{}, nil
+func New(cfg *config.Config, lg *logrus.Logger) *Roamly {
+	return &Roamly{
+		config: cfg,
+		logger: lg,
+	}
 }
 
 func (app *Roamly) Run() {
-	//load config
-
 	//init dbs
 	//postgres, err := gorm.Open(postgres.Open(app.config.GetDsn), &gorm.Config{})
 	//if err != nil {
@@ -51,5 +56,5 @@ func (app *Roamly) newRouter() *gin.Engine {
 func (app *Roamly) initAPI(router *gin.Engine, postgres *gorm.DB) {
 	userStorage := storage.NewStorage(postgres)
 	userService := service.NewService(userStorage)
-	handler.NewUserHandler(router, userService)
+	handler.NewUserHandler(router, app.logger, userService)
 }

@@ -2,18 +2,15 @@ package main
 
 import (
 	"github.com/ShelbyKS/Roamly-backend/app"
-	"log"
+	"github.com/ShelbyKS/Roamly-backend/app/config"
+	"github.com/ShelbyKS/Roamly-backend/app/logger"
 )
 
 func main() {
-	// load config
+	appCfg := config.LoadConfig()
 
-	//init logger
+	lg := logger.InitLogger(appCfg)
 
-	application, err := app.New()
-	if err != nil {
-		log.Fatal("Failed to create application: %v", err)
-	}
-
+	application := app.New(appCfg, lg)
 	application.Run()
 }
