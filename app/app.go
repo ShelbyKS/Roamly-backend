@@ -1,7 +1,9 @@
 package app
 
 import (
-	"github.com/ShelbyKS/Roamly-backend/internal/app/user"
+	"github.com/ShelbyKS/Roamly-backend/internal/database/storage"
+	"github.com/ShelbyKS/Roamly-backend/internal/service"
+	"github.com/ShelbyKS/Roamly-backend/internal/handler"
 	"github.com/gin-gonic/gin"
 	"gorm.io/gorm"
 	"log"
@@ -47,7 +49,7 @@ func (app *Roamly) newRouter() *gin.Engine {
 }
 
 func (app *Roamly) initAPI(router *gin.Engine, postgres *gorm.DB) {
-	userStorage := user.NewStorage(postgres)
-	userService := user.NewService(userStorage)
-	user.NewHandler(router, userService)
+	userStorage := storage.NewStorage(postgres)
+	userService := service.NewService(userStorage)
+	handler.NewUserHandler(router, userService)
 }
