@@ -24,12 +24,17 @@ func NewTripHandler(router *gin.Engine, lg *logrus.Logger, tripService service.I
 		tripService: tripService,
 	}
 
-	userGroup := router.Group("/trip")
+	tripGroup := router.Group("/trip")
 	{
-		userGroup.GET("/:trip_id", handler.GetTripByID)
-		userGroup.POST("/", handler.CreateTrip)
-		userGroup.PUT("/", handler.UpdateTrip)
-		userGroup.DELETE("/:trip_id", handler.DeleteTrip)
+		tripGroup.GET("/:trip_id", handler.GetTripByID)
+		tripGroup.POST("/", handler.CreateTrip)
+		tripGroup.PUT("/", handler.UpdateTrip)
+		tripGroup.DELETE("/:trip_id", handler.DeleteTrip)
+	}
+
+	tripPlaceGroup := router.Group("/place")
+	{
+		tripPlaceGroup.POST("/")
 	}
 }
 
@@ -81,7 +86,7 @@ type CreateTripRequest struct {
 	ID        int    `json:"id" binding:"required"`
 	StartTime string `json:"start_time" binding:"required"`
 	EndTime   string `json:"end_time" binding:"required"`
-	Region    string `json:"region" binding:"required"`
+	AreaID    string `json:"area_id" binding:"required"`
 }
 
 func (h *TripHandler) CreateTrip(ctx *gin.Context) {
@@ -97,7 +102,7 @@ func (h *TripHandler) CreateTrip(ctx *gin.Context) {
 		ID:        tripReq.ID,
 		StartTime: tripReq.StartTime,
 		EndTime:   tripReq.EndTime,
-		Region:    tripReq.Region,
+		AreaID:    tripReq.AreaID,
 	})
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, gin.H{"err": err.Error()})
@@ -111,7 +116,7 @@ type UpdateTripRequest struct {
 	ID        int    `json:"id" binding:"required"`
 	StartTime string `json:"start_time" binding:"required"`
 	EndTime   string `json:"end_time" binding:"required"`
-	Region    string `json:"region" binding:"required"`
+	AreaID    string `json:"area_id" binding:"required"`
 }
 
 func (h *TripHandler) UpdateTrip(ctx *gin.Context) {
@@ -127,7 +132,7 @@ func (h *TripHandler) UpdateTrip(ctx *gin.Context) {
 		ID:        tripReq.ID,
 		StartTime: tripReq.StartTime,
 		EndTime:   tripReq.EndTime,
-		Region:    tripReq.Region,
+		AreaID:    tripReq.AreaID,
 	})
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, gin.H{"err": err.Error()})

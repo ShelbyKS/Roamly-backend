@@ -5,4 +5,5 @@ type Place struct {
 	Name   string  `json:"name"`
 	Photo  string  `json:"photo"`
 	Rating float32 `json:"rating"`
+	Trips  []*Trip `json:"trips"`
 }

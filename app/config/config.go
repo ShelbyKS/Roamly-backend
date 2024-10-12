@@ -1,6 +1,7 @@
 package config
 
 import (
+	"fmt"
 	"log"
 
 	"github.com/spf13/viper"
@@ -16,6 +17,7 @@ type Config struct {
 	PostgresUser string `mapstructure:"POSTGRES_USER"`
 	PostgresPass string `mapstructure:"POSTGRES_PASSWORD"`
 	PostgresDB   string `mapstructure:"POSTGRES_DB"`
+	PostgresSSL  string `mapstructure:"POSTGRES_SSL"`
 }
 
 func LoadConfig() *Config {
@@ -32,4 +34,18 @@ func LoadConfig() *Config {
 	}
 
 	return config
+}
+
+func (cfg *Config) GetPostgresCfg() string {
+	dsn := fmt.Sprintf(
+		"host=%s port=%s user=%s dbname=%s password=%s sslmode=%s",
+		cfg.PostgresHost,
+		cfg.PostgresPort,
+		cfg.PostgresUser,
+		cfg.PostgresDB,
+		cfg.PostgresPass,
+		cfg.PostgresSSL,
+	)
+
+	return dsn
 }

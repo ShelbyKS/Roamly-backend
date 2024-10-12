@@ -28,7 +28,9 @@ func (storage *TripStorage) GetTripByID(ctx context.Context, id int) (model.Trip
 		ID: id,
 	}
 
-	tx := storage.db.WithContext(ctx).First(&trip)
+	tx := storage.db.WithContext(ctx).
+		Preload("Places").
+		First(&trip)
 	if errors.Is(tx.Error, gorm.ErrRecordNotFound) {
 		tx.Error = errors.Join(domain.ErrTripNotFound, tx.Error)
 	}
@@ -66,7 +68,7 @@ func (storage *TripStorage) CreateTrip(ctx context.Context, trip model.Trip) err
 
 func (storage *TripStorage) UpdateTrip(ctx context.Context, trip model.Trip) error {
 	tripDb := TripConverter{}.ToDb(trip)
-	
+
 	tx := storage.db.WithContext(ctx).
 		Model(&orm.Trip{ID: trip.ID}).
 		Updates(&tripDb)

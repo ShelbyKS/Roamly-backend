@@ -5,5 +5,7 @@ type Trip struct {
 	Users     []*User `json:"users"`
 	StartTime string  `json:"start_time"`
 	EndTime   string  `json:"end_time"`
-	Region    string  `json:"region"`
+	AreaID    string  `json:"area_id"`
+	Area      *Place
+	Places    []*Place `json:"places"`
 }
