@@ -13,9 +13,7 @@ import (
 	"github.com/ShelbyKS/Roamly-backend/internal/domain/model"
 	"github.com/ShelbyKS/Roamly-backend/internal/handler"
 	"github.com/ShelbyKS/Roamly-backend/internal/service"
-	"github.com/gin-gonic/gin"
 	"gorm.io/driver/postgres"
-	"gorm.io/gorm"
 )
 
 type Roamly struct {
@@ -39,7 +37,7 @@ func (app *Roamly) Run() {
 	// pgDB := &gorm.DB{}
 
 	dsn := fmt.Sprintf(
-		"host=%s port=%s user=%s dbname=%s password=%s",// sslmode=%s",
+		"host=%s port=%s user=%s dbname=%s password=%s", // sslmode=%s",
 		"localhost",
 		"5432",
 		"postgres",
@@ -79,7 +77,7 @@ func (app *Roamly) newRouter() *gin.Engine {
 }
 
 func (app *Roamly) initAPI(router *gin.Engine, postgres *gorm.DB) {
-	userStorage := storage.NewStorage(postgres)
-	userService := service.NewService(userStorage)
+	userStorage := storage.NewUserStorage(postgres)
+	userService := service.NewUserService(userStorage)
 	handler.NewUserHandler(router, app.logger, userService)
 }
