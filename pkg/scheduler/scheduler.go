@@ -46,11 +46,11 @@ type Response struct {
 
 func (c *SchedulerClient) PostPrompt(ctx context.Context, prompt string) (string, error) {
 	req := Request{
-        Model:  "llama3.2",
-        Prompt: prompt,
-        Stream: false,
-    }
-	
+		Model:  "llama3.1", //todo: move to cfg
+		Prompt: prompt,
+		Stream: false,
+	}
+
 	var resp Response
 	_, err := c.client.R().
 		SetContext(ctx).
