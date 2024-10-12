@@ -45,7 +45,7 @@ func (storage *TripStorage) DeleteTrip(ctx context.Context, id int) error {
 		ID: id,
 	}
 
-	tx := storage.db.WithContext(ctx).Delete(trip)
+	tx := storage.db.WithContext(ctx).Delete(&trip)
 	if errors.Is(tx.Error, gorm.ErrRecordNotFound) {
 		tx.Error = errors.Join(domain.ErrUserNotFound, tx.Error)
 	}
@@ -58,15 +58,18 @@ func (storage *TripStorage) DeleteTrip(ctx context.Context, id int) error {
 }
 
 func (storage *TripStorage) CreateTrip(ctx context.Context, trip model.Trip) error {
-	tx := storage.db.WithContext(ctx).Create(TripConverter{}.ToDb(trip))
+	tripDb := TripConverter{}.ToDb(trip)
+	tx := storage.db.WithContext(ctx).Create(&tripDb)
 
 	return tx.Error
 }
 
 func (storage *TripStorage) UpdateTrip(ctx context.Context, trip model.Trip) error {
+	tripDb := TripConverter{}.ToDb(trip)
+	
 	tx := storage.db.WithContext(ctx).
 		Model(&orm.Trip{ID: trip.ID}).
-		Updates(TripConverter{}.ToDb(trip))
+		Updates(&tripDb)
 
 	return tx.Error
 }
