@@ -5,5 +5,5 @@ type Trip struct {
 	StartTime string  `gorm:"type:TIME"`
 	EndTime   string  `gorm:"type:TIME"`
 	Region    string  `gorm:"type:TEXT"`
-	Users     []*User `gorm:"many2many:trip_user"`
+	Users     []*User `gorm:"many2many:trip_users"`
 }

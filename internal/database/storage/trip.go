@@ -61,6 +61,10 @@ func (storage *TripStorage) CreateTrip(ctx context.Context, trip model.Trip) err
 	tripDb := TripConverter{}.ToDb(trip)
 	tx := storage.db.WithContext(ctx).Create(&tripDb)
 
+	// err = r.db.Model(&orm.Trip{
+	// 	ID: id,
+	// }).Association("Trainers").Append(&trainerOrm)
+
 	return tx.Error
 }
 

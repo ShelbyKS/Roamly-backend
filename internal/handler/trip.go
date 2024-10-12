@@ -14,11 +14,17 @@ import (
 )
 
 type TripHandler struct {
-	lg          *logrus.Logger
-	tripService service.ITripService
+	lg               *logrus.Logger
+	tripService      service.ITripService
+	schedulerService service.ISchedulerService
 }
 
-func NewTripHandler(router *gin.Engine, lg *logrus.Logger, tripService service.ITripService) {
+func NewTripHandler(router *gin.Engine,
+	lg *logrus.Logger,
+	tripService service.ITripService,
+	schedulerService service.ISchedulerService) {
+
+
 	handler := &TripHandler{
 		lg:          lg,
 		tripService: tripService,
@@ -82,6 +88,7 @@ type CreateTripRequest struct {
 	StartTime string `json:"start_time" binding:"required"`
 	EndTime   string `json:"end_time" binding:"required"`
 	Region    string `json:"region" binding:"required"`
+	UserId    int    `json:"user_id" binding:"required"`
 }
 
 func (h *TripHandler) CreateTrip(ctx *gin.Context) {
@@ -98,6 +105,13 @@ func (h *TripHandler) CreateTrip(ctx *gin.Context) {
 		StartTime: tripReq.StartTime,
 		EndTime:   tripReq.EndTime,
 		Region:    tripReq.Region,
+		
+		// TODO: ХААААААААРДКОД!!!!!!!!!!!!!!!!!!!!!!
+		Users: []*model.User{
+			&model.User{
+				ID: 1,
+			},
+		},
 	})
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, gin.H{"err": err.Error()})
@@ -135,4 +149,26 @@ func (h *TripHandler) UpdateTrip(ctx *gin.Context) {
 	}
 
 	ctx.JSON(http.StatusOK, gin.H{})
+}
+
+func (h *TripHandler) ScheduleTrip(ctx *gin.Context) {
+	idString := ctx.Param("trip_id")
+	id, err := strconv.Atoi(idString)
+	if err != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{"err": err.Error()})
+		return
+	}
+
+	trip, err := h.tripService.GetTripByID(ctx.Request.Context(), id)
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, gin.H{"err": err.Error()})
+		return
+	}
+	schedule, err := h.schedulerService.GetSchedule(ctx.Request.Context(), trip.Places)
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, gin.H{"err": err.Error()})
+		return
+	}
+
+	ctx.JSON(http.StatusOK, gin.H{"schedule" : schedule})
 }
