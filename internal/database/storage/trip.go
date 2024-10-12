@@ -41,7 +41,7 @@ func (storage *TripStorage) GetTripByID(ctx context.Context, id int) (model.Trip
 }
 
 func (storage *TripStorage) DeleteTrip(ctx context.Context, id int) error {
-	trip := orm.User{
+	trip := orm.Trip{
 		ID: id,
 	}
 
