@@ -102,7 +102,7 @@ func (h *TripHandler) CreateTrip(c *gin.Context) {
 		return
 	}
 
-	err = h.tripService.CreateTrip(c.Request.Context, model.Trip{
+	err = h.tripService.CreateTrip(c.Request.Context(), model.Trip{
 		ID:        tripReq.ID,
 		StartTime: tripReq.StartTime,
 		EndTime:   tripReq.EndTime,

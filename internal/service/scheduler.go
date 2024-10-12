@@ -19,7 +19,7 @@ func NewShedulerService(client storage.ISchedulerClient) service.ISchedulerServi
 	}
 }
 
-func (s *SchedulerService) GetSchedule(ctx context.Context, places []model.Place) (model.Schedule, error) {
+func (s *SchedulerService) GetSchedule(ctx context.Context, places []*model.Place) (model.Schedule, error) {
 	resp, err := s.client.PostPrompt(ctx, "Хэллоу ворлд")
 	if err != nil {
 		return model.Schedule{}, err
