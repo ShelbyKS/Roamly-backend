@@ -9,8 +9,8 @@ import (
 	"gorm.io/gorm"
 
 	"github.com/ShelbyKS/Roamly-backend/app/config"
+	"github.com/ShelbyKS/Roamly-backend/internal/database/orm"
 	"github.com/ShelbyKS/Roamly-backend/internal/database/storage"
-	"github.com/ShelbyKS/Roamly-backend/internal/domain/model"
 	"github.com/ShelbyKS/Roamly-backend/internal/handler"
 	"github.com/ShelbyKS/Roamly-backend/internal/service"
 	"gorm.io/driver/postgres"
@@ -54,7 +54,8 @@ func (app *Roamly) Run() {
 		log.Fatalf(err.Error())
 	}
 
-	pgDB.AutoMigrate(&model.User{})
+	pgDB.AutoMigrate(&orm.User{}, &orm.Trip{})
+	// pgDB.AutoMigrate(&model.Trip{})
 
 	r := app.newRouter()
 
@@ -80,4 +81,8 @@ func (app *Roamly) initAPI(router *gin.Engine, postgres *gorm.DB) {
 	userStorage := storage.NewUserStorage(postgres)
 	userService := service.NewUserService(userStorage)
 	handler.NewUserHandler(router, app.logger, userService)
+
+	tripStorage := storage.NewTripStorage(postgres)
+	tripService := service.NewTripService(tripStorage)
+	handler.NewTripHandler(router, app.logger, tripService)
 }
