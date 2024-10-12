@@ -7,8 +7,9 @@ import (
 )
 
 type Config struct {
-	ServerPort string `mapstructure:"SERVER_PORT"`
-	LogLevel   string `mapstructure:"LOG_LEVEL"`
+	ServerPort   string `mapstructure:"SERVER_PORT"`
+	LogLevel     string `mapstructure:"LOG_LEVEL"`
+	GoogleApiKey string `mapstructure:"GOOGLE_API_KEY"`
 
 	PostgresHost string `mapstructure:"POSTGRES_HOST"`
 	PostgresPort string `mapstructure:"POSTGRES_PORT"`

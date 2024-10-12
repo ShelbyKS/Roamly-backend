@@ -4,16 +4,18 @@ import (
 	"fmt"
 	"log"
 
+	"gorm.io/gorm"
+	"gorm.io/driver/postgres"
+
 	"github.com/gin-gonic/gin"
 	"github.com/sirupsen/logrus"
-	"gorm.io/gorm"
 
 	"github.com/ShelbyKS/Roamly-backend/app/config"
 	"github.com/ShelbyKS/Roamly-backend/internal/database/orm"
 	"github.com/ShelbyKS/Roamly-backend/internal/database/storage"
 	"github.com/ShelbyKS/Roamly-backend/internal/handler"
 	"github.com/ShelbyKS/Roamly-backend/internal/service"
-	"gorm.io/driver/postgres"
+	"github.com/ShelbyKS/Roamly-backend/pkg/googleapi"
 )
 
 type Roamly struct {
@@ -59,6 +61,7 @@ func (app *Roamly) Run() {
 
 	r := app.newRouter()
 
+	app.initExternalClients()
 	app.initAPI(r, pgDB)
 
 	//get port from config
@@ -85,4 +88,9 @@ func (app *Roamly) initAPI(router *gin.Engine, postgres *gorm.DB) {
 	tripStorage := storage.NewTripStorage(postgres)
 	tripService := service.NewTripService(tripStorage)
 	handler.NewTripHandler(router, app.logger, tripService)
+	handler.NewUserHandler(router, app.logger, userService, googleapi.DefaultClient)
+}
+
+func (app *Roamly) initExternalClients() {
+	googleapi.Init(app.config.GoogleApiKey)
 }
