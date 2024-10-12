@@ -1,7 +1,14 @@
 package storage
 
+import (
+	"context"
+
+	"github.com/ShelbyKS/Roamly-backend/internal/domain/model"
+)
+
 type IUserStorage interface {
-	//getByID(id uint64) (domain.User, error)
-	//create(user domain.User) (bool, error)
-	//update(user domain.User) (bool, error)
+	GetUserByID(ctx context.Context, id int) (model.User, error)
+	GetUserByLogin(ctx context.Context, login string) (model.User, error)
+	CreateUser(ctx context.Context, user model.User) error
+	UpdateUser(ctx context.Context, user model.User) error
 }
