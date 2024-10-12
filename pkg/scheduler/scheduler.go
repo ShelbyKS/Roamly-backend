@@ -2,6 +2,7 @@ package scheduler
 
 import (
 	"context"
+	"log"
 	"time"
 
 	"github.com/go-resty/resty/v2"
@@ -44,12 +45,20 @@ type Response struct {
 }
 
 func (c *SchedulerClient) PostPrompt(ctx context.Context, prompt string) (string, error) {
+	req := Request{
+        Model:  "llama3.2",
+        Prompt: prompt,
+        Stream: false,
+    }
+	
 	var resp Response
 	_, err := c.client.R().
 		SetContext(ctx).
-		// SetQueryParams(params).
+		SetBody(req).
 		SetResult(&resp).
 		Post(c.url)
+
+	log.Println(resp, err)
 
 	if err != nil {
 		return "", err

@@ -1,7 +1,6 @@
 package app
 
 import (
-	"context"
 	"fmt"
 	"log"
 
@@ -12,9 +11,9 @@ import (
 	"github.com/ShelbyKS/Roamly-backend/app/config"
 	"github.com/ShelbyKS/Roamly-backend/internal/database/orm"
 	"github.com/ShelbyKS/Roamly-backend/internal/database/storage"
-	"github.com/ShelbyKS/Roamly-backend/internal/domain/model"
 	"github.com/ShelbyKS/Roamly-backend/internal/handler"
 	"github.com/ShelbyKS/Roamly-backend/internal/service"
+	"github.com/ShelbyKS/Roamly-backend/pkg/scheduler"
 	"gorm.io/driver/postgres"
 )
 
@@ -82,12 +81,15 @@ func (app *Roamly) newRouter() *gin.Engine {
 	return router
 }
 
-type StubScedulerService struct {
-}
+// type StubScedulerService struct {
+// }
 
-func (*StubScedulerService) GetSchedule(ctx context.Context, places []model.Place) (model.Schedule, error) {
-	return model.Schedule{}, nil
-}
+// func (*StubScedulerService) GetSchedule(ctx context.Context, places []model.Place) (model.Schedule, error) {
+// 	return model.Schedule{}, nil
+// }
+
+// type StubScedulerService struct {
+// }
 
 func (app *Roamly) initAPI(router *gin.Engine, postgres *gorm.DB) {
 	userStorage := storage.NewUserStorage(postgres)
@@ -96,5 +98,9 @@ func (app *Roamly) initAPI(router *gin.Engine, postgres *gorm.DB) {
 
 	tripStorage := storage.NewTripStorage(postgres)
 	tripService := service.NewTripService(tripStorage)
-	handler.NewTripHandler(router, app.logger, tripService, &StubScedulerService{})
+
+	schedulerCLient := scheduler.NewClient(scheduler.URL)
+	schedulerService := service.NewShedulerService(schedulerCLient)
+	// log.Println("schedulerService", schedulerService)
+	handler.NewTripHandler(router, app.logger, tripService, schedulerService)
 }

@@ -28,6 +28,7 @@ func NewTripHandler(router *gin.Engine,
 	handler := &TripHandler{
 		lg:          lg,
 		tripService: tripService,
+		schedulerService: schedulerService,
 	}
 
 	userGroup := router.Group("/trip")
@@ -36,6 +37,8 @@ func NewTripHandler(router *gin.Engine,
 		userGroup.POST("/", handler.CreateTrip)
 		userGroup.PUT("/", handler.UpdateTrip)
 		userGroup.DELETE("/:trip_id", handler.DeleteTrip)
+
+		userGroup.GET("/:trip_id/schedule", handler.ScheduleTrip)
 	}
 }
 
@@ -48,7 +51,7 @@ func (h *TripHandler) GetTripByID(ctx *gin.Context) {
 	}
 
 	trip, err := h.tripService.GetTripByID(ctx.Request.Context(), id)
-	if errors.Is(err, domain.ErrUserNotFound) {
+	if errors.Is(err, domain.ErrTripNotFound) {
 		h.lg.Warnf("Trip with id=%d not found", id)
 		ctx.JSON(http.StatusNotFound, gin.H{"err": err.Error()})
 		return
@@ -71,7 +74,7 @@ func (h *TripHandler) DeleteTrip(ctx *gin.Context) {
 	}
 
 	err = h.tripService.DeleteTrip(ctx.Request.Context(), id)
-	if errors.Is(err, domain.ErrUserNotFound) {
+	if errors.Is(err, domain.ErrTripNotFound) {
 		ctx.JSON(http.StatusNotFound, gin.H{"err": err.Error()})
 		return
 	}
@@ -164,6 +167,11 @@ func (h *TripHandler) ScheduleTrip(ctx *gin.Context) {
 		ctx.JSON(http.StatusInternalServerError, gin.H{"err": err.Error()})
 		return
 	}
+
+	// h.lg.Info("trip", trip)
+	// h.lg.Info("service", h.schedulerService)
+	// h.lg.Info("service", trip.Places)
+
 	schedule, err := h.schedulerService.GetSchedule(ctx.Request.Context(), trip.Places)
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, gin.H{"err": err.Error()})

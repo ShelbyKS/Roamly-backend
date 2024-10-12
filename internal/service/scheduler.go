@@ -5,11 +5,18 @@ import (
 	"time"
 
 	"github.com/ShelbyKS/Roamly-backend/internal/domain/model"
+	"github.com/ShelbyKS/Roamly-backend/internal/domain/service"
 	"github.com/ShelbyKS/Roamly-backend/internal/domain/storage"
 )
 
 type SchedulerService struct {
 	client storage.ISchedulerClient
+}
+
+func NewShedulerService(client storage.ISchedulerClient) service.ISchedulerService {
+	return &SchedulerService{
+		client: client,
+	}
 }
 
 func (s *SchedulerService) GetSchedule(ctx context.Context, places []model.Place) (model.Schedule, error) {
@@ -21,9 +28,9 @@ func (s *SchedulerService) GetSchedule(ctx context.Context, places []model.Place
 	return model.Schedule{
 		Events: []model.Event{
 			model.Event{
-				Place: "Москва",
+				Place:     "Москва",
 				StartTime: time.Now(),
-				EndTime: time.Now(),
+				EndTime:   time.Now(),
 				Payload: map[string]any{
 					"Kek": "Lol",
 				},
