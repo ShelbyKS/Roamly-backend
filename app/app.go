@@ -1,20 +1,21 @@
 package app
 
 import (
-	"fmt"
 	"log"
+
+	"gorm.io/driver/postgres"
+	"gorm.io/gorm"
 
 	"github.com/gin-gonic/gin"
 	"github.com/sirupsen/logrus"
-	"gorm.io/gorm"
 
 	"github.com/ShelbyKS/Roamly-backend/app/config"
 	"github.com/ShelbyKS/Roamly-backend/internal/database/orm"
 	"github.com/ShelbyKS/Roamly-backend/internal/database/storage"
 	"github.com/ShelbyKS/Roamly-backend/internal/handler"
 	"github.com/ShelbyKS/Roamly-backend/internal/service"
+	"github.com/ShelbyKS/Roamly-backend/pkg/googleapi"
 	"github.com/ShelbyKS/Roamly-backend/pkg/scheduler"
-	"gorm.io/driver/postgres"
 )
 
 type Roamly struct {
@@ -30,45 +31,22 @@ func New(cfg *config.Config, lg *logrus.Logger) *Roamly {
 }
 
 func (app *Roamly) Run() {
-	//init dbs
-	//postgres, err := gorm.Open(postgres.Open(app.config.GetDsn), &gorm.Config{})
-	//if err != nil {
-	//	log.Fatalf("Failed to connect to postgres: %v", err)
-	//}
-	// pgDB := &gorm.DB{}
-
-	dsn := fmt.Sprintf(
-		"host=%s port=%s user=%s dbname=%s password=%s", // sslmode=%s",
-		"localhost",
-		"5432",
-		"postgres",
-		"postgres",
-		"postgres",
-		// conf.User,
-		// conf.DBName,
-		// conf.Password,
-		// conf.SSLMode,
-	)
-
-	pgDB, err := gorm.Open(postgres.Open(dsn), &gorm.Config{})
+	pgDB, err := gorm.Open(postgres.Open(app.config.GetPostgresCfg()), &gorm.Config{})
 	if err != nil {
 		log.Fatalf(err.Error())
 	}
 
-	// pgDB.AutoMigrate(&orm.Trip{})
-	err = pgDB.AutoMigrate(&orm.User{}, &orm.Trip{})
+	err = pgDB.AutoMigrate(&orm.User{}, &orm.Trip{}, &orm.Place{})
 	if err != nil {
-		log.Fatalf("Migration failed: %v", err)
+		log.Fatalf("Failed to migrate db: %v", err)
 	}
 
 	r := app.newRouter()
 
+	app.initExternalClients()
 	app.initAPI(r, pgDB)
 
-	//get port from config
-	port := "8080"
-
-	if err := r.Run(":" + port); err != nil {
+	if err := r.Run(":" + string(app.config.ServerPort)); err != nil {
 		log.Fatalf("Failed to start server: %v", err)
 	}
 }
@@ -81,26 +59,23 @@ func (app *Roamly) newRouter() *gin.Engine {
 	return router
 }
 
-// type StubScedulerService struct {
-// }
-
-// func (*StubScedulerService) GetSchedule(ctx context.Context, places []model.Place) (model.Schedule, error) {
-// 	return model.Schedule{}, nil
-// }
-
-// type StubScedulerService struct {
-// }
-
 func (app *Roamly) initAPI(router *gin.Engine, postgres *gorm.DB) {
 	userStorage := storage.NewUserStorage(postgres)
-	userService := service.NewUserService(userStorage)
-	handler.NewUserHandler(router, app.logger, userService)
-
 	tripStorage := storage.NewTripStorage(postgres)
-	tripService := service.NewTripService(tripStorage)
+	placeStorage := storage.NewPlaceStorage(postgres)
 
-	schedulerCLient := scheduler.NewClient(scheduler.URL)
+	schedulerCLient := scheduler.NewClient(scheduler.URL) //todo: move to external
+
 	schedulerService := service.NewShedulerService(schedulerCLient)
-	// log.Println("schedulerService", schedulerService)
+	userService := service.NewUserService(userStorage)
+	tripService := service.NewTripService(tripStorage, placeStorage)
+	placeService := service.NewPlaceService(placeStorage, tripStorage)
+
+	handler.NewUserHandler(router, app.logger, userService)
 	handler.NewTripHandler(router, app.logger, tripService, schedulerService)
+	handler.NewPlaceHandler(router, app.logger, placeService)
+}
+
+func (app *Roamly) initExternalClients() {
+	googleapi.Init(app.config.GoogleApiKey)
 }

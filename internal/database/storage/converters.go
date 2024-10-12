@@ -25,7 +25,6 @@ func (UserConverter) ToDomain(user model.User) orm.User {
 
 type TripConverter struct{}
 
-
 func (TripConverter) ToDb(trip model.Trip) orm.Trip {
 	users := make([]*orm.User, len(trip.Users))
 	for i, user := range trip.Users {
@@ -40,12 +39,21 @@ func (TripConverter) ToDb(trip model.Trip) orm.Trip {
 		Users:     users,
 		StartTime: trip.StartTime,
 		EndTime:   trip.EndTime,
-		Region:    trip.Region,
+		AreaID:    trip.AreaID,
 	}
 }
 
-
 func (TripConverter) ToDomain(trip orm.Trip) model.Trip {
+	var tripPlaces []model.Place
+
+	for _, place := range trip.Places {
+		tripPlaces = append(tripPlaces, model.Place{
+			ID:     place.Payload.Data().PlaceID,
+			Name:   place.Payload.Data().Name,
+			Rating: place.Payload.Data().Rating,
+		})
+	}
+
 	users := make([]*model.User, len(trip.Users))
 	for i, user := range trip.Users {
 		users[i] = &model.User{
@@ -59,6 +67,6 @@ func (TripConverter) ToDomain(trip orm.Trip) model.Trip {
 		Users:     users,
 		StartTime: trip.StartTime,
 		EndTime:   trip.EndTime,
-		Region:    trip.Region,
+		AreaID:    trip.AreaID,
 	}
 }

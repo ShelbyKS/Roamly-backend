@@ -2,20 +2,23 @@ package service
 
 import (
 	"context"
+	"errors"
 	"fmt"
-
+	"github.com/ShelbyKS/Roamly-backend/internal/domain"
 	"github.com/ShelbyKS/Roamly-backend/internal/domain/model"
 	"github.com/ShelbyKS/Roamly-backend/internal/domain/service"
 	"github.com/ShelbyKS/Roamly-backend/internal/domain/storage"
 )
 
 type TripService struct {
-	tripStorage storage.ITripStorage
+	tripStorage  storage.ITripStorage
+	placeStorage storage.IPlaceStorage
 }
 
-func NewTripService(tripStorage storage.ITripStorage) service.ITripService {
+func NewTripService(tripStorage storage.ITripStorage, placeStorage storage.IPlaceStorage) service.ITripService {
 	return &TripService{
-		tripStorage: tripStorage,
+		tripStorage:  tripStorage,
+		placeStorage: placeStorage,
 	}
 }
 
@@ -38,7 +41,19 @@ func (service *TripService) DeleteTrip(ctx context.Context, id int) error {
 }
 
 func (service *TripService) CreateTrip(ctx context.Context, trip model.Trip) error {
-	err := service.tripStorage.CreateTrip(ctx, trip)
+	area, err := service.placeStorage.GetPlaceByID(ctx, trip.AreaID)
+	if err != nil && !errors.Is(err, domain.ErrPlaceNotFound) {
+		return fmt.Errorf("fail to get area from storage: %w", err)
+	}
+
+	if errors.Is(err, domain.ErrPlaceNotFound) {
+		//todo: go to google place api and take info about
+		// create area in db
+	}
+
+	trip.Area = &area
+
+	err = service.tripStorage.CreateTrip(ctx, trip)
 	if err != nil {
 		return fmt.Errorf("fail to create trip from storage: %w", err)
 	}
