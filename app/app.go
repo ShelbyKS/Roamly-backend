@@ -54,7 +54,7 @@ func (app *Roamly) newRouter() *gin.Engine {
 }
 
 func (app *Roamly) initAPI(router *gin.Engine, postgres *gorm.DB) {
-	userStorage := storage.NewStorage(postgres)
-	userService := service.NewService(userStorage)
+	userStorage := storage.NewUserStorage(postgres)
+	userService := service.NewUserService(userStorage)
 	handler.NewUserHandler(router, app.logger, userService)
 }
