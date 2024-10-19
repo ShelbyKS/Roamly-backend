@@ -1,0 +1,405 @@
+definitions:
+  handler.AddPlaceToTripRequest:
+    properties:
+      place_id:
+        type: string
+      trip_id:
+        type: integer
+    type: object
+  handler.CreateTripRequest:
+    properties:
+      area_id:
+        type: string
+      end_time:
+        type: string
+      start_time:
+        type: string
+    required:
+    - area_id
+    - end_time
+    - start_time
+    type: object
+  handler.CreateUserRequest:
+    properties:
+      login:
+        type: string
+      password:
+        type: string
+    required:
+    - login
+    - password
+    type: object
+  handler.UpdateTripRequest:
+    properties:
+      area_id:
+        type: string
+      end_time:
+        type: string
+      id:
+        type: integer
+      start_time:
+        type: string
+    required:
+    - area_id
+    - end_time
+    - id
+    - start_time
+    type: object
+  handler.UpdateUserRequest:
+    properties:
+      id:
+        type: integer
+      login:
+        type: string
+      password:
+        type: string
+    required:
+    - id
+    - login
+    - password
+    type: object
+  model.Place:
+    properties:
+      name:
+        type: string
+      photo:
+        type: string
+      place_id:
+        type: string
+      rating:
+        type: number
+      trips:
+        items:
+          $ref: '#/definitions/model.Trip'
+        type: array
+    type: object
+  model.Trip:
+    properties:
+      area:
+        $ref: '#/definitions/model.Place'
+      area_id:
+        type: string
+      end_time:
+        type: string
+      id:
+        type: integer
+      places:
+        items:
+          $ref: '#/definitions/model.Place'
+        type: array
+      start_time:
+        type: string
+      users:
+        items:
+          $ref: '#/definitions/model.User'
+        type: array
+    type: object
+  model.User:
+    properties:
+      id:
+        type: integer
+      login:
+        type: string
+      password:
+        type: string
+    type: object
+info:
+  contact: {}
+paths:
+  /api/v1/trip:
+    post:
+      consumes:
+      - application/json
+      description: Create a new trip for the user
+      parameters:
+      - description: Trip data
+        in: body
+        name: trip
+        required: true
+        schema:
+          $ref: '#/definitions/handler.CreateTripRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/model.Trip'
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Create a new trip
+      tags:
+      - trip
+    put:
+      consumes:
+      - application/json
+      description: Update trip data
+      parameters:
+      - description: Trip data
+        in: body
+        name: trip
+        required: true
+        schema:
+          $ref: '#/definitions/handler.UpdateTripRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/model.Trip'
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "404":
+          description: Not Found
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Update trip
+      tags:
+      - trip
+  /api/v1/trip/{trip_id}:
+    delete:
+      description: Delete a trip by its ID
+      parameters:
+      - description: Trip ID
+        in: path
+        name: trip_id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            type: "null"
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "404":
+          description: Not Found
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Delete a trip
+      tags:
+      - trip
+    get:
+      description: Get data of a specific trip by its ID
+      parameters:
+      - description: Trip ID
+        in: path
+        name: trip_id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/model.Trip'
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "404":
+          description: Not Found
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Get trip by ID
+      tags:
+      - trip
+  /api/v1/trip/place:
+    post:
+      consumes:
+      - application/json
+      description: Add place to trip by id
+      parameters:
+      - description: Place and trip IDs
+        in: body
+        name: trip-place
+        required: true
+        schema:
+          $ref: '#/definitions/handler.AddPlaceToTripRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/model.Trip'
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "404":
+          description: Not Found
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Add place to trip
+      tags:
+      - place
+  /api/v1/user:
+    post:
+      consumes:
+      - application/json
+      description: Creates a new user with the provided details.
+      parameters:
+      - description: User data
+        in: body
+        name: user
+        required: true
+        schema:
+          $ref: '#/definitions/handler.CreateUserRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            type: string
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Create a new user
+      tags:
+      - user
+    put:
+      consumes:
+      - application/json
+      description: Updates the details of an existing user.
+      parameters:
+      - description: User data
+        in: body
+        name: user
+        required: true
+        schema:
+          $ref: '#/definitions/handler.UpdateUserRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            type: string
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "404":
+          description: Not Found
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Update user details
+      tags:
+      - user
+  /api/v1/user/{user_id}:
+    get:
+      description: Retrieves a user by their ID.
+      parameters:
+      - description: User ID
+        in: path
+        name: user_id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/model.User'
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "404":
+          description: Not Found
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Get user by ID
+      tags:
+      - user
+swagger: "2.0"

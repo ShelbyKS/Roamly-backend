@@ -8,8 +8,11 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/sirupsen/logrus"
+	swaggerFiles "github.com/swaggo/files"
+	ginSwagger "github.com/swaggo/gin-swagger"
 
 	"github.com/ShelbyKS/Roamly-backend/app/config"
+	_ "github.com/ShelbyKS/Roamly-backend/docs"
 	"github.com/ShelbyKS/Roamly-backend/internal/database/orm"
 	"github.com/ShelbyKS/Roamly-backend/internal/database/storage"
 	"github.com/ShelbyKS/Roamly-backend/internal/handler"
@@ -74,6 +77,8 @@ func (app *Roamly) initAPI(router *gin.Engine, postgres *gorm.DB) {
 	handler.NewUserHandler(router, app.logger, userService)
 	handler.NewTripHandler(router, app.logger, tripService, schedulerService)
 	handler.NewPlaceHandler(router, app.logger, placeService)
+
+	router.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
 }
 
 func (app *Roamly) initExternalClients() {
