@@ -42,9 +42,61 @@ func generateHandler(w http.ResponseWriter, r *http.Request) {
 
     // Create a dummy response based on the request
     response := Response{
-        Model:              req.Model,
-        CreatedAt:          time.Now(),
-        Response:           "This is a generated response to: " + req.Prompt,
+          Model:              req.Model,
+          CreatedAt:          time.Now(),
+          Response:           `{
+        "events": [
+          {
+          "place": "Гум",
+          "start_time": "2023-10-13T10:00:00Z",
+          "end_time": "2023-10-13T11:00:00Z",
+          "payload": {}
+          },
+          {
+          "place": "Красная площадь",
+          "start_time": "2023-10-13T11:30:00Z",
+          "end_time": "2023-10-13T12:30:00Z",
+          "payload": {}
+          },
+          {
+          "place": "Большой театр",
+          "start_time": "2023-10-13T13:00:00Z",
+          "end_time": "2023-10-13T14:00:00Z",
+          "payload": {}
+          },
+          {
+          "place": "Парк Горького",
+          "start_time": "2023-10-13T15:00:00Z",
+          "end_time": "2023-10-13T17:00:00Z",
+          "payload": {}
+          },
+          {
+          "place": "Царицино",
+          "start_time": "2023-10-13T17:30:00Z",
+          "end_time": "2023-10-13T19:00:00Z",
+          "payload": {}
+          },
+          {
+          "place": "Усадьба Кусково",
+          "start_time": "2023-10-13T19:30:00Z",
+          "end_time": "2023-10-13T21:00:00Z",
+          "payload": {}
+          },
+          {
+          "place": "ВДНХ",
+          "start_time": "2023-10-14T10:00:00Z",
+          "end_time": "2023-10-14T12:00:00Z",
+          "payload": {}
+          },
+          {
+          "place": "Пятницкое шоссе",
+          "start_time": "2023-10-14T12:30:00Z",
+          "end_time": "2023-10-14T14:00:00Z",
+          "payload": {}
+          }
+        ],
+        "payload": {}
+        }`,
         Done:               true,
         Context:            []int{1, 2, 3}, // Dummy data
         TotalDuration:      1234,
