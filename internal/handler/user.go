@@ -24,7 +24,7 @@ func NewUserHandler(router *gin.Engine, lg *logrus.Logger, userService service.I
 		userService: userService,
 	}
 
-	userGroup := router.Group("/user")
+	userGroup := router.Group("/api/v1/user")
 	{
 		// userGroup.GET("/", handler.GetUserByLogin)
 		userGroup.GET("/:user_id", handler.GetUserByID)
@@ -33,6 +33,16 @@ func NewUserHandler(router *gin.Engine, lg *logrus.Logger, userService service.I
 	}
 }
 
+// @Summary Get user by ID
+// @Description Retrieves a user by their ID.
+// @Tags user
+// @Produce  json
+// @Param user_id path int true "User ID"
+// @Success 200 {object} model.User
+// @Failure 400 {object} map[string]string
+// @Failure 404 {object} map[string]string
+// @Failure 500 {object} map[string]string
+// @Router /api/v1/user/{user_id} [get]
 func (h *UserHandler) GetUserByID(ctx *gin.Context) {
 	idString := ctx.Param("user_id")
 	id, err := strconv.Atoi(idString)
@@ -56,28 +66,21 @@ func (h *UserHandler) GetUserByID(ctx *gin.Context) {
 	ctx.JSON(http.StatusOK, gin.H{"user": user})
 }
 
-func (h *UserHandler) GetUserByLogin(ctx *gin.Context) {
-	login := ctx.Param("login")
-
-	user, err := h.userService.GetUserByLogin(ctx.Request.Context(), login)
-	if errors.Is(err, domain.ErrUserNotFound) {
-		ctx.JSON(http.StatusNotFound, gin.H{"err": err.Error()})
-		return
-	}
-	if err != nil {
-		ctx.JSON(http.StatusInternalServerError, gin.H{"err": err.Error()})
-		return
-	}
-
-	ctx.JSON(http.StatusOK, gin.H{"user": user})
-}
-
 type CreateUserRequest struct {
-	ID       int    `json:"id" binding:"required"`
 	Login    string `json:"login" binding:"required"`
 	Password string `json:"password" binding:"required"`
 }
 
+// @Summary Create a new user
+// @Description Creates a new user with the provided details.
+// @Tags user
+// @Accept  json
+// @Produce  json
+// @Param user body CreateUserRequest true "User data"
+// @Success 200 {string} string
+// @Failure 400 {object} map[string]string
+// @Failure 500 {object} map[string]string
+// @Router /api/v1/user [post]
 func (h *UserHandler) CreateUser(ctx *gin.Context) {
 	var userReq CreateUserRequest
 
@@ -88,7 +91,6 @@ func (h *UserHandler) CreateUser(ctx *gin.Context) {
 	}
 
 	err = h.userService.CreateUser(ctx, model.User{
-		ID:       userReq.ID,
 		Login:    userReq.Login,
 		Password: userReq.Password,
 	})
@@ -106,6 +108,17 @@ type UpdateUserRequest struct {
 	Password string `json:"password" binding:"required"`
 }
 
+// @Summary Update user details
+// @Description Updates the details of an existing user.
+// @Tags user
+// @Accept  json
+// @Produce  json
+// @Param user body UpdateUserRequest true "User data"
+// @Success 200 {string} string
+// @Failure 400 {object} map[string]string
+// @Failure 404 {object} map[string]string
+// @Failure 500 {object} map[string]string
+// @Router /api/v1/user [put]
 func (h *UserHandler) UpdateUser(ctx *gin.Context) {
 	var userReq UpdateUserRequest
 

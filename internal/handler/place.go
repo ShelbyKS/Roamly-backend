@@ -18,7 +18,7 @@ func NewPlaceHandler(router *gin.Engine, lg *logrus.Logger, placeService service
 		placeService: placeService,
 	}
 
-	tripPlaceGroup := router.Group("/trip/place")
+	tripPlaceGroup := router.Group("/api/v1/trip/place")
 	{
 		tripPlaceGroup.POST("/", handler.AddPlaceToTrip)
 	}
@@ -29,6 +29,17 @@ type AddPlaceToTripRequest struct {
 	PlaceID string `json:"place_id"`
 }
 
+// @Summary Add place to trip
+// @Description Add place to trip by id
+// @Tags place
+// @Accept json
+// @Produce json
+// @Param trip-place body AddPlaceToTripRequest true "Place and trip IDs"
+// @Success 200 {object} model.Trip
+// @Failure 400 {object} map[string]string
+// @Failure 404 {object} map[string]string
+// @Failure 500 {object} map[string]string
+// @Router /api/v1/trip/place [post]
 func (h *PlaceHandler) AddPlaceToTrip(c *gin.Context) {
 	var req AddPlaceToTripRequest
 
