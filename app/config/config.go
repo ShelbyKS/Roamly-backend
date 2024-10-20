@@ -12,12 +12,23 @@ type Config struct {
 	LogLevel     string `mapstructure:"LOG_LEVEL"`
 	GoogleApiKey string `mapstructure:"GOOGLE_API_KEY"`
 
-	PostgresHost string `mapstructure:"POSTGRES_HOST"`
-	PostgresPort string `mapstructure:"POSTGRES_PORT"`
-	PostgresUser string `mapstructure:"POSTGRES_USER"`
-	PostgresPass string `mapstructure:"POSTGRES_PASSWORD"`
-	PostgresDB   string `mapstructure:"POSTGRES_DB"`
-	PostgresSSL  string `mapstructure:"POSTGRES_SSL"`
+	Postgres PostgresConfig `mapstructure:",squash"`
+	Redis    RedisConfig    `mapstructure:",squash"`
+}
+
+type PostgresConfig struct {
+	Host string `mapstructure:"POSTGRES_HOST"`
+	Port string `mapstructure:"POSTGRES_PORT"`
+	User string `mapstructure:"POSTGRES_USER"`
+	Pass string `mapstructure:"POSTGRES_PASSWORD"`
+	DB   string `mapstructure:"POSTGRES_DB"`
+	SSL  string `mapstructure:"POSTGRES_SSL"`
+}
+
+type RedisConfig struct {
+	Host     string `mapstructure:"REDIS_HOST"`
+	Port     string `mapstructure:"REDIS_PORT"`
+	Password string `mapstructure:"REDIS_PASSWORD"`
 }
 
 func LoadConfig() *Config {
@@ -28,23 +39,23 @@ func LoadConfig() *Config {
 		log.Fatalf("Error reading config file: %s", err)
 	}
 
-	var config *Config
+	var config Config
 	if err := viper.Unmarshal(&config); err != nil {
 		log.Fatalf("Unable to unmarshal config: %s", err)
 	}
 
-	return config
+	return &config
 }
 
 func (cfg *Config) GetPostgresCfg() string {
 	dsn := fmt.Sprintf(
 		"host=%s port=%s user=%s dbname=%s password=%s sslmode=%s",
-		cfg.PostgresHost,
-		cfg.PostgresPort,
-		cfg.PostgresUser,
-		cfg.PostgresDB,
-		cfg.PostgresPass,
-		cfg.PostgresSSL,
+		cfg.Postgres.Host,
+		cfg.Postgres.Port,
+		cfg.Postgres.User,
+		cfg.Postgres.DB,
+		cfg.Postgres.Pass,
+		cfg.Postgres.SSL,
 	)
 
 	return dsn

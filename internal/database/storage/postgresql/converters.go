@@ -1,4 +1,4 @@
-package storage
+package postgresql
 
 import (
 	"github.com/ShelbyKS/Roamly-backend/internal/database/orm"

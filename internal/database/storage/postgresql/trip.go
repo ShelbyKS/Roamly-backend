@@ -1,9 +1,8 @@
-package storage
+package postgresql
 
 import (
 	"context"
 	"errors"
-
 	"gorm.io/gorm"
 
 	"github.com/ShelbyKS/Roamly-backend/internal/domain"

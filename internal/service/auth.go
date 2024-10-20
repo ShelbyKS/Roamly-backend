@@ -6,29 +6,30 @@ import (
 	"crypto/rand"
 	"errors"
 	"fmt"
-	"github.com/ShelbyKS/Roamly-backend/internal/domain"
-	"github.com/google/uuid"
-	"golang.org/x/crypto/argon2"
 	"time"
 
+	"github.com/google/uuid"
+	"golang.org/x/crypto/argon2"
+
+	"github.com/ShelbyKS/Roamly-backend/internal/domain"
 	"github.com/ShelbyKS/Roamly-backend/internal/domain/model"
 	"github.com/ShelbyKS/Roamly-backend/internal/domain/service"
 	"github.com/ShelbyKS/Roamly-backend/internal/domain/storage"
 )
 
-type UserService struct {
+type AuthService struct {
 	userStorage    storage.IUserStorage
 	sessionStorage storage.ISessionStorage
 }
 
-func NewUserService(userStorage storage.IUserStorage, sessionStorage storage.ISessionStorage) service.IUserService {
-	return &UserService{
+func NewAuthService(userStorage storage.IUserStorage, sessionStorage storage.ISessionStorage) service.IAuthService {
+	return &AuthService{
 		userStorage:    userStorage,
 		sessionStorage: sessionStorage,
 	}
 }
 
-func (s *UserService) Login(ctx context.Context, user model.User) (model.Session, error) {
+func (s *AuthService) Login(ctx context.Context, user model.User) (model.Session, error) {
 	expectedUser, err := s.userStorage.GetUserByEmail(ctx, user.Email)
 	if err != nil {
 		return model.Session{}, fmt.Errorf("failed to get user by email: %w", err)
@@ -51,7 +52,7 @@ func (s *UserService) Login(ctx context.Context, user model.User) (model.Session
 	return session, nil
 }
 
-func (s *UserService) Logout(ctx context.Context, session model.Session) error {
+func (s *AuthService) Logout(ctx context.Context, session model.Session) error {
 	err := s.sessionStorage.DeleteByToken(ctx, session.Token)
 	if err != nil {
 		return fmt.Errorf("failed to delete session in storage: %w", err)
@@ -60,7 +61,7 @@ func (s *UserService) Logout(ctx context.Context, session model.Session) error {
 	return nil
 }
 
-func (s *UserService) Register(ctx context.Context, user model.User) (model.User, error) {
+func (s *AuthService) Register(ctx context.Context, user model.User) (model.User, error) {
 	_, err := s.userStorage.GetUserByEmail(ctx, user.Email)
 	if err != nil && !errors.Is(err, domain.ErrUserNotFound) {
 		return model.User{}, fmt.Errorf("failed to check existing user: %w", err)
@@ -85,32 +86,14 @@ func (s *UserService) Register(ctx context.Context, user model.User) (model.User
 	return user, nil
 }
 
-func (s *UserService) hashPassword(salt, password []byte) []byte {
+func (s *AuthService) hashPassword(salt, password []byte) []byte {
 	hashedPassword := argon2.IDKey(password, salt, 1, 64*1024, 4, 32)
 	return append(salt, hashedPassword...)
 }
 
-func (s *UserService) matchPasswords(hashedPassword, plainPassword []byte) bool {
+func (s *AuthService) matchPasswords(hashedPassword, plainPassword []byte) bool {
 	salt := hashedPassword[:8]
 	userPassHash := s.hashPassword(salt, plainPassword)
 
 	return bytes.Equal(userPassHash, hashedPassword)
-}
-
-func (s *UserService) GetUserByID(ctx context.Context, id int) (model.User, error) {
-	user, err := s.userStorage.GetUserByID(ctx, id)
-	if err != nil {
-		return model.User{}, fmt.Errorf("fail to get user from storage: %w", err)
-	}
-
-	return user, nil
-}
-
-func (service *UserService) UpdateUser(ctx context.Context, user model.User) error {
-	err := service.userStorage.UpdateUser(ctx, user)
-	if err != nil {
-		return fmt.Errorf("fail to update user from storage: %w", err)
-	}
-
-	return nil
 }

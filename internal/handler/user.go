@@ -2,11 +2,10 @@ package handler
 
 import (
 	"errors"
-	"net/http"
-	"strconv"
-
 	"github.com/gin-gonic/gin"
 	"github.com/sirupsen/logrus"
+	"net/http"
+	"strconv"
 
 	"github.com/ShelbyKS/Roamly-backend/internal/domain"
 	"github.com/ShelbyKS/Roamly-backend/internal/domain/model"
@@ -26,9 +25,7 @@ func NewUserHandler(router *gin.Engine, lg *logrus.Logger, userService service.I
 
 	userGroup := router.Group("/api/v1/user")
 	{
-		// userGroup.GET("/", handler.GetUserByLogin)
 		userGroup.GET("/:user_id", handler.GetUserByID)
-		userGroup.POST("/", handler.CreateUser)
 		userGroup.PUT("/", handler.UpdateUser)
 	}
 }
@@ -66,45 +63,10 @@ func (h *UserHandler) GetUserByID(ctx *gin.Context) {
 	ctx.JSON(http.StatusOK, gin.H{"user": user})
 }
 
-type CreateUserRequest struct {
-	Login    string `json:"login" binding:"required"`
-	Password string `json:"password" binding:"required"`
-}
-
-// @Summary Create a new user
-// @Description Creates a new user with the provided details.
-// @Tags user
-// @Accept  json
-// @Produce  json
-// @Param user body CreateUserRequest true "User data"
-// @Success 200 {string} string
-// @Failure 400 {object} map[string]string
-// @Failure 500 {object} map[string]string
-// @Router /api/v1/user [post]
-func (h *UserHandler) CreateUser(ctx *gin.Context) {
-	var userReq CreateUserRequest
-
-	err := ctx.BindJSON(&userReq)
-	if err != nil {
-		ctx.JSON(http.StatusBadRequest, gin.H{"err": err.Error()})
-		return
-	}
-
-	err = h.userService.CreateUser(ctx, model.User{
-		Login:    userReq.Login,
-		Password: userReq.Password,
-	})
-	if err != nil {
-		ctx.JSON(http.StatusInternalServerError, gin.H{"err": err.Error()})
-		return
-	}
-
-	ctx.JSON(http.StatusOK, gin.H{})
-}
-
 type UpdateUserRequest struct {
 	ID       int    `json:"id" binding:"required"`
 	Login    string `json:"login" binding:"required"`
+	Email    string `json:"email" binding:"required"`
 	Password string `json:"password" binding:"required"`
 }
 
@@ -114,10 +76,11 @@ type UpdateUserRequest struct {
 // @Accept  json
 // @Produce  json
 // @Param user body UpdateUserRequest true "User data"
-// @Success 200 {string} string
-// @Failure 400 {object} map[string]string
-// @Failure 404 {object} map[string]string
-// @Failure 500 {object} map[string]string
+// @Success 200 {string} map[string]string
+// @Failure 400 {object} object{err=string}
+// @Failure 401 {object} object{err=string}
+// @Failure 404 {object} object{err=string}
+// @Failure 500 {object} object{err=string}
 // @Router /api/v1/user [put]
 func (h *UserHandler) UpdateUser(ctx *gin.Context) {
 	var userReq UpdateUserRequest
@@ -131,7 +94,7 @@ func (h *UserHandler) UpdateUser(ctx *gin.Context) {
 	err = h.userService.UpdateUser(ctx, model.User{
 		ID:       userReq.ID,
 		Login:    userReq.Login,
-		Password: userReq.Password,
+		Password: []byte(userReq.Password),
 	})
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, gin.H{"err": err.Error()})
