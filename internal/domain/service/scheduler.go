@@ -7,5 +7,5 @@ import (
 )
 
 type ISchedulerService interface {
-	GetSchedule(ctx context.Context, places []*model.Place) (model.Schedule, error)
+	GetSchedule(ctx context.Context, trip model.Trip, places []*model.Place, timeMatrix [][]int) (model.Schedule, error)
 }

@@ -1,10 +1,12 @@
 package handler
 
 import (
+	"net/http"
+
 	"github.com/ShelbyKS/Roamly-backend/internal/domain/service"
 	"github.com/gin-gonic/gin"
+	"github.com/google/uuid"
 	"github.com/sirupsen/logrus"
-	"net/http"
 )
 
 type PlaceHandler struct {
@@ -25,8 +27,8 @@ func NewPlaceHandler(router *gin.Engine, lg *logrus.Logger, placeService service
 }
 
 type AddPlaceToTripRequest struct {
-	TripID  int    `json:"trip_id"`
-	PlaceID string `json:"place_id"`
+	TripID  uuid.UUID `json:"trip_id"`
+	PlaceID string    `json:"place_id"`
 }
 
 // @Summary Add place to trip

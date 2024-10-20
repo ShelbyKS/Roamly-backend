@@ -4,10 +4,12 @@ import (
 	"context"
 	"errors"
 	"fmt"
+
 	"github.com/ShelbyKS/Roamly-backend/internal/domain"
 	"github.com/ShelbyKS/Roamly-backend/internal/domain/model"
 	"github.com/ShelbyKS/Roamly-backend/internal/domain/service"
 	"github.com/ShelbyKS/Roamly-backend/internal/domain/storage"
+	"github.com/google/uuid"
 )
 
 type TripService struct {
@@ -22,7 +24,7 @@ func NewTripService(tripStorage storage.ITripStorage, placeStorage storage.IPlac
 	}
 }
 
-func (service *TripService) GetTripByID(ctx context.Context, id int) (model.Trip, error) {
+func (service *TripService) GetTripByID(ctx context.Context, id uuid.UUID) (model.Trip, error) {
 	trip, err := service.tripStorage.GetTripByID(ctx, id)
 	if err != nil {
 		return model.Trip{}, fmt.Errorf("fail to get trip from storage: %w", err)
@@ -31,7 +33,7 @@ func (service *TripService) GetTripByID(ctx context.Context, id int) (model.Trip
 	return trip, nil
 }
 
-func (service *TripService) DeleteTrip(ctx context.Context, id int) error {
+func (service *TripService) DeleteTrip(ctx context.Context, id uuid.UUID) error {
 	err := service.tripStorage.DeleteTrip(ctx, id)
 	if err != nil {
 		return fmt.Errorf("fail to delete trip from storage: %w", err)
@@ -40,10 +42,10 @@ func (service *TripService) DeleteTrip(ctx context.Context, id int) error {
 	return nil
 }
 
-func (service *TripService) CreateTrip(ctx context.Context, trip model.Trip) error {
+func (service *TripService) CreateTrip(ctx context.Context, trip model.Trip) (uuid.UUID, error) {
 	area, err := service.placeStorage.GetPlaceByID(ctx, trip.AreaID)
 	if err != nil && !errors.Is(err, domain.ErrPlaceNotFound) {
-		return fmt.Errorf("fail to get area from storage: %w", err)
+		return uuid.Nil, fmt.Errorf("fail to get area from storage: %w", err)
 	}
 
 	if errors.Is(err, domain.ErrPlaceNotFound) {
@@ -52,13 +54,14 @@ func (service *TripService) CreateTrip(ctx context.Context, trip model.Trip) err
 	}
 
 	trip.Area = &area
+	trip.ID = uuid.New()
 
 	err = service.tripStorage.CreateTrip(ctx, trip)
 	if err != nil {
-		return fmt.Errorf("fail to create trip from storage: %w", err)
+		return uuid.Nil, fmt.Errorf("fail to create trip from storage: %w", err)
 	}
 
-	return nil
+	return trip.ID, nil
 }
 
 func (service *TripService) UpdateTrip(ctx context.Context, trip model.Trip) error {

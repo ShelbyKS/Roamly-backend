@@ -8,6 +8,7 @@ import (
 	"github.com/ShelbyKS/Roamly-backend/internal/domain"
 	"github.com/ShelbyKS/Roamly-backend/internal/domain/model"
 	"github.com/ShelbyKS/Roamly-backend/internal/domain/storage"
+	"github.com/google/uuid"
 
 	"github.com/ShelbyKS/Roamly-backend/internal/database/orm"
 )
@@ -22,13 +23,16 @@ func NewTripStorage(db *gorm.DB) storage.ITripStorage {
 	}
 }
 
-func (storage *TripStorage) GetTripByID(ctx context.Context, id int) (model.Trip, error) {
+func (storage *TripStorage) GetTripByID(ctx context.Context, id uuid.UUID) (model.Trip, error) {
 	trip := orm.Trip{
 		ID: id,
 	}
 
 	tx := storage.db.WithContext(ctx).
+		Model(&orm.Trip{}).
+		Preload("Users").
 		Preload("Places").
+		Preload("Events").
 		First(&trip)
 	if errors.Is(tx.Error, gorm.ErrRecordNotFound) {
 		tx.Error = errors.Join(domain.ErrTripNotFound, tx.Error)
@@ -41,7 +45,7 @@ func (storage *TripStorage) GetTripByID(ctx context.Context, id int) (model.Trip
 	return TripConverter{}.ToDomain(trip), tx.Error
 }
 
-func (storage *TripStorage) DeleteTrip(ctx context.Context, id int) error {
+func (storage *TripStorage) DeleteTrip(ctx context.Context, id uuid.UUID) error {
 	trip := orm.Trip{
 		ID: id,
 	}
@@ -61,10 +65,6 @@ func (storage *TripStorage) DeleteTrip(ctx context.Context, id int) error {
 func (storage *TripStorage) CreateTrip(ctx context.Context, trip model.Trip) error {
 	tripDb := TripConverter{}.ToDb(trip)
 	tx := storage.db.WithContext(ctx).Create(&tripDb)
-
-	// err = r.db.Model(&orm.Trip{
-	// 	ID: id,
-	// }).Association("Trainers").Append(&trainerOrm)
 
 	return tx.Error
 }

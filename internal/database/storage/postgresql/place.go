@@ -4,10 +4,10 @@ import (
 	"context"
 	"errors"
 	"fmt"
+
 	"github.com/ShelbyKS/Roamly-backend/internal/domain"
 
 	"github.com/ShelbyKS/Roamly-backend/internal/database/orm"
-	"gorm.io/datatypes"
 
 	"github.com/ShelbyKS/Roamly-backend/internal/domain/model"
 	"github.com/ShelbyKS/Roamly-backend/internal/domain/storage"
@@ -25,9 +25,10 @@ func NewPlaceStorage(db *gorm.DB) storage.IPlaceStorage {
 }
 
 func (storage *PlaceStorage) GetPlaceByID(ctx context.Context, placeID string) (model.Place, error) {
-	placeModel := &orm.Place{}
+	placeModel := &orm.Place{
+		ID: placeID,
+	}
 	res := storage.db.WithContext(ctx).
-		Where("payload ->> 'place_id' = ?", placeID).
 		First(placeModel)
 
 	if errors.Is(res.Error, gorm.ErrRecordNotFound) {
@@ -39,27 +40,27 @@ func (storage *PlaceStorage) GetPlaceByID(ctx context.Context, placeID string) (
 	}
 
 	return model.Place{
-		ID:     placeModel.Payload.Data().PlaceID,
-		Name:   placeModel.Payload.Data().Name,
-		Rating: placeModel.Payload.Data().Rating,
+		ID:     placeModel.ID,
+		Name:   placeModel.Name,
+		Photo:  placeModel.Photo,
+		Rating: placeModel.Rating,
 	}, nil
 }
 
 func (storage *PlaceStorage) CreatePlace(ctx context.Context, place model.Place) error {
-	var trips []orm.Trip
+	var trips []*orm.Trip
 	for _, i := range place.Trips {
-		trips = append(trips, TripConverter{}.ToDb(*i))
+		trip := TripConverter{}.ToDb(*i)
+		trips = append(trips, &trip)
 	}
 
 	placeModel := orm.Place{
-		Payload: datatypes.NewJSONType(
-			orm.PlacePayload{
-				PlaceID: place.ID,
-				Name:    place.Name,
-				Rating:  place.Rating,
-			},
-		),
-		Trips: &trips,
+
+		ID:     place.ID,
+		Name:   place.Name,
+		Rating: place.Rating,
+		Photo:  place.Photo,
+		Trips:  trips,
 	}
 
 	res := storage.db.WithContext(ctx).Create(&placeModel)

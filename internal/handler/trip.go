@@ -3,9 +3,9 @@ package handler
 import (
 	"errors"
 	"net/http"
-	"strconv"
 
 	"github.com/gin-gonic/gin"
+	"github.com/google/uuid"
 	"github.com/sirupsen/logrus"
 
 	"github.com/ShelbyKS/Roamly-backend/internal/domain"
@@ -17,6 +17,7 @@ type TripHandler struct {
 	lg               *logrus.Logger
 	tripService      service.ITripService
 	schedulerService service.ISchedulerService
+	placesService    service.IPlaceService
 }
 
 func NewTripHandler(router *gin.Engine,
@@ -45,7 +46,7 @@ func NewTripHandler(router *gin.Engine,
 // @Description Get data of a specific trip by its ID
 // @Tags trip
 // @Produce json
-// @Param trip_id path int true "Trip ID"
+// @Param trip_id path string true "Trip ID"
 // @Success 200 {object} model.Trip
 // @Failure 400 {object} map[string]string
 // @Failure 404 {object} map[string]string
@@ -53,7 +54,7 @@ func NewTripHandler(router *gin.Engine,
 // @Router /api/v1/trip/{trip_id} [get]
 func (h *TripHandler) GetTripByID(c *gin.Context) {
 	idString := c.Param("trip_id")
-	id, err := strconv.Atoi(idString)
+	id, err := uuid.Parse(idString)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"err": err.Error()})
 		return
@@ -78,7 +79,7 @@ func (h *TripHandler) GetTripByID(c *gin.Context) {
 // @Description Delete a trip by its ID
 // @Tags trip
 // @Produce json
-// @Param trip_id path int true "Trip ID"
+// @Param trip_id path string true "Trip ID"
 // @Success 200 {null} string
 // @Failure 400 {object} map[string]string
 // @Failure 404 {object} map[string]string
@@ -86,7 +87,7 @@ func (h *TripHandler) GetTripByID(c *gin.Context) {
 // @Router /api/v1/trip/{trip_id} [delete]
 func (h *TripHandler) DeleteTrip(c *gin.Context) {
 	idString := c.Param("trip_id")
-	id, err := strconv.Atoi(idString)
+	id, err := uuid.Parse(idString)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"err": err.Error()})
 		return
@@ -106,6 +107,7 @@ func (h *TripHandler) DeleteTrip(c *gin.Context) {
 }
 
 type CreateTripRequest struct {
+	UserID    int    `json:"user_id" binding:"required"`
 	StartTime string `json:"start_time" binding:"required"`
 	EndTime   string `json:"end_time" binding:"required"`
 	AreaID    string `json:"area_id" binding:"required"`
@@ -117,7 +119,7 @@ type CreateTripRequest struct {
 // @Accept json
 // @Produce json
 // @Param trip body CreateTripRequest true "Trip data"
-// @Success 200 {object} model.Trip
+// @Success 200 {object} map[string]string
 // @Failure 400 {object} map[string]string
 // @Failure 500 {object} map[string]string
 // @Router /api/v1/trip [post]
@@ -130,14 +132,14 @@ func (h *TripHandler) CreateTrip(c *gin.Context) {
 		return
 	}
 
-	err = h.tripService.CreateTrip(c.Request.Context(), model.Trip{
+	id, err := h.tripService.CreateTrip(c.Request.Context(), model.Trip{
 		StartTime: tripReq.StartTime,
 		EndTime:   tripReq.EndTime,
 		AreaID:    tripReq.AreaID,
 		// TODO: ХААААААААРДКОД!!!!!!!!!!!!!!!!!!!!!!
 		Users: []*model.User{
-			&model.User{
-				ID: 1,
+			{
+				ID: tripReq.UserID,
 			},
 		},
 	})
@@ -146,14 +148,14 @@ func (h *TripHandler) CreateTrip(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, gin.H{})
+	c.JSON(http.StatusOK, gin.H{"id": id})
 }
 
 type UpdateTripRequest struct {
-	ID        int    `json:"id" binding:"required"`
-	StartTime string `json:"start_time" binding:"required"`
-	EndTime   string `json:"end_time" binding:"required"`
-	AreaID    string `json:"area_id" binding:"required"`
+	ID        uuid.UUID `json:"id" binding:"required"`
+	StartTime string    `json:"start_time" binding:"required"`
+	EndTime   string    `json:"end_time" binding:"required"`
+	AreaID    string    `json:"area_id" binding:"required"`
 }
 
 // @Summary Update trip
@@ -190,9 +192,19 @@ func (h *TripHandler) UpdateTrip(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{})
 }
 
+// @Summary Schedule trip
+// @Description Schedule places  in trip
+// @Tags trip
+// @Produce json
+// @Param trip_id path string true "Trip ID"
+// @Success 200 {null} string
+// @Failure 400 {object} map[string]string
+// @Failure 404 {object} map[string]string
+// @Failure 500 {object} map[string]string
+// @Router /api/v1/trip/{trip_id}/schedule [get]
 func (h *TripHandler) ScheduleTrip(c *gin.Context) {
 	idString := c.Param("trip_id")
-	id, err := strconv.Atoi(idString)
+	id, err := uuid.Parse(idString)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"err": err.Error()})
 		return
@@ -207,8 +219,9 @@ func (h *TripHandler) ScheduleTrip(c *gin.Context) {
 	// h.lg.Info("trip", trip)
 	// h.lg.Info("service", h.schedulerService)
 	// h.lg.Info("service", trip.Places)
+	matrix := h.placesService.GetTimeMatrix(c.Request.Context(), trip.Places)
 
-	schedule, err := h.schedulerService.GetSchedule(c.Request.Context(), trip.Places)
+	schedule, err := h.schedulerService.GetSchedule(c.Request.Context(), trip, trip.Places, matrix)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"err": err.Error()})
 		return

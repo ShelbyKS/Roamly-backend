@@ -1,16 +1,13 @@
 package orm
 
-import "gorm.io/datatypes"
+import "time"
 
 type Place struct {
-	ID      int     `gorm:"primary_key"`
-	Trips   *[]Trip `gorm:"many2many:trip_place"`
-	Payload datatypes.JSONType[PlacePayload]
-}
-
-type PlacePayload struct {
-	PlaceID string  `json:"place_id"`
-	Name    string  `json:"name"`
-	Photo   string  `json:"photo"`
-	Rating  float32 `json:"rating"`
+	ID      string  `gorm:"primary_key"`
+	Trips   []*Trip `gorm:"many2many:trip_place;constraint:OnDelete:CASCADE;"`
+	Closing time.Time
+	Opening time.Time
+	Name    string
+	Photo   string
+	Rating  float32
 }
