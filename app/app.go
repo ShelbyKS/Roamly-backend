@@ -101,6 +101,7 @@ func (app *Roamly) initAPI(router *gin.Engine) {
 	sessionStorage := redis.NewSessionStorage(app.redisDB)
 	tripStorage := postgresql.NewTripStorage(app.pgDB)
 	placeStorage := postgresql.NewPlaceStorage(app.pgDB)
+	eventStorage := postgresql.NewEventStorage(app.pgDB)
 	mw := middleware.InitMiddleware(sessionStorage)
 
 	schedulerCLient := scheduler.NewClient(scheduler.URL) //todo: move to external

@@ -13,6 +13,7 @@ require (
 	github.com/swaggo/gin-swagger v1.6.0
 	github.com/swaggo/swag v1.16.3
 	golang.org/x/crypto v0.28.0
+	golang.org/x/exp v0.0.0-20230905200255-921286631fa9
 	gorm.io/datatypes v1.2.3
 	gorm.io/driver/postgres v1.5.9
 	gorm.io/gorm v1.25.12
@@ -69,7 +70,6 @@ require (
 	go.uber.org/atomic v1.9.0 // indirect
 	go.uber.org/multierr v1.9.0 // indirect
 	golang.org/x/arch v0.11.0 // indirect
-	golang.org/x/exp v0.0.0-20230905200255-921286631fa9 // indirect
 	golang.org/x/net v0.30.0 // indirect
 	golang.org/x/sync v0.8.0 // indirect
 	golang.org/x/sys v0.26.0 // indirect
