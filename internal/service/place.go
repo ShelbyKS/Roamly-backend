@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/ShelbyKS/Roamly-backend/internal/domain/clients"
 	"github.com/ShelbyKS/Roamly-backend/internal/domain/model"
 	"github.com/google/uuid"
 	"golang.org/x/exp/rand"
@@ -16,13 +17,33 @@ import (
 type PlaceService struct {
 	placeStorage storage.IPlaceStorage
 	tripStorage  storage.ITripStorage
+	googleApi    clients.IGoogleApiClient
 }
 
-func NewPlaceService(placeStorage storage.IPlaceStorage, tripStorage storage.ITripStorage) service.IPlaceService {
-	return &PlaceService{
+func NewPlaceService(placeStorage storage.IPlaceStorage,
+		tripStorage storage.ITripStorage,
+		googleApi clients.IGoogleApiClient) service.IPlaceService {
+	
+		return &PlaceService{
 		placeStorage: placeStorage,
 		tripStorage:  tripStorage,
+		googleApi: googleApi,
 	}
+}
+
+func (service *PlaceService) FindPlace(ctx context.Context, searchString string) ([]model.Place, error) {
+	places, err := service.googleApi.FindPlace(ctx,
+		searchString,
+		[]string{
+			"formatted_address",
+			"name",
+			"rating",
+			"geometry"})
+	if err != nil {
+		return []model.Place{}, fmt.Errorf("fail to find place: %w", err)
+	}
+
+	return places, nil
 }
 
 func (service *PlaceService) AddPlaceToTrip(ctx context.Context, tripID uuid.UUID, placeID string) error {
@@ -64,7 +85,7 @@ func (service *PlaceService) GetTimeMatrix(ctx context.Context, places []*model.
 		timeMatrix[i] = make([]int, matrixSize)
 		for j := 0; j < matrixSize; j++ {
 			if i == j {
-				timeMatrix[i][j] = 0 
+				timeMatrix[i][j] = 0
 			} else {
 				timeMatrix[i][j] = rand.Intn(60) + 1
 			}

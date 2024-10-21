@@ -13,15 +13,15 @@ const (
 	methodFindPlace = "https://maps.googleapis.com/maps/api/place/findplacefromtext/json"
 )
 
-type Client struct {
+type GoogleApiClient struct {
 	client *resty.Client
 	apiKey string
 }
 
-func NewClient(apiKey string) *Client {
+func NewClient(apiKey string) *GoogleApiClient {
 	// init settings from cfg
 
-	return &Client{
+	return &GoogleApiClient{
 		client: resty.New(),
 		apiKey: apiKey,
 	}
@@ -33,7 +33,7 @@ type FindPlaceResponse struct {
 	ErrorMsg   string `json:"error_message"`
 }
 
-func (c *Client) FindPlace(ctx context.Context, input string, fields []string) ([]model.Place, error) {
+func (c *GoogleApiClient) FindPlace(ctx context.Context, input string, fields []string) ([]model.Place, error) {
 	params := map[string]string{
 		"input":     input,
 		"inputtype": "textquery",
@@ -61,6 +61,6 @@ func (c *Client) FindPlace(ctx context.Context, input string, fields []string) (
 	return result.Candidates, nil
 }
 
-func (c *Client) joinFields(fields []string) string {
+func (c *GoogleApiClient) joinFields(fields []string) string {
 	return fmt.Sprintf("%s", fields)
 }

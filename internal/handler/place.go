@@ -20,6 +20,8 @@ func NewPlaceHandler(router *gin.Engine, lg *logrus.Logger, placeService service
 		placeService: placeService,
 	}
 
+	router.GET("/api/v1/place", handler.FindPlaces)
+
 	tripPlaceGroup := router.Group("/api/v1/trip/place")
 	{
 		tripPlaceGroup.POST("/", handler.AddPlaceToTrip)
@@ -58,4 +60,26 @@ func (h *PlaceHandler) AddPlaceToTrip(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, gin.H{})
+}
+
+// @Summary Find place
+// @Description Find places by searchString
+// @Tags place
+// @Produce json
+// @Param searchString query true "SearchString"
+// @Success 200 {object} model.Trip
+// @Failure 400 {object} map[string]string
+// @Failure 404 {object} map[string]string
+// @Failure 500 {object} map[string]string
+// @Router /api/v1/place [get]
+func (h *PlaceHandler) FindPlaces(c *gin.Context) {
+	searchString := c.Query("searchString")
+
+	places, err := h.placeService.FindPlace(c.Request.Context(), searchString)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"err": err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"places": places})
 }
