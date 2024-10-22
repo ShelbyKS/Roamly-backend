@@ -102,9 +102,8 @@ func (app *Roamly) initAPI(router *gin.Engine) {
 	tripStorage := postgresql.NewTripStorage(app.pgDB)
 	placeStorage := postgresql.NewPlaceStorage(app.pgDB)
 	eventStorage := postgresql.NewEventStorage(app.pgDB)
-	mw := middleware.InitMiddleware(sessionStorage)
 
-	
+
 
 	schedulerCLient := scheduler.NewClient(scheduler.URL) //todo: move to external
 	googleapi := googleapi.NewClient(app.config.GoogleApiKey)
@@ -116,8 +115,9 @@ func (app *Roamly) initAPI(router *gin.Engine) {
 	placeService := service.NewPlaceService(placeStorage, tripStorage, googleapi)
 	eventService := service.NewEventService(eventStorage, tripStorage, placeStorage)
 
-	handler.NewAuthHandler(router, app.logger, authService, mw)
-	router.Use(mw.AuthMiddleware())
+	middleware.Mw = middleware.InitMiddleware(sessionStorage)
+
+	handler.NewAuthHandler(router, app.logger, authService)
 	handler.NewUserHandler(router, app.logger, userService)
 	handler.NewTripHandler(router, app.logger, tripService, schedulerService)
 	handler.NewPlaceHandler(router, app.logger, placeService)

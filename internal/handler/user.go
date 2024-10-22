@@ -40,27 +40,27 @@ func NewUserHandler(router *gin.Engine, lg *logrus.Logger, userService service.I
 // @Failure 404 {object} map[string]string
 // @Failure 500 {object} map[string]string
 // @Router /api/v1/user/{user_id} [get]
-func (h *UserHandler) GetUserByID(ctx *gin.Context) {
-	idString := ctx.Param("user_id")
+func (h *UserHandler) GetUserByID(c *gin.Context) {
+	idString := c.Param("user_id")
 	id, err := strconv.Atoi(idString)
 	if err != nil {
-		ctx.JSON(http.StatusBadRequest, gin.H{"err": err.Error()})
+		c.JSON(http.StatusBadRequest, gin.H{"err": err.Error()})
 		return
 	}
 
-	user, err := h.userService.GetUserByID(ctx.Request.Context(), id)
+	user, err := h.userService.GetUserByID(c.Request.Context(), id)
 	if errors.Is(err, domain.ErrUserNotFound) {
 		h.lg.Warnf("User with id=%d not found", id)
-		ctx.JSON(http.StatusNotFound, gin.H{"err": err.Error()})
+		c.JSON(http.StatusNotFound, gin.H{"err": err.Error()})
 		return
 	}
 	if err != nil {
 		h.lg.WithError(err).Errorf("Fail to get user with id=%d", id)
-		ctx.JSON(http.StatusInternalServerError, gin.H{"err": err.Error()})
+		c.JSON(http.StatusInternalServerError, gin.H{"err": err.Error()})
 		return
 	}
 
-	ctx.JSON(http.StatusOK, gin.H{"user": user})
+	c.JSON(http.StatusOK, gin.H{"user": user})
 }
 
 type UpdateUserRequest struct {
@@ -82,24 +82,24 @@ type UpdateUserRequest struct {
 // @Failure 404 {object} object{err=string}
 // @Failure 500 {object} object{err=string}
 // @Router /api/v1/user [put]
-func (h *UserHandler) UpdateUser(ctx *gin.Context) {
+func (h *UserHandler) UpdateUser(c *gin.Context) {
 	var userReq UpdateUserRequest
 
-	err := ctx.BindJSON(&userReq)
+	err := c.BindJSON(&userReq)
 	if err != nil {
-		ctx.JSON(http.StatusBadRequest, gin.H{"err": err.Error()})
+		c.JSON(http.StatusBadRequest, gin.H{"err": err.Error()})
 		return
 	}
 
-	err = h.userService.UpdateUser(ctx, model.User{
+	err = h.userService.UpdateUser(c, model.User{
 		ID:       userReq.ID,
 		Login:    userReq.Login,
 		Password: []byte(userReq.Password),
 	})
 	if err != nil {
-		ctx.JSON(http.StatusInternalServerError, gin.H{"err": err.Error()})
+		c.JSON(http.StatusInternalServerError, gin.H{"err": err.Error()})
 		return
 	}
 
-	ctx.JSON(http.StatusOK, gin.H{})
+	c.JSON(http.StatusOK, gin.H{})
 }

@@ -2,6 +2,7 @@ package handler
 
 import (
 	"errors"
+	"github.com/ShelbyKS/Roamly-backend/internal/middleware"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
@@ -20,10 +21,12 @@ type TripHandler struct {
 	placesService    service.IPlaceService
 }
 
-func NewTripHandler(router *gin.Engine,
+func NewTripHandler(
+	router *gin.Engine,
 	lg *logrus.Logger,
 	tripService service.ITripService,
-	schedulerService service.ISchedulerService) {
+	schedulerService service.ISchedulerService,
+) {
 
 	handler := &TripHandler{
 		lg:               lg,
@@ -32,6 +35,7 @@ func NewTripHandler(router *gin.Engine,
 	}
 
 	tripGroup := router.Group("/api/v1/trip")
+	tripGroup.Use(middleware.Mw.AuthMiddleware())
 	{
 		tripGroup.GET("/:trip_id", handler.GetTripByID)
 		tripGroup.POST("/", handler.CreateTrip)
@@ -107,10 +111,9 @@ func (h *TripHandler) DeleteTrip(c *gin.Context) {
 }
 
 type CreateTripRequest struct {
-	UserID    int    `json:"user_id" binding:"required"`
-	StartTime string `json:"start_time" binding:"required"`
-	EndTime   string `json:"end_time" binding:"required"`
-	AreaID    string `json:"area_id" binding:"required"`
+	StartTime string `json:"start_time" form:"start_time" binding:"required"`
+	EndTime   string `json:"end_time" form:"end_time" binding:"required"`
+	AreaID    string `json:"area_id" form:"area_id" binding:"required"`
 }
 
 // @Summary Create a new trip
@@ -126,9 +129,24 @@ type CreateTripRequest struct {
 func (h *TripHandler) CreateTrip(c *gin.Context) {
 	var tripReq CreateTripRequest
 
-	err := c.BindJSON(&tripReq)
+	err := c.Bind(&tripReq)
 	if err != nil {
+		h.lg.WithError(err).Errorf("failed to parse body")
 		c.JSON(http.StatusBadRequest, gin.H{"err": err.Error()})
+		return
+	}
+
+	userID, ok := c.Get("user_id")
+	if !ok {
+		h.lg.Errorf("Fail to get user_id from context")
+		c.JSON(http.StatusInternalServerError, gin.H{"err": "Fail to get user_id from context"})
+		return
+	}
+
+	userIDInt, ok := userID.(int)
+	if !ok {
+		h.lg.Errorf("User ID is not an integer")
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "User ID is not an integer"})
 		return
 	}
 
@@ -136,14 +154,14 @@ func (h *TripHandler) CreateTrip(c *gin.Context) {
 		StartTime: tripReq.StartTime,
 		EndTime:   tripReq.EndTime,
 		AreaID:    tripReq.AreaID,
-		// TODO: ХААААААААРДКОД!!!!!!!!!!!!!!!!!!!!!!
 		Users: []*model.User{
 			{
-				ID: tripReq.UserID,
+				ID: userIDInt,
 			},
 		},
 	})
 	if err != nil {
+		h.lg.WithError(err).Errorf("failed to create trip")
 		c.JSON(http.StatusInternalServerError, gin.H{"err": err.Error()})
 		return
 	}

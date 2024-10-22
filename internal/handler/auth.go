@@ -15,7 +15,7 @@ type AuthHandler struct {
 	authService service.IAuthService
 }
 
-func NewAuthHandler(router *gin.Engine, lg *logrus.Logger, authService service.IAuthService, mw *middleware.Middleware) {
+func NewAuthHandler(router *gin.Engine, lg *logrus.Logger, authService service.IAuthService) {
 	handler := &AuthHandler{
 		lg:          lg,
 		authService: authService,
@@ -23,12 +23,10 @@ func NewAuthHandler(router *gin.Engine, lg *logrus.Logger, authService service.I
 
 	userGroup := router.Group("/api/v1/auth")
 	{
-		userGroup.POST("/register", mw.UnauthMiddleware(), handler.Register)
-		userGroup.POST("/login", mw.UnauthMiddleware(), handler.Login)
-
-		userGroup.Use(mw.AuthMiddleware())
-		userGroup.POST("/logout", handler.Logout)
-		userGroup.GET("/check", handler.CheckAuth)
+		userGroup.POST("/register", middleware.Mw.UnauthMiddleware(), handler.Register)
+		userGroup.POST("/login", middleware.Mw.UnauthMiddleware(), handler.Login)
+		userGroup.POST("/logout", middleware.Mw.AuthMiddleware(), handler.Logout)
+		userGroup.GET("/check", middleware.Mw.AuthMiddleware(), handler.CheckAuth)
 	}
 }
 

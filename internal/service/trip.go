@@ -51,6 +51,12 @@ func (service *TripService) CreateTrip(ctx context.Context, trip model.Trip) (uu
 	if errors.Is(err, domain.ErrPlaceNotFound) {
 		//todo: go to google place api and take info about
 		// create area in db
+		area, err = service.placeStorage.CreatePlace(ctx, &model.Place{
+			ID: trip.AreaID,
+		})
+		if err != nil {
+			return uuid.Nil, fmt.Errorf("fail to create area from storage: %w", err)
+		}
 	}
 
 	trip.Area = &area

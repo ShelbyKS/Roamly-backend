@@ -25,6 +25,12 @@ func NewPlaceStorage(db *gorm.DB) storage.IPlaceStorage {
 }
 
 func (storage *PlaceStorage) GetPlaceByID(ctx context.Context, placeID string) (model.Place, error) {
+	//placeModel := orm.Place{}
+	//
+	//res := storage.db.WithContext(ctx).
+	//	Where(&orm.Place{ID: placeID}).
+	//	First(&placeModel)
+
 	placeModel := &orm.Place{
 		ID: placeID,
 	}
@@ -47,12 +53,12 @@ func (storage *PlaceStorage) GetPlaceByID(ctx context.Context, placeID string) (
 	}, nil
 }
 
-func (storage *PlaceStorage) CreatePlace(ctx context.Context, place model.Place) error {
-	var trips []*orm.Trip
-	for _, i := range place.Trips {
-		trip := TripConverter{}.ToDb(*i)
-		trips = append(trips, &trip)
-	}
+func (storage *PlaceStorage) CreatePlace(ctx context.Context, place *model.Place) (model.Place, error) {
+	//var trips []*orm.Trip
+	//for _, i := range place.Trips {
+	//	trip := TripConverter{}.ToDb(*i)
+	//	trips = append(trips, &trip)
+	//}
 
 	placeModel := orm.Place{
 
@@ -60,13 +66,18 @@ func (storage *PlaceStorage) CreatePlace(ctx context.Context, place model.Place)
 		Name:   place.Name,
 		Rating: place.Rating,
 		Photo:  place.Photo,
-		Trips:  trips,
+		//Trips:  trips,
 	}
 
 	res := storage.db.WithContext(ctx).Create(&placeModel)
 	if res.Error != nil {
-		return fmt.Errorf("create phantom in db: %w", res.Error)
+		return model.Place{}, fmt.Errorf("create place in db: %w", res.Error)
 	}
 
-	return nil
+	return model.Place{
+		ID:     placeModel.ID,
+		Name:   placeModel.Name,
+		Photo:  placeModel.Photo,
+		Rating: placeModel.Rating,
+	}, nil
 }

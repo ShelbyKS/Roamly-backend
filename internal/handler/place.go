@@ -1,11 +1,11 @@
 package handler
 
 import (
+	"github.com/google/uuid"
 	"net/http"
 
 	"github.com/ShelbyKS/Roamly-backend/internal/domain/service"
 	"github.com/gin-gonic/gin"
-	"github.com/google/uuid"
 	"github.com/sirupsen/logrus"
 )
 
@@ -29,8 +29,9 @@ func NewPlaceHandler(router *gin.Engine, lg *logrus.Logger, placeService service
 }
 
 type AddPlaceToTripRequest struct {
-	TripID  uuid.UUID `json:"trip_id"`
-	PlaceID string    `json:"place_id"`
+	//TripID  string `json:"trip_id" form:"trip_id" binding:"required"`
+	TripID  uuid.UUID `json:"trip_id" form:"trip_id" binding:"required"`
+	PlaceID string    `json:"place_id" form:"place_id" binding:"required"`
 }
 
 // @Summary Add place to trip
@@ -47,14 +48,23 @@ type AddPlaceToTripRequest struct {
 func (h *PlaceHandler) AddPlaceToTrip(c *gin.Context) {
 	var req AddPlaceToTripRequest
 
-	err := c.BindJSON(&req)
+	err := c.Bind(&req)
 	if err != nil {
+		h.lg.WithError(err).Errorf("failed to parse body")
 		c.JSON(http.StatusBadRequest, gin.H{"err": err.Error()})
 		return
 	}
 
-	err = h.placeService.AddPlaceToTrip(c.Request.Context(), req.TripID, req.PlaceID)
+	tripUUID, err := uuid.Parse(req.TripID)
 	if err != nil {
+		h.lg.WithError(err).Errorf("invalid trip_id")
+		c.JSON(http.StatusBadRequest, gin.H{"err": "Invalid trip_id format"})
+		return
+	}
+
+	err = h.placeService.AddPlaceToTrip(c.Request.Context(), tripUUID, req.PlaceID)
+	if err != nil {
+		h.lg.WithError(err).Errorf("failed to add place to trip")
 		c.JSON(http.StatusInternalServerError, gin.H{"err": err.Error()})
 		return
 	}

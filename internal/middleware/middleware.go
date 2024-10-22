@@ -15,6 +15,8 @@ func InitMiddleware(sessionStorage storage.ISessionStorage) *Middleware {
 	return &Middleware{sessionStorage}
 }
 
+var Mw *Middleware
+
 func (mw *Middleware) AuthMiddleware() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		sessionToken, err := c.Cookie("session_token")

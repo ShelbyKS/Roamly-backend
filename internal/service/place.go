@@ -5,13 +5,13 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/ShelbyKS/Roamly-backend/internal/domain/clients"
-	"github.com/ShelbyKS/Roamly-backend/internal/domain/model"
 	"github.com/google/uuid"
 	"golang.org/x/exp/rand"
 
 	"github.com/ShelbyKS/Roamly-backend/internal/domain/service"
 	"github.com/ShelbyKS/Roamly-backend/internal/domain/storage"
+	"github.com/ShelbyKS/Roamly-backend/internal/domain/clients"
+	"github.com/ShelbyKS/Roamly-backend/internal/domain/model"
 )
 
 type PlaceService struct {
@@ -23,7 +23,7 @@ type PlaceService struct {
 func NewPlaceService(placeStorage storage.IPlaceStorage,
 		tripStorage storage.ITripStorage,
 		googleApi clients.IGoogleApiClient) service.IPlaceService {
-	
+
 		return &PlaceService{
 		placeStorage: placeStorage,
 		tripStorage:  tripStorage,
@@ -50,7 +50,11 @@ func (service *PlaceService) AddPlaceToTrip(ctx context.Context, tripID uuid.UUI
 	//todo: check for this placeID in our bd
 	// if exists: create relation for tripID
 
+	//todo: need to match trip owner
+
 	//todo: go to google place api and take info about
+	newPlace, err := service.googleApi.GetPlaceByID(ctx, placeID, []string{"id", "name", "rating"})
+	newPlace.ID = placeID //todo: need to delete
 
 	// мне кажется вот это не особо нужно(можно добавлять просто по айди поездки, а не всей поездке)
 	trip, err := service.tripStorage.GetTripByID(ctx, tripID)
@@ -58,12 +62,9 @@ func (service *PlaceService) AddPlaceToTrip(ctx context.Context, tripID uuid.UUI
 		return fmt.Errorf("fail to get trip from storage: %w", err)
 	}
 
-	newPlace := model.Place{
-		ID:    placeID,
-		Trips: []*model.Trip{&trip},
-	}
+	newPlace.Trips = []*model.Trip{&trip}
 
-	err = service.placeStorage.CreatePlace(ctx, newPlace)
+	_, err = s.placeStorage.CreatePlace(ctx, &newPlace)
 	if err != nil {
 		return fmt.Errorf("fail to add new place: %w", err)
 	}

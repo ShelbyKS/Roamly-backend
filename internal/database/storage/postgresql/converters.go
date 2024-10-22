@@ -64,16 +64,16 @@ func (TripConverter) ToDomain(trip orm.Trip) model.Trip {
 		}
 	}
 
-	events := make([]model.Event, len(trip.Events))
-	for i, event := range trip.Events {
-		events[i] = model.Event{
-			PlaceID:   event.PlaceID,
-			TripID:    event.TripID,
-			StartTime: event.StartTime,
-			EndTime:   event.EndTime,
-			Payload:   event.Payload,
-		}
-	}
+	//events := make([]model.Event, len(trip.Events))
+	//for i, event := range trip.Events {
+	//	events[i] = model.Event{
+	//		PlaceID:   event.PlaceID,
+	//		TripID:    event.TripID,
+	//		StartTime: event.StartTime,
+	//		EndTime:   event.EndTime,
+	//		Payload:   event.Payload,
+	//	}
+	//}
 
 	return model.Trip{
 		ID:        trip.ID,
@@ -82,7 +82,7 @@ func (TripConverter) ToDomain(trip orm.Trip) model.Trip {
 		EndTime:   trip.EndTime,
 		AreaID:    trip.AreaID,
 		Places:    tripPlaces,
-		Events:    events,
+		//Events:    events,
 	}
 }
 
@@ -96,13 +96,13 @@ func (PlaceConverter) ToDb(place model.Place) orm.Place {
 	}
 
 	return orm.Place{
-		ID:     place.ID,
-		Photo:  place.Photo,
-		Name:   place.Name,
+		ID:      place.ID,
+		Photo:   place.Photo,
+		Name:    place.Name,
 		Closing: place.Closing,
 		Opening: place.Opening,
-		Rating: place.Rating,
-		Trips:  trips,
+		Rating:  place.Rating,
+		Trips:   trips,
 	}
 }
 
