@@ -8,10 +8,10 @@ import (
 	"github.com/google/uuid"
 	"golang.org/x/exp/rand"
 
-	"github.com/ShelbyKS/Roamly-backend/internal/domain/service"
-	"github.com/ShelbyKS/Roamly-backend/internal/domain/storage"
 	"github.com/ShelbyKS/Roamly-backend/internal/domain/clients"
 	"github.com/ShelbyKS/Roamly-backend/internal/domain/model"
+	"github.com/ShelbyKS/Roamly-backend/internal/domain/service"
+	"github.com/ShelbyKS/Roamly-backend/internal/domain/storage"
 )
 
 type PlaceService struct {
@@ -21,13 +21,13 @@ type PlaceService struct {
 }
 
 func NewPlaceService(placeStorage storage.IPlaceStorage,
-		tripStorage storage.ITripStorage,
-		googleApi clients.IGoogleApiClient) service.IPlaceService {
+	tripStorage storage.ITripStorage,
+	googleApi clients.IGoogleApiClient) service.IPlaceService {
 
-		return &PlaceService{
+	return &PlaceService{
 		placeStorage: placeStorage,
 		tripStorage:  tripStorage,
-		googleApi: googleApi,
+		googleApi:    googleApi,
 	}
 }
 
@@ -64,7 +64,7 @@ func (service *PlaceService) AddPlaceToTrip(ctx context.Context, tripID uuid.UUI
 
 	newPlace.Trips = []*model.Trip{&trip}
 
-	_, err = s.placeStorage.CreatePlace(ctx, &newPlace)
+	_, err = service.placeStorage.CreatePlace(ctx, &newPlace)
 	if err != nil {
 		return fmt.Errorf("fail to add new place: %w", err)
 	}

@@ -54,11 +54,11 @@ func (storage *PlaceStorage) GetPlaceByID(ctx context.Context, placeID string) (
 }
 
 func (storage *PlaceStorage) CreatePlace(ctx context.Context, place *model.Place) (model.Place, error) {
-	//var trips []*orm.Trip
-	//for _, i := range place.Trips {
-	//	trip := TripConverter{}.ToDb(*i)
-	//	trips = append(trips, &trip)
-	//}
+	var trips []*orm.Trip
+	for _, i := range place.Trips {
+		trip := TripConverter{}.ToDb(*i)
+		trips = append(trips, &trip)
+	}
 
 	placeModel := orm.Place{
 
@@ -66,7 +66,7 @@ func (storage *PlaceStorage) CreatePlace(ctx context.Context, place *model.Place
 		Name:   place.Name,
 		Rating: place.Rating,
 		Photo:  place.Photo,
-		//Trips:  trips,
+		Trips:  trips,
 	}
 
 	res := storage.db.WithContext(ctx).Create(&placeModel)

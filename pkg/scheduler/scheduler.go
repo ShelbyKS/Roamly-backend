@@ -25,9 +25,10 @@ func NewClient(url string) *SchedulerClient {
 }
 
 type Request struct {
-	Model  string
-	Prompt string
-	Stream bool
+	Model        string
+	Prompt       string
+	Stream       bool
+	ResetContext bool `json:"reset_context"`
 }
 
 type Response struct {
@@ -46,9 +47,10 @@ type Response struct {
 
 func (c *SchedulerClient) PostPrompt(ctx context.Context, prompt string) (string, error) {
 	req := Request{
-		Model:  "llama3.1", //todo: move to cfg
-		Prompt: prompt,
-		Stream: false,
+		Model:        "llama3.1", //todo: move to cfg
+		Prompt:       prompt,
+		Stream:       false,
+		ResetContext: true,
 	}
 
 	var resp Response
@@ -58,7 +60,7 @@ func (c *SchedulerClient) PostPrompt(ctx context.Context, prompt string) (string
 		SetResult(&resp).
 		Post(c.url)
 
-	log.Println(resp, err)
+	log.Println(resp.Response)
 
 	if err != nil {
 		return "", err

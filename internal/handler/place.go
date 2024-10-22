@@ -29,9 +29,9 @@ func NewPlaceHandler(router *gin.Engine, lg *logrus.Logger, placeService service
 }
 
 type AddPlaceToTripRequest struct {
-	//TripID  string `json:"trip_id" form:"trip_id" binding:"required"`
-	TripID  uuid.UUID `json:"trip_id" form:"trip_id" binding:"required"`
-	PlaceID string    `json:"place_id" form:"place_id" binding:"required"`
+	TripID string `json:"trip_id" form:"trip_id" binding:"required"`
+	//TripID  uuid.UUID `json:"trip_id" form:"trip_id" binding:"required"`
+	PlaceID string `json:"place_id" form:"place_id" binding:"required"`
 }
 
 // @Summary Add place to trip

@@ -26,11 +26,23 @@ func NewTripService(tripStorage storage.ITripStorage, placeStorage storage.IPlac
 
 func (service *TripService) GetTripByID(ctx context.Context, id uuid.UUID) (model.Trip, error) {
 	trip, err := service.tripStorage.GetTripByID(ctx, id)
+	if errors.Is(err, domain.ErrTripNotFound) {
+		return model.Trip{}, err
+	}
 	if err != nil {
 		return model.Trip{}, fmt.Errorf("fail to get trip from storage: %w", err)
 	}
 
 	return trip, nil
+}
+
+func (service *TripService) GetTrips(ctx context.Context) ([]model.Trip, error) {
+	trips, err := service.tripStorage.GetTrips(ctx)
+	if err != nil {
+		return []model.Trip{}, fmt.Errorf("fail to get trip from storage: %w", err)
+	}
+
+	return trips, nil
 }
 
 func (service *TripService) DeleteTrip(ctx context.Context, id uuid.UUID) error {

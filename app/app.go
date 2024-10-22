@@ -49,7 +49,7 @@ func (app *Roamly) Run() {
 	app.initExternalClients()
 	app.initAPI(r)
 
-	if err := r.Run(":" + string(app.config.ServerPort)); err != nil {
+	if err := r.Run(":" + "8080"); err != nil {
 		log.Fatalf("Failed to start server: %v", err)
 	}
 }
@@ -79,7 +79,7 @@ func (app *Roamly) initDBs() {
 	}
 
 	redisClient := goRedis.NewClient(&goRedis.Options{
-		Addr:     app.config.Redis.Host + ":" + app.config.Redis.Port,
+		Addr:     "172.17.0.1" + ":" + "6379",
 		Password: app.config.Redis.Password,
 	})
 	_, err = redisClient.Ping(context.Background()).Result()
@@ -87,7 +87,7 @@ func (app *Roamly) initDBs() {
 		log.Fatalf("Failed to connect to redis: %v", err)
 	}
 
-	err = pgDB.AutoMigrate(&orm.User{}, &orm.Trip{}, &orm.Place{})
+	err = pgDB.AutoMigrate(&orm.User{}, &orm.Trip{}, &orm.Place{}, &orm.Event{})
 	if err != nil {
 		log.Fatalf("Failed to migrate db: %v", err)
 	}
@@ -103,23 +103,21 @@ func (app *Roamly) initAPI(router *gin.Engine) {
 	placeStorage := postgresql.NewPlaceStorage(app.pgDB)
 	eventStorage := postgresql.NewEventStorage(app.pgDB)
 
-
-
 	schedulerCLient := scheduler.NewClient(scheduler.URL) //todo: move to external
-	googleapi := googleapi.NewClient(app.config.GoogleApiKey)
+	googleApi := googleapi.NewClient(app.config.GoogleApiKey)
 
 	schedulerService := service.NewShedulerService(schedulerCLient)
 	userService := service.NewUserService(userStorage, sessionStorage)
 	authService := service.NewAuthService(userStorage, sessionStorage)
 	tripService := service.NewTripService(tripStorage, placeStorage)
-	placeService := service.NewPlaceService(placeStorage, tripStorage, googleapi)
+	placeService := service.NewPlaceService(placeStorage, tripStorage, googleApi)
 	eventService := service.NewEventService(eventStorage, tripStorage, placeStorage)
 
 	middleware.Mw = middleware.InitMiddleware(sessionStorage)
 
 	handler.NewAuthHandler(router, app.logger, authService)
 	handler.NewUserHandler(router, app.logger, userService)
-	handler.NewTripHandler(router, app.logger, tripService, schedulerService)
+	handler.NewTripHandler(router, app.logger, tripService, placeService, schedulerService)
 	handler.NewPlaceHandler(router, app.logger, placeService)
 	handler.NewEventHandler(router, app.logger, eventService)
 

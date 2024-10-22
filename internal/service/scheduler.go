@@ -26,6 +26,9 @@ func (s *SchedulerService) GetSchedule(ctx context.Context, trip model.Trip, pla
 	if err != nil {
 		return model.Schedule{}, err
 	}
+
+	fmt.Println(prompt)
+
 	resp, err := s.client.PostPrompt(ctx, prompt)
 	if err != nil {
 		return model.Schedule{}, err
@@ -37,8 +40,7 @@ func (s *SchedulerService) GetSchedule(ctx context.Context, trip model.Trip, pla
 func (s *SchedulerService) generateRequestString(trip model.Trip, places []*model.Place, timeMatrix [][]int) (string, error) {
 	var sb strings.Builder
 
-	sb.WriteString(`Реализуй метод, который принимает массив мест и матрицу расстояний
-и создает на их основе запрос вида:  СПЛАНИРУЙ ПОЕЗДКУ ТОЛЬКО ПО ДАННЫМ МЕСТАМ,
+	sb.WriteString(`СПЛАНИРУЙ ПОЕЗДКУ ТОЛЬКО ПО ДАННЫМ МЕСТАМ,
 ИСПОЛЬЗУЯ ИНФОРМАЦИЮ, ПРИВЕДЕННУЮ НИЖЕ, ВЕРНИ МЕСТА И ВРЕМЯ ПОСЕЩЕНИЯ,
 В ОТВЕТЕ ОПИШИ ИМЕННО ТОЛЬКО JSON  объект, КОТОРЫЙ БУДЕТ ОПИСЫВАТЬ СПЛАНИРОВАННОЕ РАСПИСАНИЕ,
 КРОМЕ JSON В ОТЕТЕ НИЧЕГО НЕ ДОЛЖНО БЫТЬ, МАРШУРТ ДОЛЖЕН БЫТЬ ОПТИМАЛЬНЫМ И УЧИТЫВАТЬ ВРЕМЯ НА ДОРОГУ МЕЖДУ МЕСТАМИ,
@@ -53,10 +55,10 @@ func (s *SchedulerService) generateRequestString(trip model.Trip, places []*mode
 		sb.WriteString(fmt.Sprintf("%d. %s\n", i+1, place.Name))
 	}
 
-	sb.WriteString("Время работы:\n")
-	for i, place := range places {
-		sb.WriteString(fmt.Sprintf("%d. %s - %s\n", i+1, place.Opening, place.Closing))
-	}
+	//sb.WriteString("Время работы:\n")
+	//for i, place := range places {
+	//	sb.WriteString(fmt.Sprintf("%d. %s - %s\n", i+1, place.Opening, place.Closing))
+	//}
 
 	sb.WriteString("Матрица времен:\n")
 	for i := range timeMatrix {
@@ -66,6 +68,25 @@ func (s *SchedulerService) generateRequestString(trip model.Trip, places []*mode
 		sb.WriteString("\n")
 	}
 
+	sb.WriteString(`
+	ФОРМАТ JSON ДОЛЖЕН СООТВЕТСТВОВАТЬ СЛЕДУЮЩЕЙ СТРУКТУРЕ: type Event struct {
+	PlaceID string    gorm:"primaryKey"
+	TripID  uuid.UUID gorm:"primaryKey"
+	Place   Place
+	Trip    Trip
+
+	StartTime string gorm:"type:TIME"
+	EndTime   string gorm:"type:TIME"
+	Payload   datatypes.JSON
+}
+
+	type Schedule struct {
+		Events  []Event
+		Payload map[string]any
+	}
+
+В ОТВЕТЕ ВЕРНИ ТОЛЬКО JSON  объект, КОТОРЫЙ БУДЕТ ОПИСЫВАТЬ СПЛАНИРОВАННОЕ РАСПИСАНИЕ. БЕЗ ЛИШНИХ КОММЕНТАРИЕВ.
+`)
 	return sb.String(), nil
 }
 
@@ -76,6 +97,5 @@ func ParseResponse(response string) (model.Schedule, error) {
 	if err != nil {
 		return model.Schedule{}, err
 	}
-
 	return schedule, nil
 }

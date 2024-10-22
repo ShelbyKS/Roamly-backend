@@ -35,7 +35,7 @@ func (storage *TripStorage) GetTripByID(ctx context.Context, id uuid.UUID) (mode
 		Preload("Events").
 		First(&trip)
 	if errors.Is(tx.Error, gorm.ErrRecordNotFound) {
-		tx.Error = errors.Join(domain.ErrTripNotFound, tx.Error)
+		return model.Trip{}, domain.ErrTripNotFound
 	}
 
 	if tx.Error != nil {
@@ -43,6 +43,22 @@ func (storage *TripStorage) GetTripByID(ctx context.Context, id uuid.UUID) (mode
 	}
 
 	return TripConverter{}.ToDomain(trip), tx.Error
+}
+
+func (storage *TripStorage) GetTrips(ctx context.Context) ([]model.Trip, error) {
+	var tripsOrm []orm.Trip
+	tx := storage.db.WithContext(ctx).Find(&tripsOrm)
+
+	if tx.Error != nil {
+		return []model.Trip{}, tx.Error
+	}
+
+	trips := make([]model.Trip, len(tripsOrm))
+	for i, trip := range tripsOrm {
+		trips[i] = TripConverter{}.ToDomain(trip)
+	} 
+
+	return trips, tx.Error
 }
 
 func (storage *TripStorage) DeleteTrip(ctx context.Context, id uuid.UUID) error {

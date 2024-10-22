@@ -4,44 +4,37 @@ import (
 	"fmt"
 	"log"
 
-	"github.com/spf13/viper"
+	"github.com/kelseyhightower/envconfig"
 )
 
 type Config struct {
-	ServerPort   string `mapstructure:"SERVER_PORT"`
-	LogLevel     string `mapstructure:"LOG_LEVEL"`
-	GoogleApiKey string `mapstructure:"GOOGLE_API_KEY"`
+	ServerPort   string `envconfig:"SERVER_PORT"`
+	LogLevel     string `envconfig:"LOG_LEVEL"`
+	GoogleApiKey string `envconfig:"GOOGLE_API_KEY"`
 
-	Postgres PostgresConfig `mapstructure:",squash"`
-	Redis    RedisConfig    `mapstructure:",squash"`
+	Postgres PostgresConfig
+	Redis    RedisConfig
 }
 
 type PostgresConfig struct {
-	Host string `mapstructure:"POSTGRES_HOST"`
-	Port string `mapstructure:"POSTGRES_PORT"`
-	User string `mapstructure:"POSTGRES_USER"`
-	Pass string `mapstructure:"POSTGRES_PASSWORD"`
-	DB   string `mapstructure:"POSTGRES_DB"`
-	SSL  string `mapstructure:"POSTGRES_SSL"`
+	Host string `envconfig:"POSTGRES_HOST"`
+	Port string `envconfig:"POSTGRES_PORT"`
+	User string `envconfig:"POSTGRES_USER"`
+	Pass string `envconfig:"POSTGRES_PASSWORD"`
+	DB   string `envconfig:"POSTGRES_DB"`
+	SSL  string `envconfig:"POSTGRES_SSL"`
 }
 
 type RedisConfig struct {
-	Host     string `mapstructure:"REDIS_HOST"`
-	Port     string `mapstructure:"REDIS_PORT"`
-	Password string `mapstructure:"REDIS_PASSWORD"`
+	Host     string `envconfig:"REDIS_HOST"`
+	Port     string `envconfig:"REDIS_PORT"`
+	Password string `envconfig:"REDIS_PASSWORD"`
 }
 
 func LoadConfig() *Config {
-	viper.SetConfigFile(".env")
-	viper.AutomaticEnv()
-
-	if err := viper.ReadInConfig(); err != nil {
-		log.Fatalf("Error reading config file: %s", err)
-	}
-
 	var config Config
-	if err := viper.Unmarshal(&config); err != nil {
-		log.Fatalf("Unable to unmarshal config: %s", err)
+	if err := envconfig.Process("", &config); err != nil {
+		log.Fatalf("Unable to process environment variables: %s", err)
 	}
 
 	return &config

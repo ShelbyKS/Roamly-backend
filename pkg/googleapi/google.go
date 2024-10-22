@@ -71,7 +71,7 @@ type GetPlaceDataResponse struct {
 	ErrorMsg string `json:"error_message"`
 }
 
-func (c *Client) GetPlaceByID(ctx context.Context, placeID string, fields []string) (model.Place, error) {
+func (c *GoogleApiClient) GetPlaceByID(ctx context.Context, placeID string, fields []string) (model.Place, error) {
 	params := map[string]string{
 		"place_id": placeID,
 		"fields":   strings.Join(fields, ","),

@@ -25,6 +25,7 @@ func NewTripHandler(
 	router *gin.Engine,
 	lg *logrus.Logger,
 	tripService service.ITripService,
+	placesService service.IPlaceService,
 	schedulerService service.ISchedulerService,
 ) {
 
@@ -32,11 +33,13 @@ func NewTripHandler(
 		lg:               lg,
 		tripService:      tripService,
 		schedulerService: schedulerService,
+		placesService:    placesService,
 	}
 
 	tripGroup := router.Group("/api/v1/trip")
 	tripGroup.Use(middleware.Mw.AuthMiddleware())
 	{
+		tripGroup.GET("/", handler.GetTrips)
 		tripGroup.GET("/:trip_id", handler.GetTripByID)
 		tripGroup.POST("/", handler.CreateTrip)
 		tripGroup.PUT("/", handler.UpdateTrip)
@@ -77,6 +80,26 @@ func (h *TripHandler) GetTripByID(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, gin.H{"trip": trip})
+}
+
+// @Summary Get trips
+// @Description Get list trips
+// @Tags trip
+// @Produce json
+// @Success 200 {object} []model.Trip
+// @Failure 400 {object} map[string]string
+// @Failure 404 {object} map[string]string
+// @Failure 500 {object} map[string]string
+// @Router /api/v1/trip/ [get]
+func (h *TripHandler) GetTrips(c *gin.Context) {
+	trips, err := h.tripService.GetTrips(c.Request.Context())
+	if err != nil {
+		h.lg.WithError(err).Errorf("Fail to get list trip")
+		c.JSON(http.StatusInternalServerError, gin.H{"err": err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"trips": trips})
 }
 
 // @Summary Delete a trip
@@ -229,14 +252,15 @@ func (h *TripHandler) ScheduleTrip(c *gin.Context) {
 	}
 
 	trip, err := h.tripService.GetTripByID(c.Request.Context(), id)
+	if errors.Is(err, domain.ErrTripNotFound) {
+		h.lg.WithError(err).Errorf("trip %s not found", id)
+		c.JSON(http.StatusNotFound, gin.H{"err": err.Error()})
+	}
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"err": err.Error()})
 		return
 	}
 
-	// h.lg.Info("trip", trip)
-	// h.lg.Info("service", h.schedulerService)
-	// h.lg.Info("service", trip.Places)
 	matrix := h.placesService.GetTimeMatrix(c.Request.Context(), trip.Places)
 
 	schedule, err := h.schedulerService.GetSchedule(c.Request.Context(), trip, trip.Places, matrix)
