@@ -2,6 +2,7 @@ package config
 
 import (
 	"fmt"
+	"github.com/joho/godotenv"
 	"log"
 
 	"github.com/kelseyhightower/envconfig"
@@ -32,6 +33,11 @@ type RedisConfig struct {
 }
 
 func LoadConfig() *Config {
+	err := godotenv.Load()
+	if err != nil {
+		log.Printf("No .env file found, proceeding with environment variables")
+	}
+
 	var config Config
 	if err := envconfig.Process("", &config); err != nil {
 		log.Fatalf("Unable to process environment variables: %s", err)

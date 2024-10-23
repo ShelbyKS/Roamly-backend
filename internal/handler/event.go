@@ -10,23 +10,20 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 	"github.com/sirupsen/logrus"
-	"gorm.io/datatypes"
 )
 
 type CreateEventRequest struct {
-	PlaceID   string         `json:"place_id" binding:"required"`
-	TripID    uuid.UUID      `json:"trip_id" binding:"required"`
-	StartTime string         `json:"start_time" binding:"required"`
-	EndTime   string         `json:"end_time" binding:"required"`
-	Payload   datatypes.JSON `json:"payload"`
+	PlaceID   string    `json:"place_id" binding:"required"`
+	TripID    uuid.UUID `json:"trip_id" binding:"required"`
+	StartTime string    `json:"start_time" binding:"required"`
+	EndTime   string    `json:"end_time" binding:"required"`
 }
 
 type UpdateEventRequest struct {
-	PlaceID   string         `json:"place_id" binding:"required"`
-	TripID    uuid.UUID      `json:"trip_id" binding:"required"`
-	StartTime string         `json:"start_time" binding:"required"`
-	EndTime   string         `json:"end_time" binding:"required"`
-	Payload   datatypes.JSON `json:"payload"`
+	PlaceID   string    `json:"place_id" binding:"required"`
+	TripID    uuid.UUID `json:"trip_id" binding:"required"`
+	StartTime string    `json:"start_time" binding:"required"`
+	EndTime   string    `json:"end_time" binding:"required"`
 }
 
 type EventHandler struct {
@@ -74,7 +71,6 @@ func (h *EventHandler) CreateEvent(c *gin.Context) {
 		TripID:    eventReq.TripID,
 		StartTime: eventReq.StartTime,
 		EndTime:   eventReq.EndTime,
-		Payload:   eventReq.Payload,
 	}
 
 	if err := h.eventService.CreateEvent(c.Request.Context(), event); err != nil {
@@ -109,7 +105,6 @@ func (h *EventHandler) UpdateEvent(c *gin.Context) {
 		TripID:    eventReq.TripID,
 		StartTime: eventReq.StartTime,
 		EndTime:   eventReq.EndTime,
-		Payload:   eventReq.Payload,
 	}
 
 	if err := h.eventService.UpdateEvent(c.Request.Context(), event); err != nil {

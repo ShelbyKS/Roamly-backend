@@ -39,9 +39,9 @@ func (storage *UserStorage) GetUserByID(ctx context.Context, id int) (model.User
 	}
 
 	return model.User{
-		ID:       user.ID,
-		Login:    user.Login,
-		Password: user.Password,
+		ID:    user.ID,
+		Login: user.Login,
+		Email: user.Email,
 	}, tx.Error
 }
 

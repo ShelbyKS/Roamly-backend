@@ -71,7 +71,6 @@ func (TripConverter) ToDomain(trip orm.Trip) model.Trip {
 			TripID:    event.TripID,
 			StartTime: event.StartTime,
 			EndTime:   event.EndTime,
-			Payload:   event.Payload,
 		}
 	}
 
@@ -130,7 +129,6 @@ func (EventConverter) ToDb(event model.Event) orm.Event {
 		TripID:    event.TripID,
 		StartTime: event.StartTime,
 		EndTime:   event.EndTime,
-		Payload:   event.Payload,
 		Trip:      TripConverter{}.ToDb(event.Trip),
 		Place:     PlaceConverter{}.ToDb(event.Place),
 	}
@@ -142,7 +140,6 @@ func (EventConverter) ToDomain(event orm.Event) model.Event {
 		TripID:    event.TripID,
 		StartTime: event.StartTime,
 		EndTime:   event.EndTime,
-		Payload:   event.Payload,
 		Trip:      TripConverter{}.ToDomain(event.Trip),
 		Place:     PlaceConverter{}.ToDomain(event.Place),
 	}

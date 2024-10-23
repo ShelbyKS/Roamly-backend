@@ -162,7 +162,7 @@ func (h *AuthHandler) Logout(c *gin.Context) {
 // @Failure 400 {object} map[string]string
 // @Failure 401 {object} map[string]string
 // @Failure 500 {object} map[string]string
-// @Router /api/v1/auth/{user_id} [get]
+// @Router /api/v1/auth/check [get]
 func (h *AuthHandler) CheckAuth(c *gin.Context) {
 	c.Status(http.StatusNoContent)
 }

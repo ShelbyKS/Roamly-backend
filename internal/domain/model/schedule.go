@@ -2,7 +2,6 @@ package model
 
 import (
 	"github.com/google/uuid"
-	"gorm.io/datatypes"
 )
 
 type Event struct {
@@ -13,7 +12,6 @@ type Event struct {
 
 	StartTime string `gorm:"type:TIME"`
 	EndTime   string `gorm:"type:TIME"`
-	Payload   datatypes.JSON
 }
 
 type Schedule struct {
