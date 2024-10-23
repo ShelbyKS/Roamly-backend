@@ -18,7 +18,7 @@ jobs:
         run: |
           echo "${{ secrets.ENV_FILE }}" > .env
 
-      - name: 'Build Auth Docker images'
+      - name: 'Build Docker image'
         run:
           sudo docker build -t roamly/backend:${GITHUB_SHA::8} -f ./cmd/app/Dockerfile . &&
           sudo docker tag roamly/backend:${GITHUB_SHA::8} roamly/backend:latest
