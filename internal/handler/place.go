@@ -7,6 +7,7 @@ import (
 	"github.com/google/uuid"
 
 	"github.com/ShelbyKS/Roamly-backend/internal/domain/service"
+	"github.com/ShelbyKS/Roamly-backend/internal/handler/dto"
 	"github.com/ShelbyKS/Roamly-backend/pkg/googleapi"
 	"github.com/gin-gonic/gin"
 	"github.com/sirupsen/logrus"
@@ -26,6 +27,7 @@ func NewPlaceHandler(router *gin.Engine, lg *logrus.Logger, placeService service
 	}
 
 	router.GET("/api/v1/place", handler.GetPlaces)
+	router.GET("/api/v1/place/find", handler.FindPlaces)
 	router.GET("/api/v1/place/photo", handler.GetPhoto)
 
 	tripPlaceGroup := router.Group("/api/v1/trip/place")
@@ -91,13 +93,21 @@ func (h *PlaceHandler) AddPlaceToTrip(c *gin.Context) {
 func (h *PlaceHandler) FindPlaces(c *gin.Context) {
 	searchString := c.Query("searchString")
 
+	
 	places, err := h.placeService.FindPlace(c.Request.Context(), searchString)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"err": err.Error()})
 		return
 	}
 
-	c.JSON(http.StatusOK, gin.H{"places": places})
+	placesDto := make([]dto.GooglePlace, len(places))
+	for i, place := range places {
+		placesDto[i] = dto.GooglePlaceConverter{}.ToDto(place.GooglePlace)
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"places": placesDto,
+	})
 }
 
 // @Summary Get places
@@ -111,10 +121,13 @@ func (h *PlaceHandler) FindPlaces(c *gin.Context) {
 // @Failure 500 {object} map[string]string
 // @Router /api/v1/place [get]
 func (h *PlaceHandler) GetPlaces(c *gin.Context) {
+	// todo: логику унести в сервис, клиента обернуть в сервис
 	qeuryMap := map[string]string{}
+	
 	name := c.Query("name")
-	qeuryMap["fields"] = "formatted_address,name,rating,geometry"
 	qeuryMap["query"] = name
+
+	qeuryMap["fields"] = "formatted_address,name,rating,geometry"
 
 	typeQuery, hasType := c.GetQuery("type")
 	if hasType {

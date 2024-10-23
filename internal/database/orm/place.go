@@ -1,7 +1,5 @@
 package orm
 
-import "time"
-
 type Location struct {
 	Lat float64 `json:"lat"`
 	Lng float64 `json:"lng"`
@@ -19,19 +17,19 @@ type GooglePlace struct {
 	FormattedAddress string   `json:"formatted_address"`
 	Geometry         Geometry `gorm:"embedded"`
 	Name             string   `json:"name"`
-	Photos           []Photo  `gorm:"-"`
+	Photos           []Photo  `gorm:"json"`
 	PlaceID          string   `json:"place_id"`
 	Rating           float64  `json:"rating"`
-	// Types            []string `json:"types"`
+	Types            []string `gorm:"json"`
 }
 
 type Place struct {
-	ID          string  `gorm:"primary_key"`
-	Trips       []*Trip `gorm:"many2many:trip_place;constraint:OnDelete:CASCADE;"`
-	Closing     time.Time
-	Opening     time.Time
-	Name        string
-	Photo       string
-	Rating      float32
+	ID    string  `gorm:"primary_key"`
+	Trips []*Trip `gorm:"many2many:trip_place;constraint:OnDelete:CASCADE;"`
+	// Closing time.Time
+	// Opening time.Time
+	// Name        string
+	// Photo string
+	// Rating      float32
 	GooglePlace GooglePlace `gorm:"embedded"`
 }

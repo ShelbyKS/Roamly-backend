@@ -1,6 +1,4 @@
-package model
-
-import "time"
+package dto
 
 type Location struct {
 	Lat float64 `json:"lat"`
@@ -23,15 +21,4 @@ type GooglePlace struct {
 	PlaceID          string   `json:"place_id"`
 	Rating           float64  `json:"rating"`
 	Types            []string `json:"types"`
-}
-
-type Place struct {
-	ID string `json:"id"`
-	Trips       []*Trip
-	// Name        string  `json:"name"`
-	// Photo       string  `json:"photo"`
-	// Rating      float32 `json:"rating"`
-	Closing     time.Time
-	Opening     time.Time
-	GooglePlace GooglePlace
 }

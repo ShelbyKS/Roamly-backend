@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"log"
 
 	"github.com/ShelbyKS/Roamly-backend/internal/domain"
 
@@ -25,12 +26,6 @@ func NewPlaceStorage(db *gorm.DB) storage.IPlaceStorage {
 }
 
 func (storage *PlaceStorage) GetPlaceByID(ctx context.Context, placeID string) (model.Place, error) {
-	//placeModel := orm.Place{}
-	//
-	//res := storage.db.WithContext(ctx).
-	//	Where(&orm.Place{ID: placeID}).
-	//	First(&placeModel)
-
 	placeModel := &orm.Place{
 		ID: placeID,
 	}
@@ -45,12 +40,9 @@ func (storage *PlaceStorage) GetPlaceByID(ctx context.Context, placeID string) (
 		return model.Place{}, res.Error
 	}
 
-	return model.Place{
-		ID:     placeModel.ID,
-		Name:   placeModel.Name,
-		Photo:  placeModel.Photo,
-		Rating: placeModel.Rating,
-	}, nil
+	place := PlaceConverter{}.ToDomain(*placeModel)
+
+	return place, nil
 }
 
 func (storage *PlaceStorage) CreatePlace(ctx context.Context, place *model.Place) (model.Place, error) {
@@ -61,6 +53,7 @@ func (storage *PlaceStorage) CreatePlace(ctx context.Context, place *model.Place
 	}
 
 	placeModel := PlaceConverter{}.ToDb(*place)
+	log.Println("in storage", placeModel)
 
 	res := storage.db.WithContext(ctx).Create(&placeModel)
 	if res.Error != nil {

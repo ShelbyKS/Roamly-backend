@@ -109,7 +109,7 @@ func (app *Roamly) initAPI(router *gin.Engine) {
 	schedulerService := service.NewShedulerService(schedulerCLient)
 	userService := service.NewUserService(userStorage, sessionStorage)
 	authService := service.NewAuthService(userStorage, sessionStorage)
-	tripService := service.NewTripService(tripStorage, placeStorage)
+	tripService := service.NewTripService(tripStorage, placeStorage, googleApi)
 	placeService := service.NewPlaceService(placeStorage, tripStorage, googleApi)
 	eventService := service.NewEventService(eventStorage, tripStorage, placeStorage)
 

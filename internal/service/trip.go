@@ -4,8 +4,10 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"log"
 
 	"github.com/ShelbyKS/Roamly-backend/internal/domain"
+	"github.com/ShelbyKS/Roamly-backend/internal/domain/clients"
 	"github.com/ShelbyKS/Roamly-backend/internal/domain/model"
 	"github.com/ShelbyKS/Roamly-backend/internal/domain/service"
 	"github.com/ShelbyKS/Roamly-backend/internal/domain/storage"
@@ -13,14 +15,16 @@ import (
 )
 
 type TripService struct {
-	tripStorage  storage.ITripStorage
-	placeStorage storage.IPlaceStorage
+	tripStorage     storage.ITripStorage
+	placeStorage    storage.IPlaceStorage
+	googleApiClient clients.IGoogleApiClient
 }
 
-func NewTripService(tripStorage storage.ITripStorage, placeStorage storage.IPlaceStorage) service.ITripService {
+func NewTripService(tripStorage storage.ITripStorage, placeStorage storage.IPlaceStorage, googleApiClient clients.IGoogleApiClient) service.ITripService {
 	return &TripService{
-		tripStorage:  tripStorage,
-		placeStorage: placeStorage,
+		tripStorage:     tripStorage,
+		placeStorage:    placeStorage,
+		googleApiClient: googleApiClient,
 	}
 }
 
@@ -61,10 +65,22 @@ func (service *TripService) CreateTrip(ctx context.Context, trip model.Trip) (uu
 	}
 
 	if errors.Is(err, domain.ErrPlaceNotFound) {
+
 		//todo: go to google place api and take info about
 		// create area in db
+		areaGoogle, err := service.googleApiClient.GetPlaceByID(ctx, trip.AreaID, []string{
+			"formatted_address",
+			"name",
+			"rating",
+			"geometry",
+			"photo",
+		})
+
+		log.Println("in service:", areaGoogle)
+
 		area, err = service.placeStorage.CreatePlace(ctx, &model.Place{
-			ID: trip.AreaID,
+			ID:          trip.AreaID,
+			GooglePlace: areaGoogle,
 		})
 		if err != nil {
 			return uuid.Nil, fmt.Errorf("fail to create area from storage: %w", err)

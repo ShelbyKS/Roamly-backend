@@ -2,8 +2,10 @@ package handler
 
 import (
 	"errors"
-	"github.com/ShelbyKS/Roamly-backend/internal/middleware"
 	"net/http"
+
+	"github.com/ShelbyKS/Roamly-backend/internal/handler/dto"
+	"github.com/ShelbyKS/Roamly-backend/internal/middleware"
 
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
@@ -79,7 +81,9 @@ func (h *TripHandler) GetTripByID(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, gin.H{"trip": trip})
+	c.JSON(http.StatusOK, gin.H{
+		"trip": dto.TripConverter{}.ToDto(trip),
+	})
 }
 
 // @Summary Get trips
@@ -99,7 +103,14 @@ func (h *TripHandler) GetTrips(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, gin.H{"trips": trips})
+	tripsDto := make([]dto.GetTrip, len(trips))
+	for i, trip := range trips {
+		tripsDto[i] = dto.TripConverter{}.ToDto(trip)
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"trips": tripsDto,
+	})
 }
 
 // @Summary Delete a trip

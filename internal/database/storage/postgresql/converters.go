@@ -12,14 +12,17 @@ func (UserConverter) ToDb(user model.User) orm.User {
 		ID:       user.ID,
 		Login:    user.Login,
 		Password: user.Password,
+		// ImageURL:  user.ImageURL,
+		CreatedAt: user.CreatedAt,
 	}
 }
 
-func (UserConverter) ToDomain(user model.User) orm.User {
-	return orm.User{
-		ID:       user.ID,
-		Login:    user.Login,
-		Password: user.Password,
+func (UserConverter) ToDomain(user orm.User) model.User {
+	return model.User{
+		ID:        user.ID,
+		Login:     user.Login,
+		Password:  user.Password,
+		CreatedAt: user.CreatedAt,
 	}
 }
 
@@ -40,6 +43,7 @@ func (TripConverter) ToDb(trip model.Trip) orm.Trip {
 		StartTime: trip.StartTime,
 		EndTime:   trip.EndTime,
 		AreaID:    trip.AreaID,
+		Area:      PlaceConverter{}.ToDb(*trip.Area),
 	}
 }
 
@@ -51,6 +55,7 @@ func (TripConverter) ToDomain(trip orm.Trip) model.Trip {
 		tripPlaces = append(tripPlaces, &placeDomain)
 	}
 
+	// todo: тут не все поля юзера
 	users := make([]*model.User, len(trip.Users))
 	for i, user := range trip.Users {
 		users[i] = &model.User{
@@ -70,12 +75,14 @@ func (TripConverter) ToDomain(trip orm.Trip) model.Trip {
 		}
 	}
 
-	tripArea := &model.Place{
-		ID:     trip.Area.ID,
-		Photo:  trip.Area.Photo,
-		Name:   trip.Area.Name,
-		Rating: trip.Area.Rating,
-	}
+	// tripArea := &model.Place{
+	// 	ID:     trip.Area.ID,
+	// 	Photo:  trip.Area.Photo,
+	// 	Name:   trip.Area.Name,
+	// 	Rating: trip.Area.Rating,
+	// }
+
+	area := PlaceConverter{}.ToDomain(trip.Area)
 
 	return model.Trip{
 		ID:        trip.ID,
@@ -83,7 +90,7 @@ func (TripConverter) ToDomain(trip orm.Trip) model.Trip {
 		StartTime: trip.StartTime,
 		EndTime:   trip.EndTime,
 		AreaID:    trip.AreaID,
-		Area:      tripArea,
+		Area:      &area,
 		Places:    tripPlaces,
 		Events:    events,
 	}
@@ -99,12 +106,12 @@ func (PlaceConverter) ToDb(place model.Place) orm.Place {
 	}
 
 	return orm.Place{
-		ID:          place.ID,
-		Photo:       place.Photo,
-		Name:        place.Name,
-		Closing:     place.Closing,
-		Opening:     place.Opening,
-		Rating:      place.Rating,
+		ID: place.ID,
+		// Photo:       place.Photo,
+		// Name:        place.Name,
+		// Closing:     place.Closing,
+		// Opening:     place.Opening,
+		// Rating:      place.Rating,
 		Trips:       trips,
 		GooglePlace: GooglePlaceConverter{}.ToDb(place.GooglePlace),
 	}
@@ -118,12 +125,12 @@ func (PlaceConverter) ToDomain(place orm.Place) model.Place {
 	}
 
 	return model.Place{
-		ID:          place.ID,
-		Photo:       place.Photo,
-		Name:        place.Name,
-		Closing:     place.Closing,
-		Opening:     place.Opening,
-		Rating:      place.Rating,
+		ID: place.ID,
+		// Photo:       place.Photo,
+		// Name:        place.Name,
+		// Closing:     place.Closing,
+		// Opening:     place.Opening,
+		// Rating:      place.Rating,
 		Trips:       trips,
 		GooglePlace: GooglePlaceConverter{}.ToDomain(place.GooglePlace),
 	}

@@ -33,18 +33,26 @@ func NewPlaceService(placeStorage storage.IPlaceStorage,
 }
 
 func (service *PlaceService) FindPlace(ctx context.Context, searchString string) ([]model.Place, error) {
-	places, err := service.googleApi.FindPlace(ctx,
-		searchString,
-		[]string{
+	places, err := service.googleApi.FindPlace(ctx, searchString, []string{
 			"formatted_address",
 			"name",
 			"rating",
-			"geometry"})
+			"geometry",
+			"photo",
+		})
 	if err != nil {
 		return []model.Place{}, fmt.Errorf("fail to find place: %w", err)
 	}
 
-	return places, nil
+	placesDomain := make([]model.Place, len(places))
+	for i, place := range places {
+		placesDomain[i] = model.Place{
+			ID: place.PlaceID,
+			GooglePlace: place,
+		}
+	}
+
+	return placesDomain, nil
 }
 
 func (service *PlaceService) AddPlaceToTrip(ctx context.Context, tripID uuid.UUID, placeID string) error {
@@ -58,7 +66,9 @@ func (service *PlaceService) AddPlaceToTrip(ctx context.Context, tripID uuid.UUI
 		"formatted_address",
 		"name",
 		"rating",
-		"geometry"})
+		"geometry",
+		"photo",
+	})
 	place := model.Place{}
 	place.ID = placeID //todo: need to delete
 	place.GooglePlace = newPlace

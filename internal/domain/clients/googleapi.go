@@ -7,6 +7,6 @@ import (
 )
 
 type IGoogleApiClient interface {
-	FindPlace(ctx context.Context, input string, fields []string) ([]model.Place, error)
+	FindPlace(ctx context.Context, input string, fields []string) ([]model.GooglePlace, error)
 	GetPlaceByID(ctx context.Context, id string, fields []string) (model.GooglePlace, error)
 }

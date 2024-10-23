@@ -7,6 +7,7 @@ import (
 	"github.com/ShelbyKS/Roamly-backend/internal/domain"
 	"github.com/ShelbyKS/Roamly-backend/internal/domain/model"
 	"github.com/ShelbyKS/Roamly-backend/internal/domain/service"
+	"github.com/ShelbyKS/Roamly-backend/internal/handler/dto"
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 	"github.com/sirupsen/logrus"
@@ -66,6 +67,7 @@ func (h *EventHandler) CreateEvent(c *gin.Context) {
 		return
 	}
 
+	// todo: в конвертер
 	event := model.Event{
 		PlaceID:   eventReq.PlaceID,
 		TripID:    eventReq.TripID,
@@ -100,6 +102,7 @@ func (h *EventHandler) UpdateEvent(c *gin.Context) {
 		return
 	}
 
+	// todo: в конвертер
 	event := model.Event{
 		PlaceID:   eventReq.PlaceID,
 		TripID:    eventReq.TripID,
@@ -171,5 +174,5 @@ func (h *EventHandler) GetEvent(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, event)
+	c.JSON(http.StatusOK, dto.EventConverter{}.ToDto(event))
 }

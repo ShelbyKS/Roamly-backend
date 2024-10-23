@@ -60,12 +60,12 @@ func NewClient(apiKey string) *GoogleApiClient {
 }
 
 type FindPlaceResponse struct {
-	Candidates []model.Place
+	Candidates []model.GooglePlace
 	Status     string `json:"status"`
-	ErrorMsg   string `json:"error_message"`
+	// ErrorMsg   string `json:"error_message"`
 }
 
-func (c *GoogleApiClient) FindPlace(ctx context.Context, input string, fields []string) ([]model.Place, error) {
+func (c *GoogleApiClient) FindPlace(ctx context.Context, input string, fields []string) ([]model.GooglePlace, error) {
 	params := map[string]string{
 		"input":     input,
 		"inputtype": "textquery",
@@ -75,11 +75,13 @@ func (c *GoogleApiClient) FindPlace(ctx context.Context, input string, fields []
 
 	var result FindPlaceResponse
 
-	_, err := c.client.R().
+	resp, err := c.client.R().
 		SetContext(ctx).
 		SetQueryParams(params).
 		SetResult(&result).
 		Get(methodFindPlace)
+
+	log.Println("resp", resp, err)	
 
 	if err != nil {
 		return nil, err
@@ -128,6 +130,9 @@ func (c *GoogleApiClient) GetPlaceByID(ctx context.Context, placeID string, fiel
 		return model.GooglePlace{}, fmt.Errorf("error: received status '%s'", result.Status)
 		// log.Println()
 	}
+
+	log.Println("googleapi", result.Result)
+	result.Result.PlaceID = placeID
 
 	return result.Result, nil
 }
