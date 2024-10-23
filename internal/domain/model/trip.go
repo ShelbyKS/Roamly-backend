@@ -8,7 +8,7 @@ type Trip struct {
 	StartTime string    `json:"start_time"`
 	EndTime   string    `json:"end_time"`
 	AreaID    string    `json:"area_id"`
-	Area      *Place
-	Places    []*Place `json:"places"`
-	Events    []Event  `json:"events"`
+	Area      *Place    `json:"area"`
+	Places    []*Place  `json:"places"`
+	Events    []Event   `json:"events"`
 }

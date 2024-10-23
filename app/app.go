@@ -79,7 +79,7 @@ func (app *Roamly) initDBs() {
 	}
 
 	redisClient := goRedis.NewClient(&goRedis.Options{
-		Addr:     "172.17.0.1" + ":" + "6379",
+		Addr:     app.config.Redis.Host + ":" + app.config.Redis.Port,
 		Password: app.config.Redis.Password,
 	})
 	_, err = redisClient.Ping(context.Background()).Result()
@@ -114,6 +114,7 @@ func (app *Roamly) initAPI(router *gin.Engine) {
 	eventService := service.NewEventService(eventStorage, tripStorage, placeStorage)
 
 	middleware.Mw = middleware.InitMiddleware(sessionStorage)
+	router.Use(middleware.Mw.CORSMiddleware())
 
 	handler.NewAuthHandler(router, app.logger, authService)
 	handler.NewUserHandler(router, app.logger, userService)
