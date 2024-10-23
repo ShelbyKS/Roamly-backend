@@ -1,0 +1,29 @@
+name: Deploy
+
+on:
+  push:
+    branches: [ deploy ]
+
+jobs:
+  # linter
+  # tests
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - name: Login to DockerHub Registry
+        run: echo ${{ secrets.DOCKERHUB_PASSWORD }} | docker login -u ${{ secrets.DOCKERHUB_USERNAME }} --password-stdin
+
+      - name: 'Create env file'
+        run: |
+          echo "${{ secrets.ENV_FILE }}" > .env
+
+      - name: 'Build Auth Docker images'
+        run:
+          sudo docker build -t roamly/backend:${GITHUB_SHA::8} -f ./cmd/app/Dockerfile . &&
+          sudo docker tag roamly/backend:${GITHUB_SHA::8} roamly/backend:latest
+
+      - name: 'Push Docker image'
+        run:
+          docker push roamly/backend:latest &&
+          docker push roamly/backend:${GITHUB_SHA::8}
