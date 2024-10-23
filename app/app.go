@@ -114,6 +114,7 @@ func (app *Roamly) initAPI(router *gin.Engine) {
 	eventService := service.NewEventService(eventStorage, tripStorage, placeStorage)
 
 	middleware.Mw = middleware.InitMiddleware(sessionStorage)
+	router.Use(middleware.Mw.CORSMiddleware())
 
 	handler.NewAuthHandler(router, app.logger, authService)
 	handler.NewUserHandler(router, app.logger, userService)
