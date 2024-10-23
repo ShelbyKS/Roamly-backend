@@ -20,10 +20,10 @@ jobs:
 
       - name: 'Build Docker image'
         run:
-          sudo docker build -t backend:${GITHUB_SHA::8} -f ./cmd/app/Dockerfile . &&
-          sudo docker tag backend:${GITHUB_SHA::8} backend:latest
+          sudo docker build -t shelby12/roamly:${GITHUB_SHA::8} -f ./cmd/app/Dockerfile . &&
+          sudo docker tag shelby12/roamly:${GITHUB_SHA::8} shelby12/roamly:latest
 
       - name: 'Push Docker image'
         run:
-          docker push shelby12/backend:latest &&
-          docker push shelby12/backend:${GITHUB_SHA::8}
+          docker push shelby12/roamly:latest &&
+          docker push shelby12/roamly:${GITHUB_SHA::8}
