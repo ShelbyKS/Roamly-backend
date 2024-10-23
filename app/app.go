@@ -79,7 +79,7 @@ func (app *Roamly) initDBs() {
 	}
 
 	redisClient := goRedis.NewClient(&goRedis.Options{
-		Addr:     "172.17.0.1" + ":" + "6379",
+		Addr:     app.config.Redis.Host + ":" + app.config.Redis.Port,
 		Password: app.config.Redis.Password,
 	})
 	_, err = redisClient.Ping(context.Background()).Result()
