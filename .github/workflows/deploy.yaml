@@ -27,3 +27,28 @@ jobs:
         run:
           docker push shelby12/roamly:latest &&
           docker push shelby12/roamly:${GITHUB_SHA::8}
+
+  deploy:
+    runs-on: ubuntu-latest
+    needs: build
+    steps:
+      - name: pull docker image
+        uses: appleboy/ssh-action@master
+        with:
+          envs: GITHUB_SHA
+          host: 212.111.86.198
+          username: ubuntu
+          key: ${{ secrets.PRIVATE_KEY }}
+          script: |
+            sudo docker pull shelby12/roamly:latest
+
+      - name: Run backend
+        uses: appleboy/ssh-action@master
+        with:
+          host: 212.111.86.198
+          username: ubuntu
+          key: ${{ secrets.PRIVATE_KEY }}
+          script: |
+            cd /home/ubuntu
+            sudo docker compose stop
+            sudo docker compose up -d
