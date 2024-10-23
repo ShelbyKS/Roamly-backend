@@ -1,10 +1,13 @@
 package handler
 
 import (
-	"github.com/google/uuid"
+	"fmt"
 	"net/http"
 
+	"github.com/google/uuid"
+
 	"github.com/ShelbyKS/Roamly-backend/internal/domain/service"
+	"github.com/ShelbyKS/Roamly-backend/pkg/googleapi"
 	"github.com/gin-gonic/gin"
 	"github.com/sirupsen/logrus"
 )
@@ -12,15 +15,18 @@ import (
 type PlaceHandler struct {
 	lg           *logrus.Logger
 	placeService service.IPlaceService
+	client       googleapi.GoogleApiClient
 }
 
-func NewPlaceHandler(router *gin.Engine, lg *logrus.Logger, placeService service.IPlaceService) {
+func NewPlaceHandler(router *gin.Engine, lg *logrus.Logger, placeService service.IPlaceService, client googleapi.GoogleApiClient) {
 	handler := &PlaceHandler{
 		lg:           lg,
 		placeService: placeService,
+		client:       client,
 	}
 
-	router.GET("/api/v1/place", handler.FindPlaces)
+	router.GET("/api/v1/place", handler.GetPlaces)
+	router.GET("/api/v1/place/photo", handler.GetPhoto)
 
 	tripPlaceGroup := router.Group("/api/v1/trip/place")
 	{
@@ -92,4 +98,64 @@ func (h *PlaceHandler) FindPlaces(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, gin.H{"places": places})
+}
+
+// @Summary Get places
+// @Description Find places by searchString
+// @Tags place
+// @Produce json
+// @Param searchString query true "SearchString"
+// @Success 200 {object} model.Trip
+// @Failure 400 {object} map[string]string
+// @Failure 404 {object} map[string]string
+// @Failure 500 {object} map[string]string
+// @Router /api/v1/place [get]
+func (h *PlaceHandler) GetPlaces(c *gin.Context) {
+	qeuryMap := map[string]string{}
+	name := c.Query("name")
+	qeuryMap["fields"] = "formatted_address,name,rating,geometry"
+	qeuryMap["query"] = name
+
+	typeQuery, hasType := c.GetQuery("type")
+	if hasType {
+		qeuryMap["type"] = typeQuery
+	} else {
+		lat := c.Query("lat")
+		lng := c.Query("lng")
+		qeuryMap["location"] = fmt.Sprintf("%s,%s", lat, lng)
+		qeuryMap["radius"] = "20000"
+	}
+
+	places, err := h.client.GetPlaces(c.Request.Context(), qeuryMap)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"err": err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"results": places})
+}
+
+// @Summary Get place photo
+// @Description Find places by searchString
+// @Tags place
+// @Produce json
+// @Param searchString query true "SearchString"
+// @Success 200 {object} model.Trip
+// @Failure 400 {object} map[string]string
+// @Failure 404 {object} map[string]string
+// @Failure 500 {object} map[string]string
+// @Router /api/v1/place [get]
+func (h *PlaceHandler) GetPhoto(c *gin.Context) {
+	reference := c.Query("reference")
+
+	file, err := h.client.GetPlacePhoto(c.Request.Context(), reference)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"err": err.Error()})
+		return
+	}
+
+	fileName := "photo.jpg"
+
+	c.Header("Content-Disposition", `inline; filename="`+fileName+`"`)
+	c.Data(http.StatusOK, "text/plain", file)
 }
