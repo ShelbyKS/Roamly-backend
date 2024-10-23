@@ -25,5 +25,5 @@ jobs:
 
       - name: 'Push Docker image'
         run:
-          docker push shelby12/roamly:latest &&
-          docker push shelby12/roamly:${GITHUB_SHA::8}
+          docker push shelby12/backend:latest &&
+          docker push shelby12/backend:${GITHUB_SHA::8}
