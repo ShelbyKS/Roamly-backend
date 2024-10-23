@@ -3,6 +3,7 @@ package service
 import (
 	"context"
 	"fmt"
+	"log"
 	"time"
 
 	"github.com/google/uuid"
@@ -53,8 +54,15 @@ func (service *PlaceService) AddPlaceToTrip(ctx context.Context, tripID uuid.UUI
 	//todo: need to match trip owner
 
 	//todo: go to google place api and take info about
-	newPlace, err := service.googleApi.GetPlaceByID(ctx, placeID, []string{"id", "name", "rating"})
-	newPlace.ID = placeID //todo: need to delete
+	newPlace, err := service.googleApi.GetPlaceByID(ctx, placeID, []string{
+		"formatted_address",
+		"name",
+		"rating",
+		"geometry"})
+	place := model.Place{}
+	place.ID = placeID //todo: need to delete
+	place.GooglePlace = newPlace
+	log.Println("newPlace", newPlace)
 
 	// мне кажется вот это не особо нужно(можно добавлять просто по айди поездки, а не всей поездке)
 	trip, err := service.tripStorage.GetTripByID(ctx, tripID)
@@ -62,9 +70,9 @@ func (service *PlaceService) AddPlaceToTrip(ctx context.Context, tripID uuid.UUI
 		return fmt.Errorf("fail to get trip from storage: %w", err)
 	}
 
-	newPlace.Trips = []*model.Trip{&trip}
+	place.Trips = []*model.Trip{&trip}
 
-	_, err = service.placeStorage.CreatePlace(ctx, &newPlace)
+	_, err = service.placeStorage.CreatePlace(ctx, &place)
 	if err != nil {
 		return fmt.Errorf("fail to add new place: %w", err)
 	}

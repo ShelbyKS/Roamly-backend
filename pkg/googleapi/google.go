@@ -3,6 +3,7 @@ package googleapi
 import (
 	"context"
 	"fmt"
+	"log"
 	"net/http"
 	"strings"
 
@@ -12,7 +13,7 @@ import (
 
 const (
 	methodFindPlace     = "https://maps.googleapis.com/maps/api/place/findplacefromtext/json"
-	methodGetPlaceData  = "https://places.googleapis.com/v1/places"
+	methodGetPlaceData  = "https://maps.googleapis.com/maps/api/place/details/json"
 	methodGetPlace      = "https://maps.googleapis.com/maps/api/place/textsearch/json"
 	methodGetPlacePhoto = "https://maps.googleapis.com/maps/api/place/photo"
 )
@@ -96,12 +97,12 @@ func (c *GoogleApiClient) joinFields(fields []string) string {
 }
 
 type GetPlaceDataResponse struct {
-	Place    model.Place
+	Result   model.GooglePlace
 	Status   string `json:"status"`
-	ErrorMsg string `json:"error_message"`
+	// ErrorMsg string `json:"error_message"`
 }
 
-func (c *GoogleApiClient) GetPlaceByID(ctx context.Context, placeID string, fields []string) (model.Place, error) {
+func (c *GoogleApiClient) GetPlaceByID(ctx context.Context, placeID string, fields []string) (model.GooglePlace, error) {
 	params := map[string]string{
 		"place_id": placeID,
 		"fields":   strings.Join(fields, ","),
@@ -110,22 +111,25 @@ func (c *GoogleApiClient) GetPlaceByID(ctx context.Context, placeID string, fiel
 
 	var result GetPlaceDataResponse
 
-	_, err := c.client.R().
+	resp, err := c.client.R().
 		SetContext(ctx).
 		SetQueryParams(params).
 		SetResult(&result).
 		Get(methodGetPlaceData)
 
+	log.Println("body", string(resp.Body()))
 	if err != nil {
-		return model.Place{}, err
+		log.Println(string(resp.Body()), err)
+		return model.GooglePlace{}, err
 	}
 
 	if result.Status != "OK" {
-		fmt.Println("Err:", result.ErrorMsg)
-		return model.Place{}, fmt.Errorf("error: received status '%s'", result.Status)
+		// fmt.Println("Err:", result.ErrorMsg)
+		return model.GooglePlace{}, fmt.Errorf("error: received status '%s'", result.Status)
+		// log.Println()
 	}
 
-	return result.Place, nil
+	return result.Result, nil
 }
 
 type GeocodeResponse struct {

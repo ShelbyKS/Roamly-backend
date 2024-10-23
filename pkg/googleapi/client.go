@@ -7,7 +7,7 @@ import (
 
 type GoogleClient interface {
 	FindPlace(ctx context.Context, input string, fields []string) ([]model.Place, error)
-	GetPlaceByID(ctx context.Context, id string, fields []string) (model.Place, error)
+	GetPlaceByID(ctx context.Context, id string, fields []string) (model.GooglePlace, error)
 }
 
 var DefaultClient GoogleClient

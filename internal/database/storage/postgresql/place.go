@@ -60,24 +60,12 @@ func (storage *PlaceStorage) CreatePlace(ctx context.Context, place *model.Place
 		trips = append(trips, &trip)
 	}
 
-	placeModel := orm.Place{
-
-		ID:     place.ID,
-		Name:   place.Name,
-		Rating: place.Rating,
-		Photo:  place.Photo,
-		Trips:  trips,
-	}
+	placeModel := PlaceConverter{}.ToDb(*place)
 
 	res := storage.db.WithContext(ctx).Create(&placeModel)
 	if res.Error != nil {
 		return model.Place{}, fmt.Errorf("create place in db: %w", res.Error)
 	}
 
-	return model.Place{
-		ID:     placeModel.ID,
-		Name:   placeModel.Name,
-		Photo:  placeModel.Photo,
-		Rating: placeModel.Rating,
-	}, nil
+	return model.Place{}, nil
 }

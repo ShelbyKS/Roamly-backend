@@ -47,12 +47,8 @@ func (TripConverter) ToDomain(trip orm.Trip) model.Trip {
 	var tripPlaces []*model.Place
 
 	for _, place := range trip.Places {
-		tripPlaces = append(tripPlaces, &model.Place{
-			ID:     place.ID,
-			Photo:  place.Photo,
-			Name:   place.Name,
-			Rating: place.Rating,
-		})
+		placeDomain := PlaceConverter{}.ToDomain(*place)
+		tripPlaces = append(tripPlaces, &placeDomain)
 	}
 
 	users := make([]*model.User, len(trip.Users))
@@ -96,13 +92,14 @@ func (PlaceConverter) ToDb(place model.Place) orm.Place {
 	}
 
 	return orm.Place{
-		ID:      place.ID,
-		Photo:   place.Photo,
-		Name:    place.Name,
-		Closing: place.Closing,
-		Opening: place.Opening,
-		Rating:  place.Rating,
-		Trips:   trips,
+		ID:          place.ID,
+		Photo:       place.Photo,
+		Name:        place.Name,
+		Closing:     place.Closing,
+		Opening:     place.Opening,
+		Rating:      place.Rating,
+		Trips:       trips,
+		GooglePlace: GooglePlaceConverter{}.ToDb(place.GooglePlace),
 	}
 }
 
@@ -114,13 +111,104 @@ func (PlaceConverter) ToDomain(place orm.Place) model.Place {
 	}
 
 	return model.Place{
-		ID:     place.ID,
-		Trips:  trips,
-		Name:   place.Name,
-		Photo:  place.Photo,
-		Rating: place.Rating,
+		ID:          place.ID,
+		Photo:       place.Photo,
+		Name:        place.Name,
+		Closing:     place.Closing,
+		Opening:     place.Opening,
+		Rating:      place.Rating,
+		Trips:       trips,
+		GooglePlace: GooglePlaceConverter{}.ToDomain(place.GooglePlace),
 	}
 }
+
+type GooglePlaceConverter struct{}
+
+func (GooglePlaceConverter) ToDb(gp model.GooglePlace) orm.GooglePlace {
+	return orm.GooglePlace{
+		FormattedAddress: gp.FormattedAddress,
+		Geometry:         GeometryConverter{}.ToDb(gp.Geometry),
+		Name:             gp.Name,
+		PlaceID:          gp.PlaceID,
+		Rating:           gp.Rating,
+	}
+}
+
+func (GooglePlaceConverter) ToDomain(gp orm.GooglePlace) model.GooglePlace {
+	return model.GooglePlace{
+		FormattedAddress: gp.FormattedAddress,
+		Geometry:         GeometryConverter{}.ToDomain(gp.Geometry),
+		Name:             gp.Name,
+		PlaceID:          gp.PlaceID,
+		Rating:           gp.Rating,
+	}
+}
+
+type GeometryConverter struct{}
+
+func (GeometryConverter) ToDb(geom model.Geometry) orm.Geometry {
+	return orm.Geometry{
+		Location: LocationConverter{}.ToDb(geom.Location),
+	}
+}
+
+func (GeometryConverter) ToDomain(geom orm.Geometry) model.Geometry {
+	return model.Geometry{
+		Location: LocationConverter{}.ToDomain(geom.Location),
+	}
+}
+
+type LocationConverter struct{}
+
+func (LocationConverter) ToDb(loc model.Location) orm.Location {
+	return orm.Location{
+		Lat: loc.Lat,
+		Lng: loc.Lng,
+	}
+}
+
+func (LocationConverter) ToDomain(loc orm.Location) model.Location {
+	return model.Location{
+		Lat: loc.Lat,
+		Lng: loc.Lng,
+	}
+}
+
+// type PlaceConverter struct{}
+
+// func (PlaceConverter) ToDb(place model.Place) orm.Place {
+// 	var trips []*orm.Trip
+// 	for _, i := range place.Trips {
+// 		trip := TripConverter{}.ToDb(*i)
+// 		trips = append(trips, &trip)
+// 	}
+
+// 	return orm.Place{
+// 		ID:      place.ID,
+// 		Photo:   place.Photo,
+// 		Name:    place.Name,
+// 		Closing: place.Closing,
+// 		Opening: place.Opening,
+// 		Rating:  place.Rating,
+// 		Trips:   trips,
+// 	}
+// }
+
+// func (PlaceConverter) ToDomain(place orm.Place) model.Place {
+// 	var trips []*model.Trip
+// 	for _, i := range place.Trips {
+// 		trip := TripConverter{}.ToDomain(*i)
+// 		trips = append(trips, &trip)
+// 	}
+
+// 	return model.Place{
+// 		ID:     place.ID,
+// 		Trips:  trips,
+// 		Name:   place.Name,
+// 		Photo:  place.Photo,
+// 		Rating: place.Rating,
+// 	}
+// }
 
 type EventConverter struct{}
 
