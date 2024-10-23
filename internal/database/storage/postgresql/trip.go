@@ -30,6 +30,7 @@ func (storage *TripStorage) GetTripByID(ctx context.Context, id uuid.UUID) (mode
 
 	tx := storage.db.WithContext(ctx).
 		Model(&orm.Trip{}).
+		Preload("Area").
 		Preload("Users").
 		Preload("Places").
 		Preload("Events").
@@ -56,7 +57,7 @@ func (storage *TripStorage) GetTrips(ctx context.Context) ([]model.Trip, error) 
 	trips := make([]model.Trip, len(tripsOrm))
 	for i, trip := range tripsOrm {
 		trips[i] = TripConverter{}.ToDomain(trip)
-	} 
+	}
 
 	return trips, tx.Error
 }

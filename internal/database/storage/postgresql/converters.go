@@ -74,12 +74,20 @@ func (TripConverter) ToDomain(trip orm.Trip) model.Trip {
 		}
 	}
 
+	tripArea := &model.Place{
+		ID:     trip.Area.ID,
+		Photo:  trip.Area.Photo,
+		Name:   trip.Area.Name,
+		Rating: trip.Area.Rating,
+	}
+
 	return model.Trip{
 		ID:        trip.ID,
 		Users:     users,
 		StartTime: trip.StartTime,
 		EndTime:   trip.EndTime,
 		AreaID:    trip.AreaID,
+		Area:      tripArea,
 		Places:    tripPlaces,
 		Events:    events,
 	}
