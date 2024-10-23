@@ -1,0 +1,2 @@
+[web]
+212.111.86.198 ansible_user=ubuntu ansible_connection=ssh ansible_ssh_private_key_file=ubuntu-STD3-4-4-50GB-base-64-7u0YINnI.pem
