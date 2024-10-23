@@ -158,11 +158,18 @@ func (h *AuthHandler) Logout(c *gin.Context) {
 // @Description Check if user is authenticated.
 // @Tags user
 // @Produce  json
-// @Success 204
+// @Success 200 {object} object{body=object{user_id=int}}
 // @Failure 400 {object} map[string]string
 // @Failure 401 {object} map[string]string
 // @Failure 500 {object} map[string]string
 // @Router /api/v1/auth/check [get]
 func (h *AuthHandler) CheckAuth(c *gin.Context) {
-	c.Status(http.StatusNoContent)
+	userID, ok := c.Get("user_id")
+	if !ok {
+		h.lg.Errorf("Fail to get user_id from context")
+		c.JSON(http.StatusInternalServerError, gin.H{"err": "Fail to get user_id from context"})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"user_id": userID})
 }
