@@ -1,0 +1,16 @@
+- name: "Provide files"
+  hosts: web
+  become: yes
+  tasks:
+    - name: "Copy redis conf"
+      copy:
+        src: files/redis.conf
+        dest: /home/ubuntu
+    - name: "Copy nginx conf"
+      copy:
+        src: files/nginx.conf
+        dest: /home/ubuntu
+    - name: "Copy docker-compose"
+      copy:
+        src: files/docker-compose.yaml
+        dest: /home/ubuntu
