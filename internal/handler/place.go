@@ -97,6 +97,7 @@ func (h *PlaceHandler) FindPlaces(c *gin.Context) {
 
 	places, err := h.placeService.FindPlace(c.Request.Context(), searchString)
 	if err != nil {
+		h.lg.WithError(err).Errorf("failed to find place by %s", searchString)
 		c.JSON(domain.GetStatusCodeByError(err), gin.H{"err": err.Error()})
 		return
 	}
