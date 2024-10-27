@@ -28,9 +28,9 @@ func NewPlaceHandler(router *gin.Engine, lg *logrus.Logger, placeService service
 		client:       client,
 	}
 
-	router.GET("/api/v1/place", handler.GetPlaces)
-	router.GET("/api/v1/place/find", handler.FindPlaces)
-	router.GET("/api/v1/place/photo", handler.GetPhoto)
+	router.GET("/api/v1/place", middleware.Mw.AuthMiddleware(), handler.GetPlaces)
+	router.GET("/api/v1/place/find", middleware.Mw.AuthMiddleware(), handler.FindPlaces)
+	router.GET("/api/v1/place/photo", middleware.Mw.AuthMiddleware(), handler.GetPhoto)
 
 	tripPlaceGroup := router.Group("/api/v1/trip/place")
 	tripPlaceGroup.Use(middleware.Mw.AuthMiddleware())
