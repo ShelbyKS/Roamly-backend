@@ -2,6 +2,7 @@ package handler
 
 import (
 	"errors"
+	"github.com/ShelbyKS/Roamly-backend/internal/middleware"
 	"net/http"
 	"strconv"
 
@@ -26,6 +27,7 @@ func NewUserHandler(router *gin.Engine, lg *logrus.Logger, userService service.I
 	}
 
 	userGroup := router.Group("/api/v1/user")
+	userGroup.Use(middleware.Mw.AuthMiddleware())
 	{
 		userGroup.GET("/:user_id", handler.GetUserByID)
 		userGroup.PUT("/", handler.UpdateUser)

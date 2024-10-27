@@ -2,6 +2,8 @@ package handler
 
 import (
 	"fmt"
+	"github.com/ShelbyKS/Roamly-backend/internal/domain"
+	"github.com/ShelbyKS/Roamly-backend/internal/middleware"
 	"net/http"
 
 	"github.com/google/uuid"
@@ -31,14 +33,14 @@ func NewPlaceHandler(router *gin.Engine, lg *logrus.Logger, placeService service
 	router.GET("/api/v1/place/photo", handler.GetPhoto)
 
 	tripPlaceGroup := router.Group("/api/v1/trip/place")
+	tripPlaceGroup.Use(middleware.Mw.AuthMiddleware())
 	{
 		tripPlaceGroup.POST("/", handler.AddPlaceToTrip)
 	}
 }
 
 type AddPlaceToTripRequest struct {
-	TripID string `json:"trip_id" form:"trip_id" binding:"required"`
-	//TripID  uuid.UUID `json:"trip_id" form:"trip_id" binding:"required"`
+	TripID  string `json:"trip_id" form:"trip_id" binding:"required"`
 	PlaceID string `json:"place_id" form:"place_id" binding:"required"`
 }
 
@@ -73,7 +75,7 @@ func (h *PlaceHandler) AddPlaceToTrip(c *gin.Context) {
 	err = h.placeService.AddPlaceToTrip(c.Request.Context(), tripUUID, req.PlaceID)
 	if err != nil {
 		h.lg.WithError(err).Errorf("failed to add place to trip")
-		c.JSON(http.StatusInternalServerError, gin.H{"err": err.Error()})
+		c.JSON(domain.GetStatusCodeByError(err), gin.H{"err": err.Error()})
 		return
 	}
 
@@ -93,10 +95,9 @@ func (h *PlaceHandler) AddPlaceToTrip(c *gin.Context) {
 func (h *PlaceHandler) FindPlaces(c *gin.Context) {
 	searchString := c.Query("searchString")
 
-	
 	places, err := h.placeService.FindPlace(c.Request.Context(), searchString)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"err": err.Error()})
+		c.JSON(domain.GetStatusCodeByError(err), gin.H{"err": err.Error()})
 		return
 	}
 
@@ -123,7 +124,7 @@ func (h *PlaceHandler) FindPlaces(c *gin.Context) {
 func (h *PlaceHandler) GetPlaces(c *gin.Context) {
 	// todo: логику унести в сервис, клиента обернуть в сервис
 	qeuryMap := map[string]string{}
-	
+
 	name := c.Query("name")
 	qeuryMap["query"] = name
 
@@ -141,7 +142,8 @@ func (h *PlaceHandler) GetPlaces(c *gin.Context) {
 
 	places, err := h.client.GetPlaces(c.Request.Context(), qeuryMap)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"err": err.Error()})
+		h.lg.WithError(err).Errorf("failed to get places from google")
+		c.JSON(domain.GetStatusCodeByError(err), gin.H{"err": err.Error()})
 		return
 	}
 
@@ -163,7 +165,8 @@ func (h *PlaceHandler) GetPhoto(c *gin.Context) {
 
 	file, err := h.client.GetPlacePhoto(c.Request.Context(), reference)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"err": err.Error()})
+		h.lg.WithError(err).Errorf("failed to get place %s photo", reference)
+		c.JSON(domain.GetStatusCodeByError(err), gin.H{"err": err.Error()})
 		return
 	}
 

@@ -3,6 +3,7 @@ package model
 import "github.com/google/uuid"
 
 type Trip struct {
+	//todo: add trip name
 	ID        uuid.UUID `json:"id"`
 	Users     []*User   `json:"users"`
 	StartTime string    `json:"start_time"`

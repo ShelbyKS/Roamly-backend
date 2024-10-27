@@ -1,13 +1,16 @@
 package handler
 
 import (
+	"net/http"
+	"time"
+
+	"github.com/gin-gonic/gin"
+	"github.com/sirupsen/logrus"
+
+	"github.com/ShelbyKS/Roamly-backend/internal/domain"
 	"github.com/ShelbyKS/Roamly-backend/internal/domain/model"
 	"github.com/ShelbyKS/Roamly-backend/internal/domain/service"
 	"github.com/ShelbyKS/Roamly-backend/internal/middleware"
-	"github.com/gin-gonic/gin"
-	"github.com/sirupsen/logrus"
-	"net/http"
-	"time"
 )
 
 type AuthHandler struct {
@@ -63,14 +66,14 @@ func (h *AuthHandler) Register(c *gin.Context) {
 	})
 	if err != nil {
 		h.lg.WithError(err).Errorf("failed to register new user with email=%s", req.Email)
-		c.JSON(http.StatusInternalServerError, gin.H{"err": err.Error()})
+		c.JSON(domain.GetStatusCodeByError(err), gin.H{"err": err.Error()})
 		return
 	}
 
 	session, err := h.authService.Login(c.Request.Context(), newUser)
 	if err != nil {
 		h.lg.WithError(err).Errorf("failed to login after registration with email=%s", newUser.Email)
-		c.JSON(http.StatusInternalServerError, gin.H{"err": err.Error()})
+		c.JSON(domain.GetStatusCodeByError(err), gin.H{"err": err.Error()})
 		return
 	}
 
@@ -112,7 +115,7 @@ func (h *AuthHandler) Login(c *gin.Context) {
 	})
 	if err != nil {
 		h.lg.WithError(err).Errorf("failed to login  with email=%s", req.Email)
-		c.JSON(http.StatusInternalServerError, gin.H{"err": err.Error()}) //todo: mb not 500
+		c.JSON(domain.GetStatusCodeByError(err), gin.H{"err": err.Error()}) //todo: mb not 500
 		return
 	}
 
@@ -145,7 +148,7 @@ func (h *AuthHandler) Logout(c *gin.Context) {
 	})
 	if err != nil {
 		h.lg.WithError(err).Errorf("failed to logout")
-		c.JSON(http.StatusInternalServerError, gin.H{"err": err.Error()}) //todo: mb not 500
+		c.JSON(domain.GetStatusCodeByError(err), gin.H{"err": err.Error()}) //todo: mb not 500
 		return
 	}
 
