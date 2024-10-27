@@ -91,9 +91,21 @@ func (h *TripHandler) GetTripByID(c *gin.Context) {
 // @Failure 500 {object} map[string]string
 // @Router /api/v1/trip/ [get]
 func (h *TripHandler) GetTrips(c *gin.Context) {
+	userId, ok := c.Get("user_id")
+	if !ok {
+		h.lg.Warningln("No user_id in context")
+		c.JSON(http.StatusBadRequest, gin.H{"err": "no user_id in context"})
+		return
+	}
+	id, ok := userId.(int)
+	if !ok {
+		h.lg.Warningln("failed to parse user_id to int")
+		c.JSON(http.StatusBadRequest, gin.H{"err": "failed to parse user_id to int"})
+		return
+	}
 	//todo: get user_id from ctx and find trips by this user
 
-	trips, err := h.tripService.GetTrips(c.Request.Context())
+	trips, err := h.tripService.GetTrips(c.Request.Context(), id)
 	if err != nil {
 		h.lg.WithError(err).Errorf("Fail to get list trip")
 		c.JSON(domain.GetStatusCodeByError(err), gin.H{"err": err.Error()})

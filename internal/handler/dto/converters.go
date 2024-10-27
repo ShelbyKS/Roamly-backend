@@ -58,15 +58,30 @@ func (TripConverter) ToDto(trip model.Trip) GetTrip {
 	}
 }
 
+type PhotoConverter struct{}
+
+func (PhotoConverter) ToDb(photo model.Photo) Photo {
+	return Photo{
+		PhotoReference: photo.PhotoReference,
+	}
+}
+
 type GooglePlaceConverter struct{}
 
 func (GooglePlaceConverter) ToDto(gp model.GooglePlace) GooglePlace {
+	photos := make([]Photo, len(gp.Photos))
+	for i, photo := range gp.Photos {
+		photos[i] = PhotoConverter{}.ToDb(photo)
+	}
+
 	return GooglePlace{
 		FormattedAddress: gp.FormattedAddress,
 		Geometry:         GeometryConverter{}.ToDto(gp.Geometry),
 		Name:             gp.Name,
 		PlaceID:          gp.PlaceID,
 		Rating:           gp.Rating,
+		Types:            gp.Types,
+		Photos:           photos, 
 	}
 }
 
