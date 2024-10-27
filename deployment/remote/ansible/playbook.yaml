@@ -14,3 +14,7 @@
       copy:
         src: files/docker-compose.yaml
         dest: /home/ubuntu
+    - name: Restart docker-compose containers
+      command: docker-compose restart
+      args:
+        chdir: /home/ubuntu
