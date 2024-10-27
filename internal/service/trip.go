@@ -40,8 +40,8 @@ func (service *TripService) GetTripByID(ctx context.Context, id uuid.UUID) (mode
 	return trip, nil
 }
 
-func (service *TripService) GetTrips(ctx context.Context) ([]model.Trip, error) {
-	trips, err := service.tripStorage.GetTrips(ctx)
+func (service *TripService) GetTrips(ctx context.Context, userId int) ([]model.Trip, error) {
+	trips, err := service.tripStorage.GetTrips(ctx, userId)
 	if err != nil {
 		return []model.Trip{}, fmt.Errorf("fail to get trip from storage: %w", err)
 	}

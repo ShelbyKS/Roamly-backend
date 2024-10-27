@@ -12,7 +12,6 @@ func (UserConverter) ToDb(user model.User) orm.User {
 		ID:       user.ID,
 		Login:    user.Login,
 		Password: user.Password,
-		// ImageURL:  user.ImageURL,
 		CreatedAt: user.CreatedAt,
 	}
 }
@@ -75,13 +74,6 @@ func (TripConverter) ToDomain(trip orm.Trip) model.Trip {
 		}
 	}
 
-	// tripArea := &model.Place{
-	// 	ID:     trip.Area.ID,
-	// 	Photo:  trip.Area.Photo,
-	// 	Name:   trip.Area.Name,
-	// 	Rating: trip.Area.Rating,
-	// }
-
 	area := PlaceConverter{}.ToDomain(trip.Area)
 
 	return model.Trip{
@@ -136,27 +128,56 @@ func (PlaceConverter) ToDomain(place orm.Place) model.Place {
 	}
 }
 
+type PhotoConverter struct{}
+
+func (PhotoConverter) ToDb(photo model.Photo) orm.Photo {
+	return orm.Photo{
+		PhotoReference: photo.PhotoReference,
+	}
+}
+
+func (PhotoConverter) ToDomain(photo orm.Photo) model.Photo {
+	return model.Photo{
+		PhotoReference: photo.PhotoReference,
+	}
+}
+
 type GooglePlaceConverter struct{}
 
 func (GooglePlaceConverter) ToDb(gp model.GooglePlace) orm.GooglePlace {
+	photos := make([]orm.Photo, len(gp.Photos))
+	for i, photo := range gp.Photos {
+		photos[i] = PhotoConverter{}.ToDb(photo)
+	}
+
 	return orm.GooglePlace{
 		FormattedAddress: gp.FormattedAddress,
 		Geometry:         GeometryConverter{}.ToDb(gp.Geometry),
+		Photos:           photos,
 		Name:             gp.Name,
 		PlaceID:          gp.PlaceID,
 		Rating:           gp.Rating,
+		Types:            gp.Types,
 	}
 }
 
 func (GooglePlaceConverter) ToDomain(gp orm.GooglePlace) model.GooglePlace {
+	photos := make([]model.Photo, len(gp.Photos))
+	for i, photo := range gp.Photos {
+		photos[i] = PhotoConverter{}.ToDomain(photo)
+	}
+
 	return model.GooglePlace{
 		FormattedAddress: gp.FormattedAddress,
 		Geometry:         GeometryConverter{}.ToDomain(gp.Geometry),
+		Photos:           photos,
 		Name:             gp.Name,
 		PlaceID:          gp.PlaceID,
 		Rating:           gp.Rating,
+		Types:            gp.Types,
 	}
 }
+
 
 type GeometryConverter struct{}
 
@@ -232,8 +253,8 @@ func (EventConverter) ToDb(event model.Event) orm.Event {
 		TripID:    event.TripID,
 		StartTime: event.StartTime,
 		EndTime:   event.EndTime,
-		Trip:      TripConverter{}.ToDb(event.Trip),
-		Place:     PlaceConverter{}.ToDb(event.Place),
+		// Trip:      TripConverter{}.ToDb(event.Trip),
+		// Place:     PlaceConverter{}.ToDb(event.Place),
 	}
 }
 

@@ -46,20 +46,24 @@ func (storage *TripStorage) GetTripByID(ctx context.Context, id uuid.UUID) (mode
 	return TripConverter{}.ToDomain(trip), tx.Error
 }
 
-func (storage *TripStorage) GetTrips(ctx context.Context) ([]model.Trip, error) {
-	var tripsOrm []orm.Trip
-	tx := storage.db.WithContext(ctx).Find(&tripsOrm)
+func (storage *TripStorage) GetTrips(ctx context.Context, userId int) ([]model.Trip, error) {
+	var user orm.User
 
-	if tx.Error != nil {
-		return []model.Trip{}, tx.Error
+    err := storage.db.
+		Preload("Trips").
+		Preload("Trips.Area").
+		Preload("Trips.Users").
+		First(&user, userId).Error
+	if err != nil {
+		return []model.Trip{}, err
 	}
 
-	trips := make([]model.Trip, len(tripsOrm))
-	for i, trip := range tripsOrm {
-		trips[i] = TripConverter{}.ToDomain(trip)
+	trips := make([]model.Trip, len(user.Trips))
+	for i, trip := range user.Trips {
+		trips[i] = TripConverter{}.ToDomain(*trip)
 	}
 
-	return trips, tx.Error
+	return trips, err
 }
 
 func (storage *TripStorage) DeleteTrip(ctx context.Context, id uuid.UUID) error {
