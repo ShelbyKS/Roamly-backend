@@ -15,6 +15,63 @@ const docTemplate = `{
     "host": "{{.Host}}",
     "basePath": "{{.BasePath}}",
     "paths": {
+        "/api/v1/auth/check": {
+            "get": {
+                "description": "Check if user is authenticated.",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "user"
+                ],
+                "summary": "Check auth",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "object",
+                            "properties": {
+                                "body": {
+                                    "type": "object",
+                                    "properties": {
+                                        "user_id": {
+                                            "type": "integer"
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                }
+            }
+        },
         "/api/v1/auth/login": {
             "post": {
                 "description": "Authenticate a user with the provided credentials.",
@@ -222,19 +279,91 @@ const docTemplate = `{
                 }
             }
         },
-        "/api/v1/auth/{user_id}": {
+        "/api/v1/event": {
             "get": {
-                "description": "Check if user is authenticated.",
+                "description": "Get event by place ID and trip ID",
+                "consumes": [
+                    "application/json"
+                ],
                 "produces": [
                     "application/json"
                 ],
                 "tags": [
-                    "user"
+                    "event"
                 ],
-                "summary": "Check auth",
+                "summary": "Get event",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Place ID",
+                        "name": "place_id",
+                        "in": "query",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Trip ID",
+                        "name": "trip_id",
+                        "in": "query",
+                        "required": true
+                    }
+                ],
                 "responses": {
-                    "204": {
-                        "description": "No Content"
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/model.Event"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                }
+            },
+            "put": {
+                "description": "Update event data",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "event"
+                ],
+                "summary": "Update event",
+                "parameters": [
+                    {
+                        "description": "Event data",
+                        "name": "event",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/handler.UpdateEventRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/model.Event"
+                        }
                     },
                     "400": {
                         "description": "Bad Request",
@@ -245,8 +374,8 @@ const docTemplate = `{
                             }
                         }
                     },
-                    "401": {
-                        "description": "Unauthorized",
+                    "404": {
+                        "description": "Not Found",
                         "schema": {
                             "type": "object",
                             "additionalProperties": {
@@ -256,6 +385,307 @@ const docTemplate = `{
                     },
                     "500": {
                         "description": "Internal Server Error",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                }
+            },
+            "post": {
+                "description": "Create a new event",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "event"
+                ],
+                "summary": "Create event",
+                "parameters": [
+                    {
+                        "description": "Event data",
+                        "name": "event",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/handler.CreateEventRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Created",
+                        "schema": {
+                            "$ref": "#/definitions/model.Event"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "description": "Delete an event by place ID and trip ID",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "event"
+                ],
+                "summary": "Delete event",
+                "parameters": [
+                    {
+                        "description": "Event data",
+                        "name": "event",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/handler.DeleteEventRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "No Content",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/place": {
+            "get": {
+                "description": "Find places by name or location",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "place"
+                ],
+                "summary": "Get places",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Name to search places by",
+                        "name": "name",
+                        "in": "query",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Type of place",
+                        "name": "type",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Latitude for location-based search",
+                        "name": "lat",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Longitude for location-based search",
+                        "name": "lng",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "List of found places",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "array",
+                                "items": {
+                                    "$ref": "#/definitions/model.Place"
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Bad request",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Not found",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/place/find": {
+            "get": {
+                "description": "Find places by searchString",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "place"
+                ],
+                "summary": "Find places",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Search string to search places",
+                        "name": "searchString",
+                        "in": "query",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "List of found places",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "array",
+                                "items": {
+                                    "$ref": "#/definitions/dto.GooglePlace"
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Bad request",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Not found",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/place/photo": {
+            "get": {
+                "description": "Get a photo of a place by photo reference",
+                "produces": [
+                    "image/jpeg"
+                ],
+                "tags": [
+                    "place"
+                ],
+                "summary": "Get place photo",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Photo reference ID",
+                        "name": "reference",
+                        "in": "query",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Binary image data of the place photo",
+                        "schema": {
+                            "type": "file"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad request",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Not found",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
                         "schema": {
                             "type": "object",
                             "additionalProperties": {
@@ -353,7 +783,10 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/model.Trip"
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
                         }
                     },
                     "400": {
@@ -377,35 +810,24 @@ const docTemplate = `{
                 }
             }
         },
-        "/api/v1/trip/place": {
-            "post": {
-                "description": "Add place to trip by id",
-                "consumes": [
-                    "application/json"
-                ],
+        "/api/v1/trip/": {
+            "get": {
+                "description": "Get list trips",
                 "produces": [
                     "application/json"
                 ],
                 "tags": [
-                    "place"
+                    "trip"
                 ],
-                "summary": "Add place to trip",
-                "parameters": [
-                    {
-                        "description": "Place and trip IDs",
-                        "name": "trip-place",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/handler.AddPlaceToTripRequest"
-                        }
-                    }
-                ],
+                "summary": "Get trips",
                 "responses": {
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/model.Trip"
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/model.Trip"
+                            }
                         }
                     },
                     "400": {
@@ -438,6 +860,68 @@ const docTemplate = `{
                 }
             }
         },
+        "/api/v1/trip/place": {
+            "post": {
+                "description": "Add a place to a specific trip by their IDs",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "place"
+                ],
+                "summary": "Add place to trip",
+                "parameters": [
+                    {
+                        "description": "JSON containing trip and place IDs",
+                        "name": "trip-place",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/handler.AddPlaceToTripRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "{}\" // Пустой объект на успешный ответ",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "400": {
+                        "description": "Bad request",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Not found",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                }
+            }
+        },
         "/api/v1/trip/{trip_id}": {
             "get": {
                 "description": "Get data of a specific trip by its ID",
@@ -450,7 +934,7 @@ const docTemplate = `{
                 "summary": "Get trip by ID",
                 "parameters": [
                     {
-                        "type": "integer",
+                        "type": "string",
                         "description": "Trip ID",
                         "name": "trip_id",
                         "in": "path",
@@ -504,7 +988,63 @@ const docTemplate = `{
                 "summary": "Delete a trip",
                 "parameters": [
                     {
-                        "type": "integer",
+                        "type": "string",
+                        "description": "Trip ID",
+                        "name": "trip_id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "null"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/trip/{trip_id}/schedule": {
+            "get": {
+                "description": "Schedule places  in trip",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "trip"
+                ],
+                "summary": "Schedule trip",
+                "parameters": [
+                    {
+                        "type": "string",
                         "description": "Trip ID",
                         "name": "trip_id",
                         "in": "path",
@@ -684,14 +1224,100 @@ const docTemplate = `{
         }
     },
     "definitions": {
+        "dto.Geometry": {
+            "type": "object",
+            "properties": {
+                "location": {
+                    "$ref": "#/definitions/dto.Location"
+                }
+            }
+        },
+        "dto.GooglePlace": {
+            "type": "object",
+            "properties": {
+                "formatted_address": {
+                    "type": "string"
+                },
+                "geometry": {
+                    "$ref": "#/definitions/dto.Geometry"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "photos": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/dto.Photo"
+                    }
+                },
+                "place_id": {
+                    "type": "string"
+                },
+                "rating": {
+                    "type": "number"
+                },
+                "types": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                }
+            }
+        },
+        "dto.Location": {
+            "type": "object",
+            "properties": {
+                "lat": {
+                    "type": "number"
+                },
+                "lng": {
+                    "type": "number"
+                }
+            }
+        },
+        "dto.Photo": {
+            "type": "object",
+            "properties": {
+                "photo_reference": {
+                    "type": "string"
+                }
+            }
+        },
         "handler.AddPlaceToTripRequest": {
             "type": "object",
+            "required": [
+                "place_id",
+                "trip_id"
+            ],
             "properties": {
                 "place_id": {
                     "type": "string"
                 },
                 "trip_id": {
-                    "type": "integer"
+                    "type": "string"
+                }
+            }
+        },
+        "handler.CreateEventRequest": {
+            "type": "object",
+            "required": [
+                "end_time",
+                "place_id",
+                "start_time",
+                "trip_id"
+            ],
+            "properties": {
+                "end_time": {
+                    "type": "string"
+                },
+                "place_id": {
+                    "type": "string"
+                },
+                "start_time": {
+                    "type": "string"
+                },
+                "trip_id": {
+                    "type": "string"
                 }
             }
         },
@@ -710,6 +1336,22 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "start_time": {
+                    "description": "todo: add trip name",
+                    "type": "string"
+                }
+            }
+        },
+        "handler.DeleteEventRequest": {
+            "type": "object",
+            "required": [
+                "place_id",
+                "trip_id"
+            ],
+            "properties": {
+                "place_id": {
+                    "type": "string"
+                },
+                "trip_id": {
                     "type": "string"
                 }
             }
@@ -748,6 +1390,29 @@ const docTemplate = `{
                 }
             }
         },
+        "handler.UpdateEventRequest": {
+            "type": "object",
+            "required": [
+                "end_time",
+                "place_id",
+                "start_time",
+                "trip_id"
+            ],
+            "properties": {
+                "end_time": {
+                    "type": "string"
+                },
+                "place_id": {
+                    "type": "string"
+                },
+                "start_time": {
+                    "type": "string"
+                },
+                "trip_id": {
+                    "type": "string"
+                }
+            }
+        },
         "handler.UpdateTripRequest": {
             "type": "object",
             "required": [
@@ -764,7 +1429,7 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "id": {
-                    "type": "integer"
+                    "type": "string"
                 },
                 "start_time": {
                     "type": "string"
@@ -794,20 +1459,103 @@ const docTemplate = `{
                 }
             }
         },
-        "model.Place": {
+        "model.Event": {
             "type": "object",
             "properties": {
+                "endTime": {
+                    "type": "string"
+                },
+                "place": {
+                    "$ref": "#/definitions/model.Place"
+                },
+                "placeID": {
+                    "type": "string"
+                },
+                "startTime": {
+                    "type": "string"
+                },
+                "trip": {
+                    "$ref": "#/definitions/model.Trip"
+                },
+                "tripID": {
+                    "type": "string"
+                }
+            }
+        },
+        "model.Geometry": {
+            "type": "object",
+            "properties": {
+                "location": {
+                    "$ref": "#/definitions/model.Location"
+                }
+            }
+        },
+        "model.GooglePlace": {
+            "type": "object",
+            "properties": {
+                "formatted_address": {
+                    "type": "string"
+                },
+                "geometry": {
+                    "$ref": "#/definitions/model.Geometry"
+                },
                 "name": {
                     "type": "string"
                 },
-                "photo": {
-                    "type": "string"
+                "photos": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/model.Photo"
+                    }
                 },
                 "place_id": {
                     "type": "string"
                 },
                 "rating": {
                     "type": "number"
+                },
+                "types": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                }
+            }
+        },
+        "model.Location": {
+            "type": "object",
+            "properties": {
+                "lat": {
+                    "type": "number"
+                },
+                "lng": {
+                    "type": "number"
+                }
+            }
+        },
+        "model.Photo": {
+            "type": "object",
+            "properties": {
+                "photo_reference": {
+                    "type": "string"
+                }
+            }
+        },
+        "model.Place": {
+            "type": "object",
+            "properties": {
+                "closing": {
+                    "description": "Name        string  ` + "`" + `json:\"name\"` + "`" + `\nPhoto       string  ` + "`" + `json:\"photo\"` + "`" + `\nRating      float32 ` + "`" + `json:\"rating\"` + "`" + `",
+                    "type": "string"
+                },
+                "googlePlace": {
+                    "$ref": "#/definitions/model.GooglePlace"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "opening": {
+                    "type": "string"
                 },
                 "trips": {
                     "type": "array",
@@ -829,8 +1577,15 @@ const docTemplate = `{
                 "end_time": {
                     "type": "string"
                 },
+                "events": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/model.Event"
+                    }
+                },
                 "id": {
-                    "type": "integer"
+                    "description": "todo: add trip name",
+                    "type": "string"
                 },
                 "places": {
                     "type": "array",
