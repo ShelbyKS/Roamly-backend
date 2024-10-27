@@ -45,15 +45,15 @@ type AddPlaceToTripRequest struct {
 }
 
 // @Summary Add place to trip
-// @Description Add place to trip by id
+// @Description Add a place to a specific trip by their IDs
 // @Tags place
 // @Accept json
 // @Produce json
-// @Param trip-place body AddPlaceToTripRequest true "Place and trip IDs"
-// @Success 200 {object} model.Trip
-// @Failure 400 {object} map[string]string
-// @Failure 404 {object} map[string]string
-// @Failure 500 {object} map[string]string
+// @Param trip-place body AddPlaceToTripRequest true "JSON containing trip and place IDs"
+// @Success 200 {object} map[string]interface{} "{}" // Пустой объект на успешный ответ
+// @Failure 400 {object} map[string]string "Bad request"
+// @Failure 404 {object} map[string]string "Not found"
+// @Failure 500 {object} map[string]string "Internal server error"
 // @Router /api/v1/trip/place [post]
 func (h *PlaceHandler) AddPlaceToTrip(c *gin.Context) {
 	var req AddPlaceToTripRequest
@@ -82,16 +82,16 @@ func (h *PlaceHandler) AddPlaceToTrip(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{})
 }
 
-// @Summary Find place
+// @Summary Find places
 // @Description Find places by searchString
 // @Tags place
 // @Produce json
-// @Param searchString query true "SearchString"
-// @Success 200 {object} model.Trip
-// @Failure 400 {object} map[string]string
-// @Failure 404 {object} map[string]string
-// @Failure 500 {object} map[string]string
-// @Router /api/v1/place [get]
+// @Param searchString query string true "Search string to search places"
+// @Success 200 {object} map[string][]dto.GooglePlace "List of found places"
+// @Failure 400 {object} map[string]string "Bad request"
+// @Failure 404 {object} map[string]string "Not found"
+// @Failure 500 {object} map[string]string "Internal server error"
+// @Router /api/v1/place/find [get]
 func (h *PlaceHandler) FindPlaces(c *gin.Context) {
 	searchString := c.Query("searchString")
 
@@ -113,14 +113,17 @@ func (h *PlaceHandler) FindPlaces(c *gin.Context) {
 }
 
 // @Summary Get places
-// @Description Find places by searchString
+// @Description Find places by name or location
 // @Tags place
 // @Produce json
-// @Param searchString query true "SearchString"
-// @Success 200 {object} model.Trip
-// @Failure 400 {object} map[string]string
-// @Failure 404 {object} map[string]string
-// @Failure 500 {object} map[string]string
+// @Param name query string true "Name to search places by"
+// @Param type query string false "Type of place"
+// @Param lat query string false "Latitude for location-based search"
+// @Param lng query string false "Longitude for location-based search"
+// @Success 200 {object} map[string][]model.Place "List of found places"
+// @Failure 400 {object} map[string]string "Bad request"
+// @Failure 404 {object} map[string]string "Not found"
+// @Failure 500 {object} map[string]string "Internal server error"
 // @Router /api/v1/place [get]
 func (h *PlaceHandler) GetPlaces(c *gin.Context) {
 	// todo: логику унести в сервис, клиента обернуть в сервис
@@ -152,15 +155,15 @@ func (h *PlaceHandler) GetPlaces(c *gin.Context) {
 }
 
 // @Summary Get place photo
-// @Description Find places by searchString
+// @Description Get a photo of a place by photo reference
 // @Tags place
-// @Produce json
-// @Param searchString query true "SearchString"
-// @Success 200 {object} model.Trip
-// @Failure 400 {object} map[string]string
-// @Failure 404 {object} map[string]string
-// @Failure 500 {object} map[string]string
-// @Router /api/v1/place [get]
+// @Produce image/jpeg
+// @Param reference query string true "Photo reference ID"
+// @Success 200 {file} jpeg "Binary image data of the place photo"
+// @Failure 400 {object} map[string]string "Bad request"
+// @Failure 404 {object} map[string]string "Not found"
+// @Failure 500 {object} map[string]string "Internal server error"
+// @Router /api/v1/place/photo [get]
 func (h *PlaceHandler) GetPhoto(c *gin.Context) {
 	reference := c.Query("reference")
 

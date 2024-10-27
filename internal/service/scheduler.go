@@ -6,16 +6,16 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/ShelbyKS/Roamly-backend/internal/domain/clients"
 	"github.com/ShelbyKS/Roamly-backend/internal/domain/model"
 	"github.com/ShelbyKS/Roamly-backend/internal/domain/service"
-	"github.com/ShelbyKS/Roamly-backend/internal/domain/storage"
 )
 
 type SchedulerService struct {
-	client storage.ISchedulerClient
+	client clients.IChatClient
 }
 
-func NewShedulerService(client storage.ISchedulerClient) service.ISchedulerService {
+func NewShedulerService(client clients.IChatClient) service.ISchedulerService {
 	return &SchedulerService{
 		client: client,
 	}
