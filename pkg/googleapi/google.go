@@ -81,7 +81,7 @@ func (c *GoogleApiClient) FindPlace(ctx context.Context, input string, fields []
 		SetResult(&result).
 		Get(methodFindPlace)
 
-	log.Println("resp", resp, err)	
+	log.Println("resp", resp, err)
 
 	if err != nil {
 		return nil, err
@@ -99,8 +99,8 @@ func (c *GoogleApiClient) joinFields(fields []string) string {
 }
 
 type GetPlaceDataResponse struct {
-	Result   model.GooglePlace
-	Status   string `json:"status"`
+	Result model.GooglePlace
+	Status string `json:"status"`
 	// ErrorMsg string `json:"error_message"`
 }
 
@@ -131,7 +131,6 @@ func (c *GoogleApiClient) GetPlaceByID(ctx context.Context, placeID string, fiel
 		// log.Println()
 	}
 
-	log.Println("googleapi", result.Result)
 	result.Result.PlaceID = placeID
 
 	return result.Result, nil
