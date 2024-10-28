@@ -72,7 +72,7 @@ func (mw *Middleware) CORSMiddleware() gin.HandlerFunc {
 
 		if c.Request.Method == http.MethodOptions {
 			c.Writer.Header().Set("Access-Control-Allow-Headers", "Content-Type, User-Agent, X-CSRF-TOKEN")
-			c.Writer.Header().Set("Access-Control-Allow-Methods", "GET, POST, DELETE, PUT, OPTI")
+			c.Writer.Header().Set("Access-Control-Allow-Methods", "GET, POST, PUT, PATCH, DELETE, OPTIONS")
 			c.Writer.Header().Set("Access-Control-Max-Age", "86400")
 			c.Writer.WriteHeader(http.StatusOK)
 		} else {
