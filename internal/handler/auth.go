@@ -120,7 +120,7 @@ func (h *AuthHandler) Login(c *gin.Context) {
 	}
 
 	expiresIn := int(session.ExpiresAt.Sub(time.Now()).Seconds())
-	c.SetCookie("session_token", session.Token, expiresIn, "/", "", false, true)
+	c.SetCookie("session_token", session.Token, expiresIn, "/", "roamly.ru", false, true)
 	c.SetSameSite(http.SameSiteNoneMode) //todo: delete for prod
 
 	c.JSON(http.StatusOK, gin.H{"user_id": session.UserID})
