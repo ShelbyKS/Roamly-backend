@@ -16,6 +16,7 @@ const (
 	methodGetPlaceData  = "https://maps.googleapis.com/maps/api/place/details/json"
 	methodGetPlace      = "https://maps.googleapis.com/maps/api/place/textsearch/json"
 	methodGetPlacePhoto = "https://maps.googleapis.com/maps/api/place/photo"
+	methodGetTimeMatrix = "https://maps.googleapis.com/maps/api/distancematrix/json"
 )
 
 type Location struct {
@@ -181,4 +182,61 @@ func (c *GoogleApiClient) GetPlacePhoto(ctx context.Context, reference string) (
 	}
 
 	return resp.Body(), nil
+}
+
+type Element struct {
+	Status   string `json:"status"`
+	Duration struct {
+		Text  string `json:"text"`
+		Value int    `json:"value"` // в секундах
+	} `json:"duration"`
+	Distance struct {
+		Text  string `json:"text"`
+		Value int    `json:"value"` // в метрах
+	} `json:"distance"`
+}
+
+type Row struct {
+	Elements []Element `json:"elements"`
+}
+
+type DistanceMatrixResponse struct {
+	DestinationAddresses []string `json:"destination_addresses"`
+	OriginAddresses      []string `json:"origin_addresses"`
+	Rows                 []Row    `json:"rows"`
+}
+
+func (c *GoogleApiClient) GetTimeDistanceMatrix(ctx context.Context, placeIDs []string) (map[string]map[string]map[string]float64, error) {
+	// Добавляем префикс "place_id:" к каждому идентификатору
+	for i := range placeIDs {
+		placeIDs[i] = "place_id:" + placeIDs[i]
+	}
+
+	placesParams := strings.Join(placeIDs, "|")
+
+	params := map[string]string{
+		"origins":      placesParams,
+		"destinations": placesParams,
+		"key":          c.apiKey,
+	}
+
+	var result DistanceMatrixResponse
+
+	resp, err := c.client.R().
+		SetContext(ctx).
+		SetQueryParams(params).
+		SetResult(&result).
+		Get(methodGetPlace)
+
+	if err != nil {
+		return nil, fmt.Errorf("Failed to get call google api method %w", err)
+	}
+
+	if resp.StatusCode() != http.StatusOK {
+		return nil, fmt.Errorf("error get time distance matrix: received status '%s'", resp.Status())
+	}
+
+	parsedMatrix :=
+
+	return result.Results, nil
 }
