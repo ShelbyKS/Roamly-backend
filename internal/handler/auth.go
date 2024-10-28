@@ -153,7 +153,8 @@ func (h *AuthHandler) Logout(c *gin.Context) {
 		return
 	}
 
-	c.SetCookie("session_token", "", -1, "/", "", false, true)
+	c.SetSameSite(http.SameSiteNoneMode) //todo: delete for prod
+	c.SetCookie("session_token", "", -1, "/", "", true, true)
 
 	c.Status(http.StatusNoContent)
 }
