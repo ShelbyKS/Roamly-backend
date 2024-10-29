@@ -53,7 +53,7 @@ func (s *SchedulerService) generateRequestString(trip model.Trip, places []*mode
 
 	sb.WriteString("PlaceID поездки:\n")
 	for i, place := range places {
-		sb.WriteString(fmt.Sprintf("%d. %s\n", i+1, place.GooglePlace.Name))
+		sb.WriteString(fmt.Sprintf("%d. %s\n", i+1, place.GooglePlace.PlaceID))
 	}
 
 	//sb.WriteString("Время работы:\n")
