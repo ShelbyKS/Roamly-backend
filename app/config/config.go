@@ -2,8 +2,9 @@ package config
 
 import (
 	"fmt"
-	"github.com/joho/godotenv"
 	"log"
+
+	"github.com/joho/godotenv"
 
 	"github.com/kelseyhightower/envconfig"
 )
@@ -12,6 +13,7 @@ type Config struct {
 	ServerPort   string `envconfig:"SERVER_PORT"`
 	LogLevel     string `envconfig:"LOG_LEVEL"`
 	GoogleApiKey string `envconfig:"GOOGLE_API_KEY"`
+	OpenAiKey    string `envconfig:"OPEN_AI_KEY"`
 
 	Postgres PostgresConfig
 	Redis    RedisConfig

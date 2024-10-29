@@ -2,10 +2,11 @@ package app
 
 import (
 	"context"
-	"github.com/ShelbyKS/Roamly-backend/internal/middleware"
-	"gorm.io/gorm/logger"
 	"log"
 	"time"
+
+	"github.com/ShelbyKS/Roamly-backend/internal/middleware"
+	"gorm.io/gorm/logger"
 
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
@@ -23,8 +24,8 @@ import (
 	"github.com/ShelbyKS/Roamly-backend/internal/database/storage/redis"
 	"github.com/ShelbyKS/Roamly-backend/internal/handler"
 	"github.com/ShelbyKS/Roamly-backend/internal/service"
+	"github.com/ShelbyKS/Roamly-backend/pkg/chatgpt"
 	"github.com/ShelbyKS/Roamly-backend/pkg/googleapi"
-	"github.com/ShelbyKS/Roamly-backend/pkg/scheduler"
 )
 
 type Roamly struct {
@@ -103,7 +104,10 @@ func (app *Roamly) initAPI(router *gin.Engine) {
 	placeStorage := postgresql.NewPlaceStorage(app.pgDB)
 	eventStorage := postgresql.NewEventStorage(app.pgDB)
 
-	schedulerCLient := scheduler.NewClient(scheduler.URL) //todo: move to external
+	schedulerCLient:= chatgpt.NewChatGPTClient(app.config.OpenAiKey) //todo: move to external
+	// if err != nil {
+	// 	log.Fatalf("Failed to create chat-gpt-client %v", err)
+	// }
 	googleApi := googleapi.NewClient(app.config.GoogleApiKey)
 
 	schedulerService := service.NewShedulerService(schedulerCLient)
