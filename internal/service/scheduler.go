@@ -9,7 +9,6 @@ import (
 	"github.com/ShelbyKS/Roamly-backend/internal/domain/clients"
 	"github.com/ShelbyKS/Roamly-backend/internal/domain/model"
 	"github.com/ShelbyKS/Roamly-backend/internal/domain/service"
-	"github.com/google/uuid"
 )
 
 type SchedulerService struct {
