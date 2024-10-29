@@ -9,9 +9,9 @@ type UserConverter struct{}
 
 func (UserConverter) ToDb(user model.User) orm.User {
 	return orm.User{
-		ID:       user.ID,
-		Login:    user.Login,
-		Password: user.Password,
+		ID:        user.ID,
+		Login:     user.Login,
+		Password:  user.Password,
 		CreatedAt: user.CreatedAt,
 	}
 }
@@ -36,12 +36,21 @@ func (TripConverter) ToDb(trip model.Trip) orm.Trip {
 			Password: user.Password,
 		}
 	}
+
+	// var tripPlaces []*orm.Place
+
+	// for _, place := range trip.Places {
+	// 	placeDb := PlaceConverter{}.ToDb(*place)
+	// 	tripPlaces = append(tripPlaces, &placeDb)
+	// }
+
 	return orm.Trip{
 		ID:        trip.ID,
 		Users:     users,
 		StartTime: trip.StartTime,
 		EndTime:   trip.EndTime,
 		AreaID:    trip.AreaID,
+		// Places:    tripPlaces,
 		// Area:      PlaceConverter{}.ToDb(*trip.Area),
 	}
 }
@@ -177,7 +186,6 @@ func (GooglePlaceConverter) ToDomain(gp orm.GooglePlace) model.GooglePlace {
 		Types:            gp.Types,
 	}
 }
-
 
 type GeometryConverter struct{}
 

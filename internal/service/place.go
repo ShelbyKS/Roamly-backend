@@ -2,12 +2,14 @@ package service
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"time"
 
 	"github.com/google/uuid"
 	"golang.org/x/exp/rand"
 
+	"github.com/ShelbyKS/Roamly-backend/internal/domain"
 	"github.com/ShelbyKS/Roamly-backend/internal/domain/clients"
 	"github.com/ShelbyKS/Roamly-backend/internal/domain/model"
 	"github.com/ShelbyKS/Roamly-backend/internal/domain/service"
@@ -59,7 +61,7 @@ func (service *PlaceService) DeletePlace(ctx context.Context, tripID uuid.UUID, 
 	if err != nil {
 		return model.Trip{}, fmt.Errorf("trip not found: %w", err)
 	}
-	
+
 	err = service.placeStorage.DeletePlace(ctx, tripID, placeID)
 	if err != nil {
 		return model.Trip{}, fmt.Errorf("can't delete place: %w", err)
@@ -77,12 +79,26 @@ func (service *PlaceService) DeletePlace(ctx context.Context, tripID uuid.UUID, 
 }
 
 func (service *PlaceService) AddPlaceToTrip(ctx context.Context, tripID uuid.UUID, placeID string) (model.Trip, error) {
-	//todo: check for this placeID in our bd
-	// if exists: create relation for tripID
+	trip, err := service.tripStorage.GetTripByID(ctx, tripID)
+	if err != nil {
+		return model.Trip{}, fmt.Errorf("fail to get trip from storage: %w", err)
+	}
 
-	//todo: need to match trip owner
+	place, err := service.placeStorage.GetPlaceByID(ctx, placeID)
+	if err != nil && !errors.Is(err, domain.ErrPlaceNotFound) {
+		return model.Trip{}, fmt.Errorf("can't get place by id %w", err)
+	}
 
-	//todo: go to google place api and take info about
+	if !errors.Is(err, domain.ErrPlaceNotFound) {
+		err := service.placeStorage.AppendPlaceToTrip(ctx, place.ID, trip.ID)
+		if err != nil {
+			return model.Trip{}, fmt.Errorf("can't append place to trip: %w", err)
+		}
+
+		trip.Places = append(trip.Places, &place)
+		return trip, nil
+	}
+
 	googlePlace, err := service.googleApi.GetPlaceByID(ctx, placeID, []string{
 		"formatted_address",
 		"name",
@@ -90,14 +106,14 @@ func (service *PlaceService) AddPlaceToTrip(ctx context.Context, tripID uuid.UUI
 		"geometry",
 		"photo",
 	})
-	place := model.Place{
+	if err != nil {
+		return model.Trip{}, fmt.Errorf("can't get place from api: %w", err)
+	}
+	place = model.Place{
 		ID:          placeID,
 		GooglePlace: googlePlace,
-	}
-
-	trip, err := service.tripStorage.GetTripByID(ctx, tripID)
-	if err != nil {
-		return model.Trip{}, fmt.Errorf("fail to get trip from storage: %w", err)
+		// Opening:     time.Now(),
+		// Closing:     time.Now(),
 	}
 
 	place.Trips = []*model.Trip{&trip}
@@ -110,6 +126,7 @@ func (service *PlaceService) AddPlaceToTrip(ctx context.Context, tripID uuid.UUI
 	trip.Places = append(trip.Places, &newPlace)
 
 	return trip, nil
+
 }
 
 func (service *PlaceService) GetTimeMatrix(ctx context.Context, places []*model.Place) [][]int {
