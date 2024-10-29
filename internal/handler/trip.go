@@ -266,23 +266,14 @@ func (h *TripHandler) UpdateTrip(c *gin.Context) {
 // @Router /api/v1/trip/{trip_id}/schedule [get]
 func (h *TripHandler) ScheduleTrip(c *gin.Context) {
 	idString := c.Param("trip_id")
-	id, err := uuid.Parse(idString)
+	tripID, err := uuid.Parse(idString)
 	if err != nil {
 		h.lg.WithError(err).Errorf("failed to parse query")
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
 
-	trip, err := h.tripService.GetTripByID(c.Request.Context(), id)
-	if err != nil {
-		h.lg.WithError(err).Errorf("failed to get trip with id=%d", id)
-		c.JSON(domain.GetStatusCodeByError(err), gin.H{"error": err.Error()})
-		return
-	}
-
-	matrix := h.placesService.GetTimeMatrix(c.Request.Context(), trip.Places)
-
-	schedule, err := h.schedulerService.GetSchedule(c.Request.Context(), trip, trip.Places, matrix)
+	schedule, err := h.schedulerService.GetSchedule(c.Request.Context(), tripID)
 	if err != nil {
 		c.JSON(domain.GetStatusCodeByError(err), gin.H{"error": err.Error()})
 		return

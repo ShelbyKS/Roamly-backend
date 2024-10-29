@@ -28,9 +28,9 @@ func (TripConverter) ToDto(trip model.Trip) GetTrip {
 	users := make([]GetUser, len(trip.Users))
 	for i, user := range trip.Users {
 		users[i] = GetUser{
-			ID:       user.ID,
-			Login:    user.Login,
-			Password: user.Password,
+			ID:    user.ID,
+			Login: user.Login,
+			Email: user.Email,
 		}
 	}
 
@@ -81,7 +81,7 @@ func (GooglePlaceConverter) ToDto(gp model.GooglePlace) GooglePlace {
 		PlaceID:          gp.PlaceID,
 		Rating:           gp.Rating,
 		Types:            gp.Types,
-		Photos:           photos, 
+		Photos:           photos,
 	}
 }
 

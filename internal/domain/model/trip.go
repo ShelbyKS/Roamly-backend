@@ -13,3 +13,11 @@ type Trip struct {
 	Places    []*Place  `json:"places"`
 	Events    []Event   `json:"events"`
 }
+
+func (trip *Trip) GetTripPlaceIDs() []string {
+	var placeIDs []string
+	for _, place := range trip.Places {
+		placeIDs = append(placeIDs, place.ID)
+	}
+	return placeIDs
+}

@@ -18,3 +18,5 @@ type Schedule struct {
 	Events  []Event
 	Payload map[string]any
 }
+
+type DistanceMatrix map[string]map[string]map[string]float64

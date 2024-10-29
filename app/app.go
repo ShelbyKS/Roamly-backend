@@ -104,13 +104,13 @@ func (app *Roamly) initAPI(router *gin.Engine) {
 	placeStorage := postgresql.NewPlaceStorage(app.pgDB)
 	eventStorage := postgresql.NewEventStorage(app.pgDB)
 
-	schedulerCLient:= chatgpt.NewChatGPTClient(app.config.OpenAiKey) //todo: move to external
+	openAIClient := chatgpt.NewChatGPTClient(app.config.OpenAiKey) //todo: move to external
 	// if err != nil {
 	// 	log.Fatalf("Failed to create chat-gpt-client %v", err)
 	// }
-	googleApi := googleapi.NewClient(app.config.GoogleApiKey)
+	googleApi := googleapi.NewClient(app.config.GoogleApiKey) //todo: move to external
 
-	schedulerService := service.NewShedulerService(schedulerCLient)
+	schedulerService := service.NewShedulerService(openAIClient, googleApi, tripStorage)
 	userService := service.NewUserService(userStorage, sessionStorage)
 	authService := service.NewAuthService(userStorage, sessionStorage)
 	tripService := service.NewTripService(tripStorage, placeStorage, googleApi)
