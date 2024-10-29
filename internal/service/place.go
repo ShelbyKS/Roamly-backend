@@ -3,7 +3,6 @@ package service
 import (
 	"context"
 	"fmt"
-	"log"
 	"time"
 
 	"github.com/google/uuid"
@@ -34,12 +33,12 @@ func NewPlaceService(placeStorage storage.IPlaceStorage,
 
 func (service *PlaceService) FindPlace(ctx context.Context, searchString string) ([]model.Place, error) {
 	places, err := service.googleApi.FindPlace(ctx, searchString, []string{
-			"formatted_address",
-			"name",
-			"rating",
-			"geometry",
-			"photo",
-		})
+		"formatted_address",
+		"name",
+		"rating",
+		"geometry",
+		"photo",
+	})
 	if err != nil {
 		return []model.Place{}, fmt.Errorf("fail to find place: %w", err)
 	}
@@ -47,7 +46,7 @@ func (service *PlaceService) FindPlace(ctx context.Context, searchString string)
 	placesDomain := make([]model.Place, len(places))
 	for i, place := range places {
 		placesDomain[i] = model.Place{
-			ID: place.PlaceID,
+			ID:          place.PlaceID,
 			GooglePlace: place,
 		}
 	}
@@ -55,39 +54,40 @@ func (service *PlaceService) FindPlace(ctx context.Context, searchString string)
 	return placesDomain, nil
 }
 
-func (service *PlaceService) AddPlaceToTrip(ctx context.Context, tripID uuid.UUID, placeID string) error {
+func (service *PlaceService) AddPlaceToTrip(ctx context.Context, tripID uuid.UUID, placeID string) (model.Trip, error) {
 	//todo: check for this placeID in our bd
 	// if exists: create relation for tripID
 
 	//todo: need to match trip owner
 
 	//todo: go to google place api and take info about
-	newPlace, err := service.googleApi.GetPlaceByID(ctx, placeID, []string{
+	googlePlace, err := service.googleApi.GetPlaceByID(ctx, placeID, []string{
 		"formatted_address",
 		"name",
 		"rating",
 		"geometry",
 		"photo",
 	})
-	place := model.Place{}
-	place.ID = placeID //todo: need to delete
-	place.GooglePlace = newPlace
-	log.Println("newPlace", newPlace)
+	place := model.Place{
+		ID:          placeID,
+		GooglePlace: googlePlace,
+	}
 
-	// мне кажется вот это не особо нужно(можно добавлять просто по айди поездки, а не всей поездке)
 	trip, err := service.tripStorage.GetTripByID(ctx, tripID)
 	if err != nil {
-		return fmt.Errorf("fail to get trip from storage: %w", err)
+		return model.Trip{}, fmt.Errorf("fail to get trip from storage: %w", err)
 	}
 
 	place.Trips = []*model.Trip{&trip}
 
-	_, err = service.placeStorage.CreatePlace(ctx, &place)
+	newPlace, err := service.placeStorage.CreatePlace(ctx, &place)
 	if err != nil {
-		return fmt.Errorf("fail to add new place: %w", err)
+		return model.Trip{}, fmt.Errorf("fail to add new place: %w", err)
 	}
 
-	return nil
+	trip.Places = append(trip.Places, &newPlace)
+
+	return trip, nil
 }
 
 func (service *PlaceService) GetTimeMatrix(ctx context.Context, places []*model.Place) [][]int {

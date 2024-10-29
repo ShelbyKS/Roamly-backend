@@ -61,25 +61,25 @@ func (h *PlaceHandler) AddPlaceToTrip(c *gin.Context) {
 	err := c.Bind(&req)
 	if err != nil {
 		h.lg.WithError(err).Errorf("failed to parse body")
-		c.JSON(http.StatusBadRequest, gin.H{"err": err.Error()})
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
 
 	tripUUID, err := uuid.Parse(req.TripID)
 	if err != nil {
 		h.lg.WithError(err).Errorf("invalid trip_id")
-		c.JSON(http.StatusBadRequest, gin.H{"err": "Invalid trip_id format"})
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid trip_id format"})
 		return
 	}
 
-	err = h.placeService.AddPlaceToTrip(c.Request.Context(), tripUUID, req.PlaceID)
+	trip, err := h.placeService.AddPlaceToTrip(c.Request.Context(), tripUUID, req.PlaceID)
 	if err != nil {
 		h.lg.WithError(err).Errorf("failed to add place to trip")
-		c.JSON(domain.GetStatusCodeByError(err), gin.H{"err": err.Error()})
+		c.JSON(domain.GetStatusCodeByError(err), gin.H{"error": err.Error()})
 		return
 	}
 
-	c.JSON(http.StatusOK, gin.H{})
+	c.JSON(http.StatusOK, gin.H{"trip": dto.TripConverter{}.ToDto(trip)})
 }
 
 // @Summary Find places
@@ -98,7 +98,7 @@ func (h *PlaceHandler) FindPlaces(c *gin.Context) {
 	places, err := h.placeService.FindPlace(c.Request.Context(), searchString)
 	if err != nil {
 		h.lg.WithError(err).Errorf("failed to find place by %s", searchString)
-		c.JSON(domain.GetStatusCodeByError(err), gin.H{"err": err.Error()})
+		c.JSON(domain.GetStatusCodeByError(err), gin.H{"error": err.Error()})
 		return
 	}
 
@@ -147,7 +147,7 @@ func (h *PlaceHandler) GetPlaces(c *gin.Context) {
 	places, err := h.client.GetPlaces(c.Request.Context(), qeuryMap)
 	if err != nil {
 		h.lg.WithError(err).Errorf("failed to get places from google")
-		c.JSON(domain.GetStatusCodeByError(err), gin.H{"err": err.Error()})
+		c.JSON(domain.GetStatusCodeByError(err), gin.H{"error": err.Error()})
 		return
 	}
 
@@ -170,7 +170,7 @@ func (h *PlaceHandler) GetPhoto(c *gin.Context) {
 	file, err := h.client.GetPlacePhoto(c.Request.Context(), reference)
 	if err != nil {
 		h.lg.WithError(err).Errorf("failed to get place %s photo", reference)
-		c.JSON(domain.GetStatusCodeByError(err), gin.H{"err": err.Error()})
+		c.JSON(domain.GetStatusCodeByError(err), gin.H{"error": err.Error()})
 		return
 	}
 
