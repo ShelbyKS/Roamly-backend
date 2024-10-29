@@ -118,7 +118,7 @@ const docTemplate = `{
                         "schema": {
                             "type": "object",
                             "properties": {
-                                "err": {
+                                "error": {
                                     "type": "string"
                                 }
                             }
@@ -129,7 +129,7 @@ const docTemplate = `{
                         "schema": {
                             "type": "object",
                             "properties": {
-                                "err": {
+                                "error": {
                                     "type": "string"
                                 }
                             }
@@ -140,7 +140,7 @@ const docTemplate = `{
                         "schema": {
                             "type": "object",
                             "properties": {
-                                "err": {
+                                "error": {
                                     "type": "string"
                                 }
                             }
@@ -171,7 +171,7 @@ const docTemplate = `{
                         "schema": {
                             "type": "object",
                             "properties": {
-                                "err": {
+                                "error": {
                                     "type": "string"
                                 }
                             }
@@ -182,7 +182,7 @@ const docTemplate = `{
                         "schema": {
                             "type": "object",
                             "properties": {
-                                "err": {
+                                "error": {
                                     "type": "string"
                                 }
                             }
@@ -193,7 +193,7 @@ const docTemplate = `{
                         "schema": {
                             "type": "object",
                             "properties": {
-                                "err": {
+                                "error": {
                                     "type": "string"
                                 }
                             }
@@ -204,7 +204,7 @@ const docTemplate = `{
                         "schema": {
                             "type": "object",
                             "properties": {
-                                "err": {
+                                "error": {
                                     "type": "string"
                                 }
                             }
@@ -259,7 +259,7 @@ const docTemplate = `{
                         "schema": {
                             "type": "object",
                             "properties": {
-                                "err": {
+                                "error": {
                                     "type": "string"
                                 }
                             }
@@ -270,7 +270,7 @@ const docTemplate = `{
                         "schema": {
                             "type": "object",
                             "properties": {
-                                "err": {
+                                "error": {
                                     "type": "string"
                                 }
                             }

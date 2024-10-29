@@ -46,11 +46,11 @@ func (storage *PlaceStorage) GetPlaceByID(ctx context.Context, placeID string) (
 }
 
 func (storage *PlaceStorage) CreatePlace(ctx context.Context, place *model.Place) (model.Place, error) {
-	var trips []*orm.Trip
-	for _, i := range place.Trips {
-		trip := TripConverter{}.ToDb(*i)
-		trips = append(trips, &trip)
-	}
+	// var trips []*orm.Trip
+	// for _, i := range place.Trips {
+	// 	trip := TripConverter{}.ToDb(*i)
+	// 	trips = append(trips, &trip)
+	// }
 
 	placeModel := PlaceConverter{}.ToDb(*place)
 	log.Println("in storage", placeModel)
@@ -60,5 +60,5 @@ func (storage *PlaceStorage) CreatePlace(ctx context.Context, place *model.Place
 		return model.Place{}, fmt.Errorf("create place in db: %w", res.Error)
 	}
 
-	return model.Place{}, nil
+	return *place, nil
 }

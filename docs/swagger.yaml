@@ -342,21 +342,21 @@ paths:
           description: Bad Request
           schema:
             properties:
-              err:
+              error:
                 type: string
             type: object
         "404":
           description: Not Found
           schema:
             properties:
-              err:
+              error:
                 type: string
             type: object
         "500":
           description: Internal Server Error
           schema:
             properties:
-              err:
+              error:
                 type: string
             type: object
       summary: Login a user
@@ -376,28 +376,28 @@ paths:
           description: Bad Request
           schema:
             properties:
-              err:
+              error:
                 type: string
             type: object
         "401":
           description: Unauthorized
           schema:
             properties:
-              err:
+              error:
                 type: string
             type: object
         "404":
           description: Not Found
           schema:
             properties:
-              err:
+              error:
                 type: string
             type: object
         "500":
           description: Internal Server Error
           schema:
             properties:
-              err:
+              error:
                 type: string
             type: object
       summary: Logout a user
@@ -432,14 +432,14 @@ paths:
           description: Bad Request
           schema:
             properties:
-              err:
+              error:
                 type: string
             type: object
         "500":
           description: Internal Server Error
           schema:
             properties:
-              err:
+              error:
                 type: string
             type: object
       summary: Register a new user
