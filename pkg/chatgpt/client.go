@@ -87,7 +87,7 @@ func (c *ChatGPTClient) PostPrompt(ctx context.Context, prompt string) (string, 
 	res, err := c.client.R().
 		SetContext(ctx).
 		SetHeader("Content-Type", "application/json").
-		SetAuthToken("Bearer " + c.apiKey).
+		SetAuthToken(c.apiKey).
 		SetBody(req).
 		SetResult(&resp).
 		Post(url)
