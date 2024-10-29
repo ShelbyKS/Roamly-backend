@@ -902,6 +902,40 @@ paths:
       summary: Get trip by ID
       tags:
       - trip
+  /api/v1/trip/{trip_id}/place/{place_id}:
+    delete:
+      consumes:
+      - application/json
+      description: Delete place from a specific trip by their IDs
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: '{}" // Пустой объект на успешный ответ'
+          schema:
+            additionalProperties: true
+            type: object
+        "400":
+          description: Bad request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "404":
+          description: Not found
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal server error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Delete place from trip
+      tags:
+      - place
   /api/v1/trip/{trip_id}/schedule:
     get:
       description: Schedule places  in trip

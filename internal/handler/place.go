@@ -31,6 +31,7 @@ func NewPlaceHandler(router *gin.Engine, lg *logrus.Logger, placeService service
 	router.GET("/api/v1/place", middleware.Mw.AuthMiddleware(), handler.GetPlaces)
 	router.GET("/api/v1/place/find", middleware.Mw.AuthMiddleware(), handler.FindPlaces)
 	router.GET("/api/v1/place/photo", middleware.Mw.AuthMiddleware(), handler.GetPhoto)
+	router.DELETE("/api/v1/trip/:trip_id/place/:place_id", handler.DeletePlaceFromTrip)
 
 	tripPlaceGroup := router.Group("/api/v1/trip/place")
 	tripPlaceGroup.Use(middleware.Mw.AuthMiddleware())
@@ -75,6 +76,37 @@ func (h *PlaceHandler) AddPlaceToTrip(c *gin.Context) {
 	trip, err := h.placeService.AddPlaceToTrip(c.Request.Context(), tripUUID, req.PlaceID)
 	if err != nil {
 		h.lg.WithError(err).Errorf("failed to add place to trip")
+		c.JSON(domain.GetStatusCodeByError(err), gin.H{"error": err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"trip": dto.TripConverter{}.ToDto(trip)})
+}
+
+// @Summary Delete place from trip
+// @Description Delete place from a specific trip by their IDs
+// @Tags place
+// @Accept json
+// @Produce json
+// @Success 200 {object} map[string]interface{} "{}" // Пустой объект на успешный ответ
+// @Failure 400 {object} map[string]string "Bad request"
+// @Failure 404 {object} map[string]string "Not found"
+// @Failure 500 {object} map[string]string "Internal server error"
+// @Router /api/v1/trip/{trip_id}/place/{place_id} [delete]
+func (h *PlaceHandler) DeletePlaceFromTrip(c *gin.Context) {	
+	tripID := c.Param("trip_id")
+	placeID := c.Param("place_id")
+
+	tripUUID, err := uuid.Parse(tripID)
+	if err != nil {
+		h.lg.WithError(err).Errorf("invalid trip_id format")
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid trip_id format"})
+		return
+	}
+
+	trip, err := h.placeService.DeletePlace(c.Request.Context(), tripUUID, placeID)
+	if err != nil {
+		h.lg.WithError(err).Errorf("failed to remove place from trip")
 		c.JSON(domain.GetStatusCodeByError(err), gin.H{"error": err.Error()})
 		return
 	}
