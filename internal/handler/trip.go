@@ -65,14 +65,14 @@ func (h *TripHandler) GetTripByID(c *gin.Context) {
 	id, err := uuid.Parse(idString)
 	if err != nil {
 		h.lg.WithError(err).Errorf("failed to parse query")
-		c.JSON(http.StatusBadRequest, gin.H{"err": err.Error()})
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
 
 	trip, err := h.tripService.GetTripByID(c.Request.Context(), id)
 	if err != nil {
 		h.lg.WithError(err).Errorf("Fail to get trip with id=%d", id)
-		c.JSON(domain.GetStatusCodeByError(err), gin.H{"err": err.Error()})
+		c.JSON(domain.GetStatusCodeByError(err), gin.H{"error": err.Error()})
 		return
 	}
 
@@ -94,13 +94,13 @@ func (h *TripHandler) GetTrips(c *gin.Context) {
 	userId, ok := c.Get("user_id")
 	if !ok {
 		h.lg.Warningln("No user_id in context")
-		c.JSON(http.StatusBadRequest, gin.H{"err": "no user_id in context"})
+		c.JSON(http.StatusBadRequest, gin.H{"error": "no user_id in context"})
 		return
 	}
 	id, ok := userId.(int)
 	if !ok {
 		h.lg.Warningln("failed to parse user_id to int")
-		c.JSON(http.StatusBadRequest, gin.H{"err": "failed to parse user_id to int"})
+		c.JSON(http.StatusBadRequest, gin.H{"error": "failed to parse user_id to int"})
 		return
 	}
 	//todo: get user_id from ctx and find trips by this user
@@ -108,7 +108,7 @@ func (h *TripHandler) GetTrips(c *gin.Context) {
 	trips, err := h.tripService.GetTrips(c.Request.Context(), id)
 	if err != nil {
 		h.lg.WithError(err).Errorf("Fail to get list trip")
-		c.JSON(domain.GetStatusCodeByError(err), gin.H{"err": err.Error()})
+		c.JSON(domain.GetStatusCodeByError(err), gin.H{"error": err.Error()})
 		return
 	}
 
@@ -137,14 +137,14 @@ func (h *TripHandler) DeleteTrip(c *gin.Context) {
 	id, err := uuid.Parse(idString)
 	if err != nil {
 		h.lg.WithError(err).Errorf("failed to parse query")
-		c.JSON(http.StatusBadRequest, gin.H{"err": err.Error()})
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
 
 	err = h.tripService.DeleteTrip(c.Request.Context(), id)
 	if err != nil {
 		h.lg.WithError(err).Errorf("failed to delete trip with id=%d", id)
-		c.JSON(domain.GetStatusCodeByError(err), gin.H{"err": err.Error()})
+		c.JSON(domain.GetStatusCodeByError(err), gin.H{"error": err.Error()})
 		return
 	}
 
@@ -174,14 +174,14 @@ func (h *TripHandler) CreateTrip(c *gin.Context) {
 	err := c.Bind(&tripReq)
 	if err != nil {
 		h.lg.WithError(err).Errorf("failed to parse body")
-		c.JSON(http.StatusBadRequest, gin.H{"err": err.Error()})
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
 
 	userID, ok := c.Get("user_id")
 	if !ok {
 		h.lg.Errorf("Fail to get user_id from context")
-		c.JSON(domain.GetStatusCodeByError(err), gin.H{"err": "Fail to get user_id from context"})
+		c.JSON(domain.GetStatusCodeByError(err), gin.H{"error": "Fail to get user_id from context"})
 		return
 	}
 
@@ -204,7 +204,7 @@ func (h *TripHandler) CreateTrip(c *gin.Context) {
 	})
 	if err != nil {
 		h.lg.WithError(err).Errorf("failed to create trip")
-		c.JSON(domain.GetStatusCodeByError(err), gin.H{"err": err.Error()})
+		c.JSON(domain.GetStatusCodeByError(err), gin.H{"error": err.Error()})
 		return
 	}
 
@@ -235,7 +235,7 @@ func (h *TripHandler) UpdateTrip(c *gin.Context) {
 	err := c.BindJSON(&tripReq)
 	if err != nil {
 		h.lg.WithError(err).Errorf("failed to parse body")
-		c.JSON(http.StatusBadRequest, gin.H{"err": err.Error()})
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
 
@@ -247,7 +247,7 @@ func (h *TripHandler) UpdateTrip(c *gin.Context) {
 	})
 	if err != nil {
 		h.lg.WithError(err).Errorf("failed to update trip with id=%d", tripReq.ID)
-		c.JSON(domain.GetStatusCodeByError(err), gin.H{"err": err.Error()})
+		c.JSON(domain.GetStatusCodeByError(err), gin.H{"error": err.Error()})
 		return
 	}
 
@@ -269,14 +269,14 @@ func (h *TripHandler) ScheduleTrip(c *gin.Context) {
 	id, err := uuid.Parse(idString)
 	if err != nil {
 		h.lg.WithError(err).Errorf("failed to parse query")
-		c.JSON(http.StatusBadRequest, gin.H{"err": err.Error()})
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
 
 	trip, err := h.tripService.GetTripByID(c.Request.Context(), id)
 	if err != nil {
 		h.lg.WithError(err).Errorf("failed to get trip with id=%d", id)
-		c.JSON(domain.GetStatusCodeByError(err), gin.H{"err": err.Error()})
+		c.JSON(domain.GetStatusCodeByError(err), gin.H{"error": err.Error()})
 		return
 	}
 
@@ -284,7 +284,7 @@ func (h *TripHandler) ScheduleTrip(c *gin.Context) {
 
 	schedule, err := h.schedulerService.GetSchedule(c.Request.Context(), trip, trip.Places, matrix)
 	if err != nil {
-		c.JSON(domain.GetStatusCodeByError(err), gin.H{"err": err.Error()})
+		c.JSON(domain.GetStatusCodeByError(err), gin.H{"error": err.Error()})
 		return
 	}
 

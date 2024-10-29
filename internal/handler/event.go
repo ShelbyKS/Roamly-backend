@@ -58,7 +58,7 @@ func (h *EventHandler) CreateEvent(c *gin.Context) {
 
 	if err := c.BindJSON(&req); err != nil {
 		h.lg.WithError(err).Errorf("failed to parse body")
-		c.JSON(http.StatusBadRequest, gin.H{"err": err.Error()})
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
 
@@ -72,7 +72,7 @@ func (h *EventHandler) CreateEvent(c *gin.Context) {
 
 	if err := h.eventService.CreateEvent(c.Request.Context(), event); err != nil {
 		h.lg.WithError(err).Errorf("failed to create event %s for trip %s", req.PlaceID, req.TripID)
-		c.JSON(domain.GetStatusCodeByError(err), gin.H{"err": err.Error()})
+		c.JSON(domain.GetStatusCodeByError(err), gin.H{"error": err.Error()})
 		return
 	}
 
@@ -102,7 +102,7 @@ func (h *EventHandler) UpdateEvent(c *gin.Context) {
 
 	if err := c.BindJSON(&req); err != nil {
 		h.lg.WithError(err).Errorf("failed to parse body")
-		c.JSON(http.StatusBadRequest, gin.H{"err": err.Error()})
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
 
@@ -116,7 +116,7 @@ func (h *EventHandler) UpdateEvent(c *gin.Context) {
 
 	if err := h.eventService.UpdateEvent(c.Request.Context(), event); err != nil {
 		h.lg.WithError(err).Errorf("failed to update event %s from trip %s ", req.PlaceID, req.TripID)
-		c.JSON(domain.GetStatusCodeByError(err), gin.H{"err": err.Error()})
+		c.JSON(domain.GetStatusCodeByError(err), gin.H{"error": err.Error()})
 		return
 	}
 
@@ -143,13 +143,13 @@ func (h *EventHandler) DeleteEvent(c *gin.Context) {
 
 	if err := c.BindJSON(&req); err != nil {
 		h.lg.WithError(err).Errorf("failed to parse body")
-		c.JSON(http.StatusBadRequest, gin.H{"err": err.Error()})
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
 
 	if err := h.eventService.DeleteEvent(c.Request.Context(), req.PlaceID, req.TripID); err != nil {
 		h.lg.WithError(err).Errorf("failed to delete event %s from trip %s", req.PlaceID, req.TripID)
-		c.JSON(domain.GetStatusCodeByError(err), gin.H{"err": err.Error()})
+		c.JSON(domain.GetStatusCodeByError(err), gin.H{"error": err.Error()})
 		return
 	}
 
@@ -172,14 +172,14 @@ func (h *EventHandler) GetEvent(c *gin.Context) {
 	tripID, err := uuid.Parse(c.Query("trip_id"))
 	if err != nil {
 		h.lg.WithError(err).Errorf("failed to parse query")
-		c.JSON(http.StatusBadRequest, gin.H{"err": "Invalid trip ID"})
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid trip ID"})
 		return
 	}
 
 	event, err := h.eventService.GetEventByID(c.Request.Context(), placeID, tripID)
 	if err != nil {
 		h.lg.WithError(err).Errorf("failed to get event %s from trip %s", placeID, tripID)
-		c.JSON(domain.GetStatusCodeByError(err), gin.H{"err": err.Error()})
+		c.JSON(domain.GetStatusCodeByError(err), gin.H{"error": err.Error()})
 		return
 	}
 

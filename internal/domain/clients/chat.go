@@ -1,9 +1,9 @@
-package storage
+package clients
 
 import (
 	"context"
 )
 
-type ISchedulerClient interface {
+type IChatClient interface {
 	PostPrompt(ctx context.Context, prompt string) (string, error)
 }

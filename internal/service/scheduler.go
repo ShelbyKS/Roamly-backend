@@ -6,16 +6,16 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/ShelbyKS/Roamly-backend/internal/domain/clients"
 	"github.com/ShelbyKS/Roamly-backend/internal/domain/model"
 	"github.com/ShelbyKS/Roamly-backend/internal/domain/service"
-	"github.com/ShelbyKS/Roamly-backend/internal/domain/storage"
 )
 
 type SchedulerService struct {
-	client storage.ISchedulerClient
+	client clients.IChatClient
 }
 
-func NewShedulerService(client storage.ISchedulerClient) service.ISchedulerService {
+func NewShedulerService(client clients.IChatClient) service.ISchedulerService {
 	return &SchedulerService{
 		client: client,
 	}
@@ -41,18 +41,19 @@ func (s *SchedulerService) generateRequestString(trip model.Trip, places []*mode
 	var sb strings.Builder
 
 	sb.WriteString(`СПЛАНИРУЙ ПОЕЗДКУ ТОЛЬКО ПО ДАННЫМ МЕСТАМ,
-ИСПОЛЬЗУЯ ИНФОРМАЦИЮ, ПРИВЕДЕННУЮ НИЖЕ, ВЕРНИ МЕСТА И ВРЕМЯ ПОСЕЩЕНИЯ,
+ИСПОЛЬЗУЯ ИНФОРМАЦИЮ, ПРИВЕДЕННУЮ НИЖЕ, ВЕРНИ PlaceID И ВРЕМЯ ПОСЕЩЕНИЯ,
 В ОТВЕТЕ ОПИШИ ИМЕННО ТОЛЬКО JSON  объект, КОТОРЫЙ БУДЕТ ОПИСЫВАТЬ СПЛАНИРОВАННОЕ РАСПИСАНИЕ,
 КРОМЕ JSON В ОТЕТЕ НИЧЕГО НЕ ДОЛЖНО БЫТЬ, МАРШУРТ ДОЛЖЕН БЫТЬ ОПТИМАЛЬНЫМ И УЧИТЫВАТЬ ВРЕМЯ НА ДОРОГУ МЕЖДУ МЕСТАМИ,
 КОТОРЫЕ УКАЗАНЫ В МАТРИЦЕ ВРЕМЕНИ, ГДЕ IJ-ОМУ СТОЛБЦУ СООТВЕТСТВУЕТ ВРЕМЯ ПУТИ ИЗ I В J:`)
+	sb.WriteString(fmt.Sprintf("TripID: %s\n", trip.ID.String()))
 
 	sb.WriteString("Дата поездки:\n")
 	sb.WriteString(fmt.Sprintf("С: %s\n", trip.StartTime))
 	sb.WriteString(fmt.Sprintf("По: %s\n", trip.EndTime))
 
-	sb.WriteString("Места поездки:\n")
+	sb.WriteString("PlaceID поездки:\n")
 	for i, place := range places {
-		sb.WriteString(fmt.Sprintf("%d. %s\n", i+1, place.GooglePlace.Name))
+		sb.WriteString(fmt.Sprintf("%d. %s\n", i+1, place.GooglePlace.PlaceID))
 	}
 
 	//sb.WriteString("Время работы:\n")
@@ -70,22 +71,18 @@ func (s *SchedulerService) generateRequestString(trip model.Trip, places []*mode
 
 	sb.WriteString(`
 	ФОРМАТ JSON ДОЛЖЕН СООТВЕТСТВОВАТЬ СЛЕДУЮЩЕЙ СТРУКТУРЕ: type Event struct {
-	PlaceID string    gorm:"primaryKey"
-	TripID  uuid.UUID gorm:"primaryKey"
-	Place   Place
-	Trip    Trip
+	PlaceID string    
+	TripID  uuid.UUID 
 
-	StartTime string gorm:"type:TIME"
-	EndTime   string gorm:"type:TIME"
-	Payload   datatypes.JSON
+	StartTime string 
+	EndTime   string 
 }
 
 	type Schedule struct {
 		Events  []Event
-		Payload map[string]any
 	}
 
-В ОТВЕТЕ ВЕРНИ ТОЛЬКО JSON  объект, КОТОРЫЙ БУДЕТ ОПИСЫВАТЬ СПЛАНИРОВАННОЕ РАСПИСАНИЕ. БЕЗ ЛИШНИХ КОММЕНТАРИЕВ.
+В ОТВЕТЕ ВЕРНИ ТОЛЬКО JSON  объект, КОТОРЫЙ БУДЕТ ОПИСЫВАТЬ СПЛАНИРОВАННОЕ РАСПИСАНИЕ. БЕЗ ЛИШНИХ КОММЕНТАРИЕВ И БЕЗ ФОРМАТИРОВАНИЯ.
 `)
 	return sb.String(), nil
 }

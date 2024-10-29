@@ -42,7 +42,7 @@ func (TripConverter) ToDb(trip model.Trip) orm.Trip {
 		StartTime: trip.StartTime,
 		EndTime:   trip.EndTime,
 		AreaID:    trip.AreaID,
-		Area:      PlaceConverter{}.ToDb(*trip.Area),
+		// Area:      PlaceConverter{}.ToDb(*trip.Area),
 	}
 }
 

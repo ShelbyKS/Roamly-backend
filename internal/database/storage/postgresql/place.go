@@ -7,6 +7,7 @@ import (
 	"log"
 
 	"github.com/ShelbyKS/Roamly-backend/internal/domain"
+	"github.com/google/uuid"
 
 	"github.com/ShelbyKS/Roamly-backend/internal/database/orm"
 
@@ -46,12 +47,6 @@ func (storage *PlaceStorage) GetPlaceByID(ctx context.Context, placeID string) (
 }
 
 func (storage *PlaceStorage) CreatePlace(ctx context.Context, place *model.Place) (model.Place, error) {
-	var trips []*orm.Trip
-	for _, i := range place.Trips {
-		trip := TripConverter{}.ToDb(*i)
-		trips = append(trips, &trip)
-	}
-
 	placeModel := PlaceConverter{}.ToDb(*place)
 	log.Println("in storage", placeModel)
 
@@ -60,5 +55,21 @@ func (storage *PlaceStorage) CreatePlace(ctx context.Context, place *model.Place
 		return model.Place{}, fmt.Errorf("create place in db: %w", res.Error)
 	}
 
-	return model.Place{}, nil
+	return *place, nil
+}
+
+func (storage *PlaceStorage) DeletePlace(ctx context.Context, tripID uuid.UUID, placeID string) error {
+	trip := &orm.Trip{
+		ID: tripID,
+	}
+
+	place := &orm.Place{
+		ID: placeID,
+	}
+
+	if err := storage.db.WithContext(ctx).Model(&trip).Association("Places").Delete(place); err != nil {
+		return err
+	}
+
+	return nil
 }

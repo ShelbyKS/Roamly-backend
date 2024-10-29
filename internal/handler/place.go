@@ -31,6 +31,7 @@ func NewPlaceHandler(router *gin.Engine, lg *logrus.Logger, placeService service
 	router.GET("/api/v1/place", middleware.Mw.AuthMiddleware(), handler.GetPlaces)
 	router.GET("/api/v1/place/find", middleware.Mw.AuthMiddleware(), handler.FindPlaces)
 	router.GET("/api/v1/place/photo", middleware.Mw.AuthMiddleware(), handler.GetPhoto)
+	router.DELETE("/api/v1/trip/:trip_id/place/:place_id", handler.DeletePlaceFromTrip)
 
 	tripPlaceGroup := router.Group("/api/v1/trip/place")
 	tripPlaceGroup.Use(middleware.Mw.AuthMiddleware())
@@ -45,15 +46,15 @@ type AddPlaceToTripRequest struct {
 }
 
 // @Summary Add place to trip
-// @Description Add place to trip by id
+// @Description Add a place to a specific trip by their IDs
 // @Tags place
 // @Accept json
 // @Produce json
-// @Param trip-place body AddPlaceToTripRequest true "Place and trip IDs"
-// @Success 200 {object} model.Trip
-// @Failure 400 {object} map[string]string
-// @Failure 404 {object} map[string]string
-// @Failure 500 {object} map[string]string
+// @Param trip-place body AddPlaceToTripRequest true "JSON containing trip and place IDs"
+// @Success 200 {object} map[string]interface{} "{}" // Пустой объект на успешный ответ
+// @Failure 400 {object} map[string]string "Bad request"
+// @Failure 404 {object} map[string]string "Not found"
+// @Failure 500 {object} map[string]string "Internal server error"
 // @Router /api/v1/trip/place [post]
 func (h *PlaceHandler) AddPlaceToTrip(c *gin.Context) {
 	var req AddPlaceToTripRequest
@@ -61,44 +62,75 @@ func (h *PlaceHandler) AddPlaceToTrip(c *gin.Context) {
 	err := c.Bind(&req)
 	if err != nil {
 		h.lg.WithError(err).Errorf("failed to parse body")
-		c.JSON(http.StatusBadRequest, gin.H{"err": err.Error()})
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
 
 	tripUUID, err := uuid.Parse(req.TripID)
 	if err != nil {
 		h.lg.WithError(err).Errorf("invalid trip_id")
-		c.JSON(http.StatusBadRequest, gin.H{"err": "Invalid trip_id format"})
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid trip_id format"})
 		return
 	}
 
-	err = h.placeService.AddPlaceToTrip(c.Request.Context(), tripUUID, req.PlaceID)
+	trip, err := h.placeService.AddPlaceToTrip(c.Request.Context(), tripUUID, req.PlaceID)
 	if err != nil {
 		h.lg.WithError(err).Errorf("failed to add place to trip")
-		c.JSON(domain.GetStatusCodeByError(err), gin.H{"err": err.Error()})
+		c.JSON(domain.GetStatusCodeByError(err), gin.H{"error": err.Error()})
 		return
 	}
 
-	c.JSON(http.StatusOK, gin.H{})
+	c.JSON(http.StatusOK, gin.H{"trip": dto.TripConverter{}.ToDto(trip)})
 }
 
-// @Summary Find place
+// @Summary Delete place from trip
+// @Description Delete place from a specific trip by their IDs
+// @Tags place
+// @Accept json
+// @Produce json
+// @Success 200 {object} map[string]interface{} "{}" // Пустой объект на успешный ответ
+// @Failure 400 {object} map[string]string "Bad request"
+// @Failure 404 {object} map[string]string "Not found"
+// @Failure 500 {object} map[string]string "Internal server error"
+// @Router /api/v1/trip/{trip_id}/place/{place_id} [delete]
+func (h *PlaceHandler) DeletePlaceFromTrip(c *gin.Context) {	
+	tripID := c.Param("trip_id")
+	placeID := c.Param("place_id")
+
+	tripUUID, err := uuid.Parse(tripID)
+	if err != nil {
+		h.lg.WithError(err).Errorf("invalid trip_id format")
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid trip_id format"})
+		return
+	}
+
+	trip, err := h.placeService.DeletePlace(c.Request.Context(), tripUUID, placeID)
+	if err != nil {
+		h.lg.WithError(err).Errorf("failed to remove place from trip")
+		c.JSON(domain.GetStatusCodeByError(err), gin.H{"error": err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"trip": dto.TripConverter{}.ToDto(trip)})
+}
+
+// @Summary Find places
 // @Description Find places by searchString
 // @Tags place
 // @Produce json
-// @Param searchString query true "SearchString"
-// @Success 200 {object} model.Trip
-// @Failure 400 {object} map[string]string
-// @Failure 404 {object} map[string]string
-// @Failure 500 {object} map[string]string
-// @Router /api/v1/place [get]
+// @Param searchString query string true "Search string to search places"
+// @Success 200 {object} map[string][]dto.GooglePlace "List of found places"
+// @Failure 400 {object} map[string]string "Bad request"
+// @Failure 404 {object} map[string]string "Not found"
+// @Failure 500 {object} map[string]string "Internal server error"
+// @Router /api/v1/place/find [get]
 func (h *PlaceHandler) FindPlaces(c *gin.Context) {
 	searchString := c.Query("searchString")
 
 	places, err := h.placeService.FindPlace(c.Request.Context(), searchString)
 	if err != nil {
 		h.lg.WithError(err).Errorf("failed to find place by %s", searchString)
-		c.JSON(domain.GetStatusCodeByError(err), gin.H{"err": err.Error()})
+		c.JSON(domain.GetStatusCodeByError(err), gin.H{"error": err.Error()})
 		return
 	}
 
@@ -113,14 +145,17 @@ func (h *PlaceHandler) FindPlaces(c *gin.Context) {
 }
 
 // @Summary Get places
-// @Description Find places by searchString
+// @Description Find places by name or location
 // @Tags place
 // @Produce json
-// @Param searchString query true "SearchString"
-// @Success 200 {object} model.Trip
-// @Failure 400 {object} map[string]string
-// @Failure 404 {object} map[string]string
-// @Failure 500 {object} map[string]string
+// @Param name query string true "Name to search places by"
+// @Param type query string false "Type of place"
+// @Param lat query string false "Latitude for location-based search"
+// @Param lng query string false "Longitude for location-based search"
+// @Success 200 {object} map[string][]model.Place "List of found places"
+// @Failure 400 {object} map[string]string "Bad request"
+// @Failure 404 {object} map[string]string "Not found"
+// @Failure 500 {object} map[string]string "Internal server error"
 // @Router /api/v1/place [get]
 func (h *PlaceHandler) GetPlaces(c *gin.Context) {
 	// todo: логику унести в сервис, клиента обернуть в сервис
@@ -144,7 +179,7 @@ func (h *PlaceHandler) GetPlaces(c *gin.Context) {
 	places, err := h.client.GetPlaces(c.Request.Context(), qeuryMap)
 	if err != nil {
 		h.lg.WithError(err).Errorf("failed to get places from google")
-		c.JSON(domain.GetStatusCodeByError(err), gin.H{"err": err.Error()})
+		c.JSON(domain.GetStatusCodeByError(err), gin.H{"error": err.Error()})
 		return
 	}
 
@@ -152,22 +187,22 @@ func (h *PlaceHandler) GetPlaces(c *gin.Context) {
 }
 
 // @Summary Get place photo
-// @Description Find places by searchString
+// @Description Get a photo of a place by photo reference
 // @Tags place
-// @Produce json
-// @Param searchString query true "SearchString"
-// @Success 200 {object} model.Trip
-// @Failure 400 {object} map[string]string
-// @Failure 404 {object} map[string]string
-// @Failure 500 {object} map[string]string
-// @Router /api/v1/place [get]
+// @Produce image/jpeg
+// @Param reference query string true "Photo reference ID"
+// @Success 200 {file} jpeg "Binary image data of the place photo"
+// @Failure 400 {object} map[string]string "Bad request"
+// @Failure 404 {object} map[string]string "Not found"
+// @Failure 500 {object} map[string]string "Internal server error"
+// @Router /api/v1/place/photo [get]
 func (h *PlaceHandler) GetPhoto(c *gin.Context) {
 	reference := c.Query("reference")
 
 	file, err := h.client.GetPlacePhoto(c.Request.Context(), reference)
 	if err != nil {
 		h.lg.WithError(err).Errorf("failed to get place %s photo", reference)
-		c.JSON(domain.GetStatusCodeByError(err), gin.H{"err": err.Error()})
+		c.JSON(domain.GetStatusCodeByError(err), gin.H{"error": err.Error()})
 		return
 	}
 
