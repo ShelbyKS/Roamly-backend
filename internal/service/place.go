@@ -54,6 +54,28 @@ func (service *PlaceService) FindPlace(ctx context.Context, searchString string)
 	return placesDomain, nil
 }
 
+func (service *PlaceService) DeletePlace(ctx context.Context, tripID uuid.UUID, placeID string) (model.Trip, error) {
+	trip, err := service.tripStorage.GetTripByID(ctx, tripID)
+	if err != nil {
+		return model.Trip{}, fmt.Errorf("trip not found: %w", err)
+	}
+	
+	err = service.placeStorage.DeletePlace(ctx, tripID, placeID)
+	if err != nil {
+		return model.Trip{}, fmt.Errorf("can't delete place: %w", err)
+	}
+
+	// возможно лучше еще раз в базу сходить просто
+	for i := len(trip.Places) - 1; i >= 0; i-- {
+		if trip.Places[i].ID == placeID {
+			trip.Places = append(trip.Places[:i], trip.Places[i+1:]...)
+			break
+		}
+	}
+
+	return trip, nil
+}
+
 func (service *PlaceService) AddPlaceToTrip(ctx context.Context, tripID uuid.UUID, placeID string) (model.Trip, error) {
 	//todo: check for this placeID in our bd
 	// if exists: create relation for tripID

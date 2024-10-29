@@ -1021,6 +1021,57 @@
                 }
             }
         },
+        "/api/v1/trip/{trip_id}/place/{place_id}": {
+            "delete": {
+                "description": "Delete place from a specific trip by their IDs",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "place"
+                ],
+                "summary": "Delete place from trip",
+                "responses": {
+                    "200": {
+                        "description": "{}\" // Пустой объект на успешный ответ",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "400": {
+                        "description": "Bad request",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Not found",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                }
+            }
+        },
         "/api/v1/trip/{trip_id}/schedule": {
             "get": {
                 "description": "Schedule places  in trip",
