@@ -1,7 +1,6 @@
 package handler
 
 import (
-	"errors"
 	"github.com/ShelbyKS/Roamly-backend/internal/middleware"
 	"net/http"
 	"strconv"
@@ -48,19 +47,15 @@ func (h *UserHandler) GetUserByID(c *gin.Context) {
 	idString := c.Param("user_id")
 	id, err := strconv.Atoi(idString)
 	if err != nil {
+		h.lg.WithError(err).Errorf("failed to parse query")
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
 
 	user, err := h.userService.GetUserByID(c.Request.Context(), id)
-	if errors.Is(err, domain.ErrUserNotFound) {
-		h.lg.Warnf("User with id=%d not found", id)
-		c.JSON(http.StatusNotFound, gin.H{"error": err.Error()})
-		return
-	}
 	if err != nil {
 		h.lg.WithError(err).Errorf("Fail to get user with id=%d", id)
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		c.JSON(domain.GetStatusCodeByError(err), gin.H{"error": err.Error()})
 		return
 	}
 
@@ -91,6 +86,7 @@ func (h *UserHandler) UpdateUser(c *gin.Context) {
 
 	err := c.BindJSON(&userReq)
 	if err != nil {
+		h.lg.WithError(err).Errorf("failed to parse body")
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
@@ -101,7 +97,8 @@ func (h *UserHandler) UpdateUser(c *gin.Context) {
 		Password: []byte(userReq.Password),
 	})
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		h.lg.WithError(err).Errorf("Fail to update user with id=%d", userReq.ID)
+		c.JSON(domain.GetStatusCodeByError(err), gin.H{"error": err.Error()})
 		return
 	}
 
