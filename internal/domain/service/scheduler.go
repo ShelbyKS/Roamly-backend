@@ -9,5 +9,5 @@ import (
 )
 
 type ISchedulerService interface {
-	GetSchedule(ctx context.Context, tripID uuid.UUID) (model.Schedule, error)
+	ScheduleTrip(ctx context.Context, tripID uuid.UUID) (model.Trip, error)
 }

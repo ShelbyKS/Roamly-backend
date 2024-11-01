@@ -243,7 +243,8 @@ definitions:
           $ref: '#/definitions/model.Event'
         type: array
       id:
-        description: 'todo: add trip name'
+        type: string
+      name:
         type: string
       places:
         items:
@@ -937,8 +938,8 @@ paths:
       tags:
       - place
   /api/v1/trip/{trip_id}/schedule:
-    get:
-      description: Schedule places  in trip
+    post:
+      description: Schedule places in trip
       parameters:
       - description: Trip ID
         in: path
@@ -951,7 +952,7 @@ paths:
         "200":
           description: OK
           schema:
-            type: "null"
+            $ref: '#/definitions/model.Trip'
         "400":
           description: Bad Request
           schema:

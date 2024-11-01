@@ -37,12 +37,17 @@ func (TripConverter) ToDb(trip model.Trip) orm.Trip {
 		}
 	}
 
-	// var tripPlaces []*orm.Place
+	var tripPlaces []*orm.Place
+	for _, place := range trip.Places {
+		placeDb := PlaceConverter{}.ToDb(*place)
+		tripPlaces = append(tripPlaces, &placeDb)
+	}
 
-	// for _, place := range trip.Places {
-	// 	placeDb := PlaceConverter{}.ToDb(*place)
-	// 	tripPlaces = append(tripPlaces, &placeDb)
-	// }
+	var tripEvents []orm.Event
+	for _, event := range trip.Events {
+		eventDB := EventConverter{}.ToDb(event)
+		tripEvents = append(tripEvents, eventDB)
+	}
 
 	return orm.Trip{
 		ID:        trip.ID,
@@ -50,8 +55,9 @@ func (TripConverter) ToDb(trip model.Trip) orm.Trip {
 		StartTime: trip.StartTime,
 		EndTime:   trip.EndTime,
 		AreaID:    trip.AreaID,
-		// Places:    tripPlaces,
-		// Area:      PlaceConverter{}.ToDb(*trip.Area),
+		Places:    tripPlaces,
+		Events:    tripEvents,
+		Area:      PlaceConverter{}.ToDb(*trip.Area),
 	}
 }
 

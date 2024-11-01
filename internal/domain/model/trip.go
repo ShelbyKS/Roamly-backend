@@ -3,13 +3,13 @@ package model
 import "github.com/google/uuid"
 
 type Trip struct {
-	//todo: add trip name
 	ID        uuid.UUID `json:"id"`
-	Users     []*User   `json:"users"`
+	Name      string    `json:"name"`
 	StartTime string    `json:"start_time"`
 	EndTime   string    `json:"end_time"`
 	AreaID    string    `json:"area_id"`
 	Area      *Place    `json:"area"`
+	Users     []*User   `json:"users"`
 	Places    []*Place  `json:"places"`
 	Events    []Event   `json:"events"`
 }

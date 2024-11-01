@@ -1084,8 +1084,8 @@ const docTemplate = `{
             }
         },
         "/api/v1/trip/{trip_id}/schedule": {
-            "get": {
-                "description": "Schedule places  in trip",
+            "post": {
+                "description": "Schedule places in trip",
                 "produces": [
                     "application/json"
                 ],
@@ -1106,7 +1106,7 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "type": "null"
+                            "$ref": "#/definitions/model.Trip"
                         }
                     },
                     "400": {
@@ -1635,7 +1635,9 @@ const docTemplate = `{
                     }
                 },
                 "id": {
-                    "description": "todo: add trip name",
+                    "type": "string"
+                },
+                "name": {
                     "type": "string"
                 },
                 "places": {

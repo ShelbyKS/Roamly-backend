@@ -17,7 +17,7 @@ func (UserConverter) ToDto(user model.User) GetUser {
 
 type TripConverter struct{}
 
-func (TripConverter) ToDto(trip model.Trip) GetTrip {
+func (TripConverter) ToDto(trip model.Trip) TripResponse {
 	places := make([]GooglePlace, len(trip.Places))
 	for i, place := range trip.Places {
 		placeDto := GooglePlaceConverter{}.ToDto(place.GooglePlace)
@@ -46,7 +46,7 @@ func (TripConverter) ToDto(trip model.Trip) GetTrip {
 
 	area := GooglePlaceConverter{}.ToDto(trip.Area.GooglePlace)
 
-	return GetTrip{
+	return TripResponse{
 		ID:        trip.ID,
 		Users:     users,
 		StartTime: trip.StartTime,
@@ -110,7 +110,5 @@ func (EventConverter) ToDto(event model.Event) GetEvent {
 		TripID:    event.TripID,
 		StartTime: event.StartTime,
 		EndTime:   event.EndTime,
-		// Trip:      TripConverter{}.ToDto(event.Trip),
-		// Place:     PlaceConverter{}.ToDb(event.Place),
 	}
 }

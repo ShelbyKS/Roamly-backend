@@ -79,7 +79,8 @@ type Response struct {
 
 func (c *ChatGPTClient) PostPrompt(ctx context.Context, prompt string) (string, error) {
 	req := Request{
-		Model:       "gpt-4o-mini",
+		//Model: "gpt-4o-mini",
+		Model:       "gpt-4o",
 		Messages:    []MessageRequest{{Role: "user", Content: prompt}},
 		Temperature: 0.7,
 	}

@@ -32,64 +32,60 @@ func NewShedulerService(
 	}
 }
 
-func (s *SchedulerService) GetSchedule(ctx context.Context, tripID uuid.UUID) (model.Schedule, error) {
+func (s *SchedulerService) ScheduleTrip(ctx context.Context, tripID uuid.UUID) (model.Trip, error) {
 	trip, err := s.tripStorage.GetTripByID(ctx, tripID)
 	if err != nil {
-		return model.Schedule{}, fmt.Errorf("failed to get trip for schedule: %w", err)
+		return model.Trip{}, fmt.Errorf("failed to get trip for schedule: %w", err)
 	}
 
 	timeDistMatrix, err := s.googleApi.GetTimeDistanceMatrix(ctx, trip.GetTripPlaceIDs())
 	if err != nil {
-		return model.Schedule{}, fmt.Errorf("failed to get time distance matrix: %w", err)
+		return model.Trip{}, fmt.Errorf("failed to get time distance matrix: %w", err)
 	}
 
-	prompt, err := s.generateRequestString(trip, trip.Places, timeDistMatrix)
-	if err != nil {
-		return model.Schedule{}, err
-	}
+	prompt := s.generateRequestString(trip, trip.Places, timeDistMatrix)
 
-	fmt.Println("PROMT: ", prompt)
+	fmt.Println("PROMT: ", prompt) //todo: delete
 
 	resp, err := s.openAIClient.PostPrompt(ctx, prompt)
 	if err != nil {
-		return model.Schedule{}, err
+		return model.Trip{}, fmt.Errorf("failed to get openai response: %w", err)
 	}
 
-	return ParseResponse(resp)
+	events, err := ParseSchedule(resp)
+	if err != nil {
+		return model.Trip{}, fmt.Errorf("failed to parse schedule: %w", err)
+	}
+
+	trip.Events = events
+	err = s.tripStorage.UpdateTrip(ctx, trip)
+	if err != nil {
+		return model.Trip{}, fmt.Errorf("failed to update trip trip events: %w", err)
+	}
+
+	return trip, nil
 }
 
-func (s *SchedulerService) generateRequestString(trip model.Trip, places []*model.Place, timeMatrix model.DistanceMatrix) (string, error) {
+func (s *SchedulerService) generateRequestString(trip model.Trip, places []*model.Place, timeMatrix model.DistanceMatrix) string {
 	var sb strings.Builder
 
-	sb.WriteString(`СПЛАНИРУЙ ПОЕЗДКУ ТОЛЬКО ПО ДАННЫМ МЕСТАМ,
-ИСПОЛЬЗУЯ ИНФОРМАЦИЮ, ПРИВЕДЕННУЮ НИЖЕ, ВЕРНИ PlaceID И ВРЕМЯ ПОСЕЩЕНИЯ,
-В ОТВЕТЕ ОПИШИ ИМЕННО ТОЛЬКО JSON  объект, КОТОРЫЙ БУДЕТ ОПИСЫВАТЬ СПЛАНИРОВАННОЕ РАСПИСАНИЕ,
-КРОМЕ JSON В ОТЕТЕ НИЧЕГО НЕ ДОЛЖНО БЫТЬ, МАРШУРТ ДОЛЖЕН БЫТЬ ОПТИМАЛЬНЫМ И УЧИТЫВАТЬ ВРЕМЯ НА ДОРОГУ МЕЖДУ МЕСТАМИ,
-КОТОРЫЕ УКАЗАНЫ В МАТРИЦЕ ВРЕМЕНИ И РАССТОЯНИЙ:`)
 	sb.WriteString(fmt.Sprintf("TripID: %s\n", trip.ID.String()))
 
-	sb.WriteString("Дата поездки:\n")
+	sb.WriteString("\nДата поездки:\n")
 	sb.WriteString(fmt.Sprintf("С: %s\n", trip.StartTime))
 	sb.WriteString(fmt.Sprintf("По: %s\n", trip.EndTime))
 
-	sb.WriteString("PlaceID поездки:\n")
+	sb.WriteString("\nМеста поездки - Название (PlaceID):\n")
 	for i, place := range places {
-		sb.WriteString(fmt.Sprintf("%d. %s\n", i+1, place.GooglePlace.PlaceID))
+		sb.WriteString(fmt.Sprintf("%d. %s (%s)\n", i+1, place.GooglePlace.Name, place.GooglePlace.PlaceID))
 	}
-
+	sb.WriteString("\nСКОЛЬКО ВРЕМЕНИ ЗАЙМЁТ ПОСЕЩЕНИЕ ЭТИХ МЕСТ? ВЫДЕЛИ СРЕДНЕЕ ВРЕМЯ\n")
 	//sb.WriteString("Время работы:\n")
 	//for i, place := range places {
 	//	sb.WriteString(fmt.Sprintf("%d. %s - %s\n", i+1, place.Opening, place.Closing))
 	//}
 
-	sb.WriteString("Матрица времени и расстояния между местами:\n")
-	//for i := range timeMatrix {
-	//	for j := range timeMatrix[i] {
-	//		sb.WriteString(fmt.Sprintf("%d ", timeMatrix[i][j]))
-	//	}
-	//	sb.WriteString("\n")
-	//}
-
+	sb.WriteString("\nМатрица времени и расстояния между местами:\n")
 	for origin, destinations := range timeMatrix {
 		for destination, metrics := range destinations {
 			if origin == destination {
@@ -100,30 +96,30 @@ func (s *SchedulerService) generateRequestString(trip model.Trip, places []*mode
 		}
 	}
 
-	sb.WriteString(`
-ФОРМАТ JSON ДОЛЖЕН СООТВЕТСТВОВАТЬ СЛЕДУЮЩЕЙ СТРУКТУРЕ: 
-type Event struct {
-	PlaceID string    
-	TripID  uuid.UUID
-	StartTime string 
-	EndTime   string 
+	sb.WriteString("\nФОРМАТ JSON ДОЛЖЕН СООТВЕТСТВОВАТЬ СЛЕДУЮЩЕЙ СТРУКТУРЕ: \n" +
+		"type Event struct {\n" +
+		"    PlaceID string\n" +
+		"    TripID uuid.UUID\n" +
+		"    StartTime string\n" +
+		"    EndTime string\n" +
+		"}\n\n" +
+		"НУЖНО ВЕРНУТЬ []Event (массив Event)\n" +
+		//"В ОТВЕТЕ ВЕРНИ ТОЛЬКО СПЛАНИРОВАННОЕ РАСПИСАНИЕ. БЕЗ ЛИШНИХ КОММЕНТАРИЕВ И БЕЗ ФОРМАТИРОВАНИЯ.\n" +
+		"ОКРУГЛЯЙ ВРЕМЯ НАЧАЛА СОБЫТИЯ И КОНЦА ДО ЦЕЛЫХ ЧАСА ИЛИ ПОЛОВИНЫ, ДАВАЯ ЗАПАС НА ПЕРЕМЕЩЕНИЕ МЕЖДУ ОБЪЕКТАМИ.\n" +
+		"НЕ ПЛАНИРУЙ ПОСЕЩЕНИЕ МЕСТ РАНЕЕ 9 УТРА\n" +
+		"ТАКЖЕ В РАСПИСАНИИ НУЖНО УЧИТЫВАТЬ ВРЕМЯ НА ПРИЁМЫ ПИЩИ И ПОХОДЫ В ТУАЛЕТ.\n" +
+		"НУЖНО РАСПРЕДЕЛЯТЬ РАВНОМЕРНО ПОСЕЩЕНИЕ МЕСТ ПО ДАТАМ ПОЕЗДКИ. " +
+		"ОДНОМ МЕСТО МОЖНО ПОСЕТИТЬ ТОЛЬКО 1 РАЗ ЗА ПОЕЗДКУ.\n" +
+		"БЕЗ ЛИШНИХ КОММЕНТАРИЕВ И БЕЗ ФОРМАТИРОВАНИЯ ПО ТИПУ \\`\\`\\`json\\`\\`\\`.\n")
+	return sb.String()
 }
 
-type Schedule struct {
-	Events  []Event
-}
+func ParseSchedule(response string) ([]model.Event, error) {
+	var events []model.Event
 
-В ОТВЕТЕ ВЕРНИ ТОЛЬКО JSON  объект, КОТОРЫЙ БУДЕТ ОПИСЫВАТЬ СПЛАНИРОВАННОЕ РАСПИСАНИЕ. БЕЗ ЛИШНИХ КОММЕНТАРИЕВ И БЕЗ ФОРМАТИРОВАНИЯ.
-`)
-	return sb.String(), nil
-}
-
-func ParseResponse(response string) (model.Schedule, error) {
-	var schedule model.Schedule
-
-	err := json.Unmarshal([]byte(response), &schedule)
+	err := json.Unmarshal([]byte(response), &events)
 	if err != nil {
-		return model.Schedule{}, err
+		return nil, err
 	}
-	return schedule, nil
+	return events, nil
 }

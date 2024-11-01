@@ -4,7 +4,7 @@ import (
 	"github.com/google/uuid"
 )
 
-type GetTrip struct {
+type TripResponse struct {
 	ID        uuid.UUID     `json:"id"`
 	Users     []GetUser     `json:"users"`
 	StartTime string        `json:"start_time"`

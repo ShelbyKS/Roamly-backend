@@ -46,7 +46,7 @@ func NewTripHandler(
 		tripGroup.PUT("/", handler.UpdateTrip)
 		tripGroup.DELETE("/:trip_id", handler.DeleteTrip)
 
-		tripGroup.GET("/:trip_id/schedule", handler.ScheduleTrip)
+		tripGroup.POST("/:trip_id/schedule", handler.ScheduleTrip)
 	}
 }
 
@@ -112,7 +112,7 @@ func (h *TripHandler) GetTrips(c *gin.Context) {
 		return
 	}
 
-	tripsDto := make([]dto.GetTrip, len(trips))
+	tripsDto := make([]dto.TripResponse, len(trips))
 	for i, trip := range trips {
 		tripsDto[i] = dto.TripConverter{}.ToDto(trip)
 	}
@@ -147,7 +147,6 @@ func (h *TripHandler) DeleteTrip(c *gin.Context) {
 		c.JSON(domain.GetStatusCodeByError(err), gin.H{"error": err.Error()})
 		return
 	}
-
 	c.Status(http.StatusOK)
 }
 
@@ -250,20 +249,19 @@ func (h *TripHandler) UpdateTrip(c *gin.Context) {
 		c.JSON(domain.GetStatusCodeByError(err), gin.H{"error": err.Error()})
 		return
 	}
-
-	c.JSON(http.StatusOK, gin.H{})
+	c.Status(http.StatusOK)
 }
 
 // @Summary Schedule trip
-// @Description Schedule places  in trip
+// @Description Schedule places in trip
 // @Tags trip
 // @Produce json
 // @Param trip_id path string true "Trip ID"
-// @Success 200 {null} string
+// @Success 200 {object} model.Trip
 // @Failure 400 {object} map[string]string
 // @Failure 404 {object} map[string]string
 // @Failure 500 {object} map[string]string
-// @Router /api/v1/trip/{trip_id}/schedule [get]
+// @Router /api/v1/trip/{trip_id}/schedule [post]
 func (h *TripHandler) ScheduleTrip(c *gin.Context) {
 	idString := c.Param("trip_id")
 	tripID, err := uuid.Parse(idString)
@@ -273,11 +271,12 @@ func (h *TripHandler) ScheduleTrip(c *gin.Context) {
 		return
 	}
 
-	schedule, err := h.schedulerService.GetSchedule(c.Request.Context(), tripID)
+	trip, err := h.schedulerService.ScheduleTrip(c.Request.Context(), tripID)
 	if err != nil {
+		h.lg.WithError(err).Errorf("failed to schedule trip with id=%d", tripID)
 		c.JSON(domain.GetStatusCodeByError(err), gin.H{"error": err.Error()})
 		return
 	}
 
-	c.JSON(http.StatusOK, gin.H{"schedule": schedule})
+	c.JSON(http.StatusOK, gin.H{"trip": dto.TripConverter{}.ToDto(trip)})
 }
