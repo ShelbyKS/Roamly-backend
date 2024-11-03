@@ -69,12 +69,14 @@ definitions:
         type: string
       end_time:
         type: string
+      name:
+        type: string
       start_time:
-        description: 'todo: add trip name'
         type: string
     required:
     - area_id
     - end_time
+    - name
     - start_time
     type: object
   handler.DeleteEventRequest:
@@ -128,18 +130,18 @@ definitions:
     type: object
   handler.UpdateTripRequest:
     properties:
-      area_id:
-        type: string
       end_time:
         type: string
       id:
         type: string
+      name:
+        type: string
       start_time:
         type: string
     required:
-    - area_id
     - end_time
     - id
+    - name
     - start_time
     type: object
   handler.UpdateUserRequest:
@@ -161,6 +163,8 @@ definitions:
   model.Event:
     properties:
       endTime:
+        type: string
+      id:
         type: string
       place:
         $ref: '#/definitions/model.Place'

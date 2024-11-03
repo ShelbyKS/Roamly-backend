@@ -1377,6 +1377,7 @@ const docTemplate = `{
             "required": [
                 "area_id",
                 "end_time",
+                "name",
                 "start_time"
             ],
             "properties": {
@@ -1386,8 +1387,10 @@ const docTemplate = `{
                 "end_time": {
                     "type": "string"
                 },
+                "name": {
+                    "type": "string"
+                },
                 "start_time": {
-                    "description": "todo: add trip name",
                     "type": "string"
                 }
             }
@@ -1467,19 +1470,19 @@ const docTemplate = `{
         "handler.UpdateTripRequest": {
             "type": "object",
             "required": [
-                "area_id",
                 "end_time",
                 "id",
+                "name",
                 "start_time"
             ],
             "properties": {
-                "area_id": {
-                    "type": "string"
-                },
                 "end_time": {
                     "type": "string"
                 },
                 "id": {
+                    "type": "string"
+                },
+                "name": {
                     "type": "string"
                 },
                 "start_time": {
@@ -1514,6 +1517,9 @@ const docTemplate = `{
             "type": "object",
             "properties": {
                 "endTime": {
+                    "type": "string"
+                },
+                "id": {
                     "type": "string"
                 },
                 "place": {
