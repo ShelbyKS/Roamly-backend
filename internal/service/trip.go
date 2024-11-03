@@ -4,8 +4,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"log"
-
 	"github.com/ShelbyKS/Roamly-backend/internal/domain"
 	"github.com/ShelbyKS/Roamly-backend/internal/domain/clients"
 	"github.com/ShelbyKS/Roamly-backend/internal/domain/model"
@@ -65,9 +63,6 @@ func (service *TripService) CreateTrip(ctx context.Context, trip model.Trip) (uu
 	}
 
 	if errors.Is(err, domain.ErrPlaceNotFound) {
-
-		//todo: go to google place api and take info about
-		// create area in db
 		areaGoogle, err := service.googleApiClient.GetPlaceByID(ctx, trip.AreaID, []string{
 			"formatted_address",
 			"name",
@@ -75,8 +70,6 @@ func (service *TripService) CreateTrip(ctx context.Context, trip model.Trip) (uu
 			"geometry",
 			"photo",
 		})
-
-		log.Println("in service:", areaGoogle)
 
 		area, err = service.placeStorage.CreatePlace(ctx, &model.Place{
 			ID:          trip.AreaID,

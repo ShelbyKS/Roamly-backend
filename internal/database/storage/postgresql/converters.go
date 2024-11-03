@@ -49,15 +49,21 @@ func (TripConverter) ToDb(trip model.Trip) orm.Trip {
 		tripEvents = append(tripEvents, eventDB)
 	}
 
+	var areaDb orm.Place
+	if trip.Area != nil {
+		areaDb = PlaceConverter{}.ToDb(*trip.Area)
+	}
+
 	return orm.Trip{
 		ID:        trip.ID,
+		Name:      trip.Name,
 		Users:     users,
 		StartTime: trip.StartTime,
 		EndTime:   trip.EndTime,
 		AreaID:    trip.AreaID,
 		Places:    tripPlaces,
 		Events:    tripEvents,
-		Area:      PlaceConverter{}.ToDb(*trip.Area),
+		Area:      areaDb,
 	}
 }
 
@@ -93,6 +99,7 @@ func (TripConverter) ToDomain(trip orm.Trip) model.Trip {
 
 	return model.Trip{
 		ID:        trip.ID,
+		Name:      trip.Name,
 		Users:     users,
 		StartTime: trip.StartTime,
 		EndTime:   trip.EndTime,
@@ -263,6 +270,7 @@ type EventConverter struct{}
 
 func (EventConverter) ToDb(event model.Event) orm.Event {
 	return orm.Event{
+		ID:        event.ID,
 		PlaceID:   event.PlaceID,
 		TripID:    event.TripID,
 		StartTime: event.StartTime,

@@ -6,6 +6,7 @@ import (
 
 type TripResponse struct {
 	ID        uuid.UUID     `json:"id"`
+	Name      string        `json:"name"`
 	Users     []GetUser     `json:"users"`
 	StartTime string        `json:"start_time"`
 	EndTime   string        `json:"end_time"`

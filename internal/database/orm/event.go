@@ -5,8 +5,9 @@ import (
 )
 
 type Event struct {
-	PlaceID string    `gorm:"primaryKey"`
-	TripID  uuid.UUID `gorm:"primaryKey"`
+	ID      uuid.UUID `gorm:"primary_key"`
+	PlaceID string
+	TripID  uuid.UUID
 	Place   Place
 	Trip    Trip
 

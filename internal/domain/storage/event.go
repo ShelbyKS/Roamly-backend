@@ -9,7 +9,7 @@ import (
 
 type IEventStorage interface {
 	GetEventByID(ctx context.Context, placeID string, tripID uuid.UUID) (model.Event, error)
-	CreateEvent(ctx context.Context, event model.Event) error
+	CreateEvent(ctx context.Context, event *model.Event) error
 	UpdateEvent(ctx context.Context, event model.Event) error
 	DeleteEvent(ctx context.Context, placeID string, tripID uuid.UUID) error
 }

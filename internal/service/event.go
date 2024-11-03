@@ -58,7 +58,7 @@ func (service *EventService) CreateEvent(ctx context.Context, event model.Event)
 	// event.Place = place
 	// event.Trip = trip
 
-	err = service.eventStorage.CreateEvent(ctx, event)
+	err = service.eventStorage.CreateEvent(ctx, &event)
 	if err != nil {
 		return fmt.Errorf("fail to create event in storage: %w", err)
 	}

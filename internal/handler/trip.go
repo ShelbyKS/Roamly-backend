@@ -103,7 +103,6 @@ func (h *TripHandler) GetTrips(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "failed to parse user_id to int"})
 		return
 	}
-	//todo: get user_id from ctx and find trips by this user
 
 	trips, err := h.tripService.GetTrips(c.Request.Context(), id)
 	if err != nil {
@@ -151,7 +150,7 @@ func (h *TripHandler) DeleteTrip(c *gin.Context) {
 }
 
 type CreateTripRequest struct {
-	//todo: add trip name
+	Name      string `json:"name" form:"name" binding:"required"`
 	StartTime string `json:"start_time" form:"start_time" binding:"required"`
 	EndTime   string `json:"end_time" form:"end_time" binding:"required"`
 	AreaID    string `json:"area_id" form:"area_id" binding:"required"`
@@ -192,6 +191,7 @@ func (h *TripHandler) CreateTrip(c *gin.Context) {
 	}
 
 	id, err := h.tripService.CreateTrip(c.Request.Context(), model.Trip{
+		Name:      tripReq.Name,
 		StartTime: tripReq.StartTime,
 		EndTime:   tripReq.EndTime,
 		AreaID:    tripReq.AreaID,
@@ -212,9 +212,9 @@ func (h *TripHandler) CreateTrip(c *gin.Context) {
 
 type UpdateTripRequest struct {
 	ID        uuid.UUID `json:"id" binding:"required"`
+	Name      string    `json:"name" binding:"required"`
 	StartTime string    `json:"start_time" binding:"required"`
 	EndTime   string    `json:"end_time" binding:"required"`
-	AreaID    string    `json:"area_id" binding:"required"`
 }
 
 // @Summary Update trip
@@ -240,16 +240,16 @@ func (h *TripHandler) UpdateTrip(c *gin.Context) {
 
 	err = h.tripService.UpdateTrip(c.Request.Context(), model.Trip{
 		ID:        tripReq.ID,
+		Name:      tripReq.Name,
 		StartTime: tripReq.StartTime,
 		EndTime:   tripReq.EndTime,
-		AreaID:    tripReq.AreaID,
 	})
 	if err != nil {
 		h.lg.WithError(err).Errorf("failed to update trip with id=%d", tripReq.ID)
 		c.JSON(domain.GetStatusCodeByError(err), gin.H{"error": err.Error()})
 		return
 	}
-	c.Status(http.StatusOK)
+	c.JSON(http.StatusOK, gin.H{"id": tripReq.ID})
 }
 
 // @Summary Schedule trip

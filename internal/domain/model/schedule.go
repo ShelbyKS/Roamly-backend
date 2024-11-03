@@ -5,13 +5,14 @@ import (
 )
 
 type Event struct {
-	PlaceID string    `gorm:"primaryKey"`
-	TripID  uuid.UUID `gorm:"primaryKey"`
+	ID      uuid.UUID
+	PlaceID string
+	TripID  uuid.UUID
 	Place   Place
 	Trip    Trip
 
-	StartTime string `gorm:"type:TIME"`
-	EndTime   string `gorm:"type:TIME"`
+	StartTime string
+	EndTime   string
 }
 
 type Schedule struct {

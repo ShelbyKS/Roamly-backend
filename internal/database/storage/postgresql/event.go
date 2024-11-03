@@ -64,10 +64,12 @@ func (storage *EventStorage) DeleteEvent(ctx context.Context, placeID string, tr
 	return nil
 }
 
-func (storage *EventStorage) CreateEvent(ctx context.Context, event model.Event) error {
-	eventDb := EventConverter{}.ToDb(event)
-	eventDb.Trip = orm.Trip{}
+func (storage *EventStorage) CreateEvent(ctx context.Context, event *model.Event) error {
+	eventDb := EventConverter{}.ToDb(*event)
+	//eventDb.Trip = orm.Trip{}
 	tx := storage.db.WithContext(ctx).Create(&eventDb)
+	event.ID = eventDb.ID
+
 	return tx.Error
 }
 

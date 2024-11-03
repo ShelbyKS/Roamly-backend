@@ -48,6 +48,7 @@ func (TripConverter) ToDto(trip model.Trip) TripResponse {
 
 	return TripResponse{
 		ID:        trip.ID,
+		Name:      trip.Name,
 		Users:     users,
 		StartTime: trip.StartTime,
 		EndTime:   trip.EndTime,

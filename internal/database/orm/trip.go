@@ -6,8 +6,9 @@ import (
 
 type Trip struct {
 	ID        uuid.UUID `gorm:"primaryKey"`
-	StartTime string    `gorm:"type:TIME"`
-	EndTime   string    `gorm:"type:TIME"`
+	Name      string
+	StartTime string `gorm:"type:TIME"`
+	EndTime   string `gorm:"type:TIME"`
 	AreaID    string
 	Area      Place
 	Users     []*User  `gorm:"many2many:trip_user;constraint:OnDelete:CASCADE;"`
