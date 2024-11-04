@@ -26,14 +26,16 @@ func NewEventHandler(router *gin.Engine,
 		eventService: eventService,
 	}
 
-	eventGroup := router.Group("/api/v1/event")
-	eventGroup.Use(middleware.Mw.AuthMiddleware())
+	tripEventGroup := router.Group("/api/v1/trip/event")
+	tripEventGroup.Use(middleware.Mw.AuthMiddleware())
 	{
-		eventGroup.POST("/", handler.CreateEvent)
-		eventGroup.GET("/", handler.GetEvent)
-		eventGroup.PUT("/", handler.UpdateEvent)
-		eventGroup.DELETE("/", handler.DeleteEvent)
+		tripEventGroup.POST("/", handler.CreateEvent)
+		tripEventGroup.GET("/", handler.GetEvent)
+		tripEventGroup.PUT("/", handler.UpdateEvent)
+		tripEventGroup.DELETE("/", handler.DeleteEvent)
 	}
+
+	router.DELETE("/api/v1/trip/:trip_id/event", middleware.Mw.AuthMiddleware(), handler.DeleteAllEvents)
 }
 
 type CreateEventRequest struct {
@@ -49,10 +51,10 @@ type CreateEventRequest struct {
 // @Accept json
 // @Produce json
 // @Param event body CreateEventRequest true "Event data"
-// @Success 201 {object} model.Event
+// @Success 201 {object} dto.GetEvent
 // @Failure 400 {object} map[string]string
 // @Failure 500 {object} map[string]string
-// @Router /api/v1/event [post]
+// @Router /api/v1/trip/event [post]
 func (h *EventHandler) CreateEvent(c *gin.Context) {
 	var req CreateEventRequest
 
@@ -69,19 +71,17 @@ func (h *EventHandler) CreateEvent(c *gin.Context) {
 		StartTime: req.StartTime,
 		EndTime:   req.EndTime,
 	}
-
-	if err := h.eventService.CreateEvent(c.Request.Context(), event); err != nil {
+	event, err := h.eventService.CreateEvent(c.Request.Context(), event)
+	if err != nil {
 		h.lg.WithError(err).Errorf("failed to create event %s for trip %s", req.PlaceID, req.TripID)
 		c.JSON(domain.GetStatusCodeByError(err), gin.H{"error": err.Error()})
 		return
 	}
-
-	c.JSON(http.StatusCreated, gin.H{})
+	c.JSON(http.StatusCreated, gin.H{"event": dto.EventConverter{}.ToDto(event)})
 }
 
 type UpdateEventRequest struct {
-	PlaceID   string    `json:"place_id" binding:"required"`
-	TripID    uuid.UUID `json:"trip_id" binding:"required"`
+	ID        uuid.UUID `json:"id" binding:"required"`
 	StartTime string    `json:"start_time" binding:"required"`
 	EndTime   string    `json:"end_time" binding:"required"`
 }
@@ -96,7 +96,7 @@ type UpdateEventRequest struct {
 // @Failure 400 {object} map[string]string
 // @Failure 404 {object} map[string]string
 // @Failure 500 {object} map[string]string
-// @Router /api/v1/event [put]
+// @Router /api/v1/trip/event [put]
 func (h *EventHandler) UpdateEvent(c *gin.Context) {
 	var req UpdateEventRequest
 
@@ -106,82 +106,98 @@ func (h *EventHandler) UpdateEvent(c *gin.Context) {
 		return
 	}
 
-	// todo: в конвертер
-	event := model.Event{
-		PlaceID:   req.PlaceID,
-		TripID:    req.TripID,
+	updatedEvent, err := h.eventService.UpdateEvent(c.Request.Context(), model.Event{
+		ID:        req.ID,
 		StartTime: req.StartTime,
 		EndTime:   req.EndTime,
-	}
-
-	if err := h.eventService.UpdateEvent(c.Request.Context(), event); err != nil {
-		h.lg.WithError(err).Errorf("failed to update event %s from trip %s ", req.PlaceID, req.TripID)
+	})
+	if err != nil {
+		h.lg.WithError(err).Errorf("failed to update event %s", req.ID)
 		c.JSON(domain.GetStatusCodeByError(err), gin.H{"error": err.Error()})
 		return
 	}
 
-	c.JSON(http.StatusOK, gin.H{})
-}
-
-type DeleteEventRequest struct {
-	PlaceID string    `json:"place_id" binding:"required"`
-	TripID  uuid.UUID `json:"trip_id" binding:"required"`
+	c.JSON(http.StatusOK, gin.H{"event": dto.EventConverter{}.ToDto(updatedEvent)})
 }
 
 // @Summary Delete event
-// @Description Delete an event by place ID and trip ID
+// @Description Delete an event by ID
 // @Tags event
 // @Accept json
 // @Produce json
-// @Param event body DeleteEventRequest true "Event data"
+// @Param event_id query string true "Event ID"
 // @Success 204 {object} map[string]string
 // @Failure 404 {object} map[string]string
 // @Failure 500 {object} map[string]string
-// @Router /api/v1/event [delete]
+// @Router /api/v1/trip/event [delete]
 func (h *EventHandler) DeleteEvent(c *gin.Context) {
-	var req DeleteEventRequest
-
-	if err := c.BindJSON(&req); err != nil {
-		h.lg.WithError(err).Errorf("failed to parse body")
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+	eventID, err := uuid.Parse(c.Query("event_id"))
+	if err != nil {
+		h.lg.WithError(err).Errorf("failed to parse query")
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid event ID"})
 		return
 	}
 
-	if err := h.eventService.DeleteEvent(c.Request.Context(), req.PlaceID, req.TripID); err != nil {
-		h.lg.WithError(err).Errorf("failed to delete event %s from trip %s", req.PlaceID, req.TripID)
+	if err := h.eventService.DeleteEvent(c.Request.Context(), eventID); err != nil {
+		h.lg.WithError(err).Errorf("failed to delete event %s", eventID)
 		c.JSON(domain.GetStatusCodeByError(err), gin.H{"error": err.Error()})
 		return
 	}
 
-	c.JSON(http.StatusNoContent, gin.H{})
+	c.Status(http.StatusNoContent)
 }
 
 // @Summary Get event
-// @Description Get event by place ID and trip ID
+// @Description Get event by ID
 // @Tags event
 // @Accept json
 // @Produce json
-// @Param place_id query string true "Place ID"
-// @Param trip_id query string true "Trip ID"
+// @Param event_id query string true "Event ID"
 // @Success 200 {object} model.Event
 // @Failure 404 {object} map[string]string
 // @Failure 500 {object} map[string]string
-// @Router /api/v1/event [get]
+// @Router /api/v1/trip/event [get]
 func (h *EventHandler) GetEvent(c *gin.Context) {
-	placeID := c.Query("place_id")
-	tripID, err := uuid.Parse(c.Query("trip_id"))
+	eventID, err := uuid.Parse(c.Query("event_id"))
+	if err != nil {
+		h.lg.WithError(err).Errorf("failed to parse query")
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid event ID"})
+		return
+	}
+
+	event, err := h.eventService.GetEventByID(c.Request.Context(), eventID)
+	if err != nil {
+		h.lg.WithError(err).Errorf("failed to get event %s from trip %s", eventID, event.TripID)
+		c.JSON(domain.GetStatusCodeByError(err), gin.H{"error": err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"event": dto.EventConverter{}.ToDto(event)})
+}
+
+// @Summary Delete trip events
+// @Description Delete all events by trip ID
+// @Tags event
+// @Accept json
+// @Produce json
+// @Param trip_id query string true "Trip ID"
+// @Success 204 {object} map[string]string
+// @Failure 404 {object} map[string]string
+// @Failure 500 {object} map[string]string
+// @Router /api/v1/trip/{trip_id}/event [delete]
+func (h *EventHandler) DeleteAllEvents(c *gin.Context) {
+	tripID, err := uuid.Parse(c.Param("trip_id"))
 	if err != nil {
 		h.lg.WithError(err).Errorf("failed to parse query")
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid trip ID"})
 		return
 	}
 
-	event, err := h.eventService.GetEventByID(c.Request.Context(), placeID, tripID)
-	if err != nil {
-		h.lg.WithError(err).Errorf("failed to get event %s from trip %s", placeID, tripID)
+	if err := h.eventService.DeleteEventsByTrip(c.Request.Context(), tripID); err != nil {
+		h.lg.WithError(err).Errorf("failed to delete events for trip %s", tripID)
 		c.JSON(domain.GetStatusCodeByError(err), gin.H{"error": err.Error()})
 		return
 	}
 
-	c.JSON(http.StatusOK, dto.EventConverter{}.ToDto(event))
+	c.Status(http.StatusNoContent)
 }

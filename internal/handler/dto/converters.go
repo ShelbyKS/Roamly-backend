@@ -37,6 +37,7 @@ func (TripConverter) ToDto(trip model.Trip) TripResponse {
 	events := make([]GetEvent, len(trip.Events))
 	for i, event := range trip.Events {
 		events[i] = GetEvent{
+			ID:        event.ID,
 			PlaceID:   event.PlaceID,
 			TripID:    event.TripID,
 			StartTime: event.StartTime,
@@ -108,6 +109,7 @@ type EventConverter struct{}
 
 func (EventConverter) ToDto(event model.Event) GetEvent {
 	return GetEvent{
+		ID:        event.ID,
 		PlaceID:   event.PlaceID,
 		TripID:    event.TripID,
 		StartTime: event.StartTime,

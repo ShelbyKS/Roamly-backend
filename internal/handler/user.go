@@ -94,7 +94,7 @@ func (h *UserHandler) UpdateUser(c *gin.Context) {
 	err = h.userService.UpdateUser(c, model.User{
 		ID:       userReq.ID,
 		Login:    userReq.Login,
-		Password: []byte(userReq.Password),
+		Password: userReq.Password,
 	})
 	if err != nil {
 		h.lg.WithError(err).Errorf("Fail to update user with id=%d", userReq.ID)

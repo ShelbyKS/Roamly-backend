@@ -13,5 +13,5 @@ type Trip struct {
 	Area      Place
 	Users     []*User  `gorm:"many2many:trip_user;constraint:OnDelete:CASCADE;"`
 	Places    []*Place `gorm:"many2many:trip_place;constraint:OnDelete:CASCADE;"`
-	Events    []Event
+	Events    []Event  `gorm:"constraint:OnDelete:CASCADE;"`
 }

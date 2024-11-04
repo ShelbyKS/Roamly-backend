@@ -7,7 +7,7 @@ import (
 type Event struct {
 	ID      uuid.UUID `gorm:"primary_key"`
 	PlaceID string
-	TripID  uuid.UUID
+	TripID  uuid.UUID `gorm:"index"`
 	Place   Place
 	Trip    Trip
 

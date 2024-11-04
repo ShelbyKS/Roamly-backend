@@ -132,8 +132,7 @@ func (h *TripHandler) GetTrips(c *gin.Context) {
 // @Failure 500 {object} map[string]string
 // @Router /api/v1/trip/{trip_id} [delete]
 func (h *TripHandler) DeleteTrip(c *gin.Context) {
-	idString := c.Param("trip_id")
-	id, err := uuid.Parse(idString)
+	id, err := uuid.Parse(c.Param("trip_id"))
 	if err != nil {
 		h.lg.WithError(err).Errorf("failed to parse query")
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})

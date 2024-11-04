@@ -23,19 +23,18 @@ func NewEventStorage(db *gorm.DB) storage.IEventStorage {
 	}
 }
 
-func (storage *EventStorage) GetEventByID(ctx context.Context, placeID string, tripID uuid.UUID) (model.Event, error) {
+func (storage *EventStorage) GetEventByID(ctx context.Context, eventID uuid.UUID) (model.Event, error) {
 	event := orm.Event{
-		PlaceID: placeID,
-		TripID:  tripID,
+		ID: eventID,
 	}
 
 	tx := storage.db.WithContext(ctx).
-		Preload("Place").
-		Preload("Trip").
+		//Preload("Place").
+		//Preload("Trip").
 		First(&event)
 
 	if errors.Is(tx.Error, gorm.ErrRecordNotFound) {
-		tx.Error = errors.Join(domain.ErrEventNotFound, tx.Error)
+		return model.Event{}, domain.ErrEventNotFound
 	}
 
 	if tx.Error != nil {
@@ -45,39 +44,65 @@ func (storage *EventStorage) GetEventByID(ctx context.Context, placeID string, t
 	return EventConverter{}.ToDomain(event), nil
 }
 
-func (storage *EventStorage) DeleteEvent(ctx context.Context, placeID string, tripID uuid.UUID) error {
+func (storage *EventStorage) DeleteEvent(ctx context.Context, eventID uuid.UUID) error {
 	event := orm.Event{
-		PlaceID: placeID,
-		TripID:  tripID,
+		ID: eventID,
 	}
 
 	tx := storage.db.WithContext(ctx).Delete(&event)
 
-	if errors.Is(tx.Error, gorm.ErrRecordNotFound) {
-		tx.Error = errors.Join(domain.ErrEventNotFound, tx.Error)
-	}
-
 	if tx.Error != nil {
 		return tx.Error
+	}
+	if tx.RowsAffected == 0 {
+		return domain.ErrEventNotFound
 	}
 
 	return nil
 }
 
-func (storage *EventStorage) CreateEvent(ctx context.Context, event *model.Event) error {
-	eventDb := EventConverter{}.ToDb(*event)
-	//eventDb.Trip = orm.Trip{}
+func (storage *EventStorage) CreateEvent(ctx context.Context, event model.Event) error {
+	eventDb := EventConverter{}.ToDb(event)
+
 	tx := storage.db.WithContext(ctx).Create(&eventDb)
-	event.ID = eventDb.ID
 
 	return tx.Error
 }
 
-func (storage *EventStorage) UpdateEvent(ctx context.Context, event model.Event) error {
+func (storage *EventStorage) UpdateEvent(ctx context.Context, event model.Event) (model.Event, error) {
 	eventDb := EventConverter{}.ToDb(event)
 	tx := storage.db.WithContext(ctx).
-		Model(&orm.Event{PlaceID: event.PlaceID, TripID: event.TripID}).
+		Model(&orm.Event{ID: eventDb.ID}).
 		Updates(eventDb)
+
+	if tx.Error != nil {
+		return model.Event{}, tx.Error
+	}
+	if tx.RowsAffected == 0 {
+		return model.Event{}, domain.ErrEventNotFound
+	}
+
+	return EventConverter{}.ToDomain(eventDb), nil
+}
+
+func (storage *EventStorage) CreateBatchEvents(ctx context.Context, events *[]model.Event) error {
+	var eventsDb []orm.Event
+	for i, event := range *events {
+		id := uuid.New()
+		event.ID = id
+		(*events)[i].ID = id
+		eventsDb = append(eventsDb, EventConverter{}.ToDb(event))
+	}
+
+	tx := storage.db.WithContext(ctx).Create(&eventsDb)
+
+	return tx.Error
+}
+
+func (storage *EventStorage) DeleteEventsByTrip(ctx context.Context, tripID uuid.UUID) error {
+	tx := storage.db.WithContext(ctx).
+		Where("trip_id = ?", tripID).
+		Delete(&orm.Event{})
 
 	return tx.Error
 }

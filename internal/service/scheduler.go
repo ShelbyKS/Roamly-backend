@@ -18,17 +18,20 @@ type SchedulerService struct {
 	openAIClient clients.IChatClient
 	googleApi    clients.IGoogleApiClient
 	tripStorage  storage.ITripStorage
+	eventStorage storage.IEventStorage
 }
 
 func NewShedulerService(
 	openAIClient clients.IChatClient,
 	googleApi clients.IGoogleApiClient,
 	tripStorage storage.ITripStorage,
+	eventStorage storage.IEventStorage,
 ) service.ISchedulerService {
 	return &SchedulerService{
 		openAIClient: openAIClient,
 		googleApi:    googleApi,
 		tripStorage:  tripStorage,
+		eventStorage: eventStorage,
 	}
 }
 
@@ -45,7 +48,7 @@ func (s *SchedulerService) ScheduleTrip(ctx context.Context, tripID uuid.UUID) (
 
 	prompt := s.generateRequestString(trip, trip.Places, timeDistMatrix)
 
-	fmt.Println("PROMT: ", prompt) //todo: delete
+	//fmt.Println("PROMT: ", prompt)
 
 	resp, err := s.openAIClient.PostPrompt(ctx, prompt)
 	if err != nil {
@@ -57,11 +60,16 @@ func (s *SchedulerService) ScheduleTrip(ctx context.Context, tripID uuid.UUID) (
 		return model.Trip{}, fmt.Errorf("failed to parse schedule: %w", err)
 	}
 
-	trip.Events = events
-	err = s.tripStorage.UpdateTrip(ctx, trip)
+	err = s.eventStorage.DeleteEventsByTrip(ctx, trip.ID)
 	if err != nil {
-		return model.Trip{}, fmt.Errorf("failed to update trip trip events: %w", err)
+		return model.Trip{}, fmt.Errorf("failed to delete current events: %w", err)
 	}
+
+	err = s.eventStorage.CreateBatchEvents(ctx, &events)
+	if err != nil {
+		return model.Trip{}, fmt.Errorf("failed to save events: %w", err)
+	}
+	trip.Events = events
 
 	return trip, nil
 }

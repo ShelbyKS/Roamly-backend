@@ -9,6 +9,6 @@ type Session struct {
 }
 
 type Credentials struct {
-	Password []byte `json:"password"`
+	Password string `json:"password"`
 	Email    string `json:"email"`
 }

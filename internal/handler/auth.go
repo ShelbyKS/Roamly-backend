@@ -47,6 +47,7 @@ type RegisterRequest struct {
 // @Param user body RegisterRequest true "User data"
 // @Success 200 {object} object{body=object{user_id=int}}
 // @Failure 400 {object} object{error=string}
+// @Failure 409 {object} object{error=string}
 // @Failure 500 {object} object{error=string}
 // @Router /api/v1/auth/register [post]
 func (h *AuthHandler) Register(c *gin.Context) {
@@ -59,20 +60,22 @@ func (h *AuthHandler) Register(c *gin.Context) {
 		return
 	}
 
-	newUser, err := h.authService.Register(c.Request.Context(), model.User{
+	user := model.User{
 		Login:    req.Login,
 		Email:    req.Email,
-		Password: []byte(req.Password),
-	})
+		Password: req.Password,
+	}
+
+	newUser, err := h.authService.Register(c.Request.Context(), user)
 	if err != nil {
 		h.lg.WithError(err).Errorf("failed to register new user with email=%s", req.Email)
 		c.JSON(domain.GetStatusCodeByError(err), gin.H{"error": err.Error()})
 		return
 	}
 
-	session, err := h.authService.Login(c.Request.Context(), newUser)
+	session, err := h.authService.Login(c.Request.Context(), user)
 	if err != nil {
-		h.lg.WithError(err).Errorf("failed to login after registration with email=%s", newUser.Email)
+		h.lg.WithError(err).Errorf("failed to login after registration with email=%s", user.Email)
 		c.JSON(domain.GetStatusCodeByError(err), gin.H{"error": err.Error()})
 		return
 	}
@@ -113,11 +116,11 @@ func (h *AuthHandler) Login(c *gin.Context) {
 
 	session, err := h.authService.Login(c.Request.Context(), model.User{
 		Email:    req.Email,
-		Password: []byte(req.Password),
+		Password: req.Password,
 	})
 	if err != nil {
 		h.lg.WithError(err).Errorf("failed to login  with email=%s", req.Email)
-		c.JSON(domain.GetStatusCodeByError(err), gin.H{"error": err.Error()}) //todo: mb not 500
+		c.JSON(domain.GetStatusCodeByError(err), gin.H{"error": err.Error()})
 		return
 	}
 

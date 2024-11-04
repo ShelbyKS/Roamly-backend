@@ -4,6 +4,32 @@ definitions:
       location:
         $ref: '#/definitions/dto.Location'
     type: object
+  dto.GetEvent:
+    properties:
+      end_time:
+        type: string
+      id:
+        type: string
+      place_id:
+        type: string
+      start_time:
+        type: string
+      trip_id:
+        type: string
+    type: object
+  dto.GetUser:
+    properties:
+      created_at:
+        type: string
+      email:
+        type: string
+      id:
+        type: integer
+      login:
+        type: string
+      password:
+        type: string
+    type: object
   dto.GooglePlace:
     properties:
       formatted_address:
@@ -24,6 +50,8 @@ definitions:
         items:
           type: string
         type: array
+      vicinity:
+        type: string
     type: object
   dto.Location:
     properties:
@@ -36,6 +64,33 @@ definitions:
     properties:
       photo_reference:
         type: string
+    type: object
+  dto.TripResponse:
+    properties:
+      area:
+        $ref: '#/definitions/dto.GooglePlace'
+      area_id:
+        type: string
+      end_time:
+        type: string
+      events:
+        items:
+          $ref: '#/definitions/dto.GetEvent'
+        type: array
+      id:
+        type: string
+      name:
+        type: string
+      places:
+        items:
+          $ref: '#/definitions/dto.GooglePlace'
+        type: array
+      start_time:
+        type: string
+      users:
+        items:
+          $ref: '#/definitions/dto.GetUser'
+        type: array
     type: object
   handler.AddPlaceToTripRequest:
     properties:
@@ -79,16 +134,6 @@ definitions:
     - name
     - start_time
     type: object
-  handler.DeleteEventRequest:
-    properties:
-      place_id:
-        type: string
-      trip_id:
-        type: string
-    required:
-    - place_id
-    - trip_id
-    type: object
   handler.LoginRequest:
     properties:
       email:
@@ -116,17 +161,14 @@ definitions:
     properties:
       end_time:
         type: string
-      place_id:
+      id:
         type: string
       start_time:
         type: string
-      trip_id:
-        type: string
     required:
     - end_time
-    - place_id
+    - id
     - start_time
-    - trip_id
     type: object
   handler.UpdateTripRequest:
     properties:
@@ -166,14 +208,12 @@ definitions:
         type: string
       id:
         type: string
-      place:
-        $ref: '#/definitions/model.Place'
+      name:
+        type: string
       placeID:
         type: string
       startTime:
         type: string
-      trip:
-        $ref: '#/definitions/model.Trip'
       tripID:
         type: string
     type: object
@@ -202,6 +242,8 @@ definitions:
         items:
           type: string
         type: array
+      vicinity:
+        type: string
     type: object
   model.Location:
     properties:
@@ -274,9 +316,7 @@ definitions:
       login:
         type: string
       password:
-        items:
-          type: integer
-        type: array
+        type: string
     type: object
 info:
   contact: {}
@@ -440,6 +480,13 @@ paths:
               error:
                 type: string
             type: object
+        "409":
+          description: Conflict
+          schema:
+            properties:
+              error:
+                type: string
+            type: object
         "500":
           description: Internal Server Error
           schema:
@@ -450,151 +497,6 @@ paths:
       summary: Register a new user
       tags:
       - user
-  /api/v1/event:
-    delete:
-      consumes:
-      - application/json
-      description: Delete an event by place ID and trip ID
-      parameters:
-      - description: Event data
-        in: body
-        name: event
-        required: true
-        schema:
-          $ref: '#/definitions/handler.DeleteEventRequest'
-      produces:
-      - application/json
-      responses:
-        "204":
-          description: No Content
-          schema:
-            additionalProperties:
-              type: string
-            type: object
-        "404":
-          description: Not Found
-          schema:
-            additionalProperties:
-              type: string
-            type: object
-        "500":
-          description: Internal Server Error
-          schema:
-            additionalProperties:
-              type: string
-            type: object
-      summary: Delete event
-      tags:
-      - event
-    get:
-      consumes:
-      - application/json
-      description: Get event by place ID and trip ID
-      parameters:
-      - description: Place ID
-        in: query
-        name: place_id
-        required: true
-        type: string
-      - description: Trip ID
-        in: query
-        name: trip_id
-        required: true
-        type: string
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            $ref: '#/definitions/model.Event'
-        "404":
-          description: Not Found
-          schema:
-            additionalProperties:
-              type: string
-            type: object
-        "500":
-          description: Internal Server Error
-          schema:
-            additionalProperties:
-              type: string
-            type: object
-      summary: Get event
-      tags:
-      - event
-    post:
-      consumes:
-      - application/json
-      description: Create a new event
-      parameters:
-      - description: Event data
-        in: body
-        name: event
-        required: true
-        schema:
-          $ref: '#/definitions/handler.CreateEventRequest'
-      produces:
-      - application/json
-      responses:
-        "201":
-          description: Created
-          schema:
-            $ref: '#/definitions/model.Event'
-        "400":
-          description: Bad Request
-          schema:
-            additionalProperties:
-              type: string
-            type: object
-        "500":
-          description: Internal Server Error
-          schema:
-            additionalProperties:
-              type: string
-            type: object
-      summary: Create event
-      tags:
-      - event
-    put:
-      consumes:
-      - application/json
-      description: Update event data
-      parameters:
-      - description: Event data
-        in: body
-        name: event
-        required: true
-        schema:
-          $ref: '#/definitions/handler.UpdateEventRequest'
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            $ref: '#/definitions/model.Event'
-        "400":
-          description: Bad Request
-          schema:
-            additionalProperties:
-              type: string
-            type: object
-        "404":
-          description: Not Found
-          schema:
-            additionalProperties:
-              type: string
-            type: object
-        "500":
-          description: Internal Server Error
-          schema:
-            additionalProperties:
-              type: string
-            type: object
-      summary: Update event
-      tags:
-      - event
   /api/v1/place:
     get:
       description: Find places by name or location
@@ -907,6 +809,41 @@ paths:
       summary: Get trip by ID
       tags:
       - trip
+  /api/v1/trip/{trip_id}/event:
+    delete:
+      consumes:
+      - application/json
+      description: Delete all events by trip ID
+      parameters:
+      - description: Trip ID
+        in: query
+        name: trip_id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "204":
+          description: No Content
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "404":
+          description: Not Found
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Delete trip events
+      tags:
+      - event
   /api/v1/trip/{trip_id}/place/{place_id}:
     delete:
       consumes:
@@ -916,10 +853,9 @@ paths:
       - application/json
       responses:
         "200":
-          description: '{}" // Пустой объект на успешный ответ'
+          description: OK
           schema:
-            additionalProperties: true
-            type: object
+            $ref: '#/definitions/dto.TripResponse'
         "400":
           description: Bad request
           schema:
@@ -978,6 +914,145 @@ paths:
       summary: Schedule trip
       tags:
       - trip
+  /api/v1/trip/event:
+    delete:
+      consumes:
+      - application/json
+      description: Delete an event by ID
+      parameters:
+      - description: Event ID
+        in: query
+        name: event_id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "204":
+          description: No Content
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "404":
+          description: Not Found
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Delete event
+      tags:
+      - event
+    get:
+      consumes:
+      - application/json
+      description: Get event by ID
+      parameters:
+      - description: Event ID
+        in: query
+        name: event_id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/model.Event'
+        "404":
+          description: Not Found
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Get event
+      tags:
+      - event
+    post:
+      consumes:
+      - application/json
+      description: Create a new event
+      parameters:
+      - description: Event data
+        in: body
+        name: event
+        required: true
+        schema:
+          $ref: '#/definitions/handler.CreateEventRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/dto.GetEvent'
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Create event
+      tags:
+      - event
+    put:
+      consumes:
+      - application/json
+      description: Update event data
+      parameters:
+      - description: Event data
+        in: body
+        name: event
+        required: true
+        schema:
+          $ref: '#/definitions/handler.UpdateEventRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/model.Event'
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "404":
+          description: Not Found
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Update event
+      tags:
+      - event
   /api/v1/trip/place:
     post:
       consumes:
@@ -994,10 +1069,9 @@ paths:
       - application/json
       responses:
         "200":
-          description: '{}" // Пустой объект на успешный ответ'
+          description: OK
           schema:
-            additionalProperties: true
-            type: object
+            $ref: '#/definitions/dto.TripResponse'
         "400":
           description: Bad request
           schema:

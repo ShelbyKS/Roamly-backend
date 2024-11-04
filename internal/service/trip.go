@@ -49,6 +49,9 @@ func (service *TripService) GetTrips(ctx context.Context, userId int) ([]model.T
 
 func (service *TripService) DeleteTrip(ctx context.Context, id uuid.UUID) error {
 	err := service.tripStorage.DeleteTrip(ctx, id)
+	if errors.Is(err, domain.ErrTripNotFound) {
+		return err
+	}
 	if err != nil {
 		return fmt.Errorf("fail to delete trip from storage: %w", err)
 	}
@@ -93,6 +96,9 @@ func (service *TripService) CreateTrip(ctx context.Context, trip model.Trip) (uu
 
 func (service *TripService) UpdateTrip(ctx context.Context, trip model.Trip) error {
 	err := service.tripStorage.UpdateTrip(ctx, trip)
+	if errors.Is(err, domain.ErrTripNotFound) {
+		return err
+	}
 	if err != nil {
 		return fmt.Errorf("fail to update trip from storage: %w", err)
 	}

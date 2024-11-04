@@ -35,6 +35,7 @@ func (storage *TripStorage) GetTripByID(ctx context.Context, id uuid.UUID) (mode
 		Preload("Places").
 		Preload("Events").
 		First(&trip)
+
 	if errors.Is(tx.Error, gorm.ErrRecordNotFound) {
 		return model.Trip{}, domain.ErrTripNotFound
 	}
@@ -49,7 +50,7 @@ func (storage *TripStorage) GetTripByID(ctx context.Context, id uuid.UUID) (mode
 func (storage *TripStorage) GetTrips(ctx context.Context, userId int) ([]model.Trip, error) {
 	var user orm.User
 
-    err := storage.db.
+	err := storage.db.
 		Preload("Trips").
 		Preload("Trips.Area").
 		Preload("Trips.Users").
@@ -72,12 +73,13 @@ func (storage *TripStorage) DeleteTrip(ctx context.Context, id uuid.UUID) error 
 	}
 
 	tx := storage.db.WithContext(ctx).Delete(&trip)
-	if errors.Is(tx.Error, gorm.ErrRecordNotFound) {
-		tx.Error = errors.Join(domain.ErrUserNotFound, tx.Error)
-	}
 
 	if tx.Error != nil {
 		return tx.Error
+	}
+
+	if tx.RowsAffected == 0 {
+		return domain.ErrTripNotFound
 	}
 
 	return nil
@@ -96,6 +98,10 @@ func (storage *TripStorage) UpdateTrip(ctx context.Context, trip model.Trip) err
 	tx := storage.db.WithContext(ctx).
 		Model(&orm.Trip{ID: trip.ID}).
 		Updates(&tripDb)
+
+	if tx.RowsAffected == 0 {
+		return domain.ErrTripNotFound
+	}
 
 	return tx.Error
 }

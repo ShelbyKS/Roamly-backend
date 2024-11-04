@@ -8,7 +8,6 @@ import (
 
 	"github.com/ShelbyKS/Roamly-backend/internal/domain"
 	"github.com/ShelbyKS/Roamly-backend/internal/middleware"
-
 	"github.com/google/uuid"
 
 	"github.com/ShelbyKS/Roamly-backend/internal/domain/service"
@@ -55,7 +54,7 @@ type AddPlaceToTripRequest struct {
 // @Accept json
 // @Produce json
 // @Param trip-place body AddPlaceToTripRequest true "JSON containing trip and place IDs"
-// @Success 200 {object} map[string]interface{} "{}" // Пустой объект на успешный ответ
+// @Success 200 {object} dto.TripResponse
 // @Failure 400 {object} map[string]string "Bad request"
 // @Failure 404 {object} map[string]string "Not found"
 // @Failure 500 {object} map[string]string "Internal server error"
@@ -92,7 +91,7 @@ func (h *PlaceHandler) AddPlaceToTrip(c *gin.Context) {
 // @Tags place
 // @Accept json
 // @Produce json
-// @Success 200 {object} map[string]interface{} "{}" // Пустой объект на успешный ответ
+// @Success 200 {object} dto.TripResponse
 // @Failure 400 {object} map[string]string "Bad request"
 // @Failure 404 {object} map[string]string "Not found"
 // @Failure 500 {object} map[string]string "Internal server error"

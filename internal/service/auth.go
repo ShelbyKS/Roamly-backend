@@ -1,11 +1,13 @@
 package service
 
 import (
-	"bytes"
 	"context"
 	"crypto/rand"
+	"crypto/subtle"
+	"encoding/base64"
 	"errors"
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/google/uuid"
@@ -35,7 +37,11 @@ func (s *AuthService) Login(ctx context.Context, user model.User) (model.Session
 		return model.Session{}, fmt.Errorf("failed to get user by email: %w", err)
 	}
 
-	if !s.matchPasswords(expectedUser.Password, user.Password) {
+	res, err := s.verifyPassword(expectedUser.Password, user.Password)
+	if err != nil {
+		return model.Session{}, fmt.Errorf("failed to verify password: %w", err)
+	}
+	if res == 0 {
 		return model.Session{}, domain.ErrWrongCredentials
 	}
 
@@ -68,15 +74,15 @@ func (s *AuthService) Register(ctx context.Context, user model.User) (model.User
 	}
 
 	if !errors.Is(err, domain.ErrUserNotFound) {
-		return model.User{}, fmt.Errorf("user already exists")
+		return model.User{}, domain.ErrUserAlreadyExists
 	}
 
-	salt := make([]byte, 8)
-	_, err = rand.Read(salt)
+	salt, err := s.generateSalt()
 	if err != nil {
 		return model.User{}, fmt.Errorf("failed to generate salt: %w", err)
 	}
-	user.Password = s.hashPassword(salt, user.Password)
+
+	user.Password = s.hashPassword(user.Password, salt)
 
 	err = s.userStorage.CreateUser(ctx, &user)
 	if err != nil {
@@ -86,14 +92,36 @@ func (s *AuthService) Register(ctx context.Context, user model.User) (model.User
 	return user, nil
 }
 
-func (s *AuthService) hashPassword(salt, password []byte) []byte {
-	hashedPassword := argon2.IDKey(password, salt, 1, 64*1024, 4, 32)
-	return append(salt, hashedPassword...)
+func (s *AuthService) generateSalt() ([]byte, error) {
+	salt := make([]byte, 16) // Например, 16 байт
+	_, err := rand.Read(salt)
+	if err != nil {
+		return nil, err
+	}
+	return salt, nil
 }
 
-func (s *AuthService) matchPasswords(hashedPassword, plainPassword []byte) bool {
-	salt := hashedPassword[:8]
-	userPassHash := s.hashPassword(salt, plainPassword)
+func (s *AuthService) hashPassword(password string, salt []byte) string {
+	hash := argon2.IDKey([]byte(password), salt, 1, 64*1024, 4, 32) // Параметры Argon2id
+	return fmt.Sprintf("%s:%s", base64.RawStdEncoding.EncodeToString(salt), base64.RawStdEncoding.EncodeToString(hash))
+}
 
-	return bytes.Equal(userPassHash, hashedPassword)
+func (s *AuthService) verifyPassword(storedHash, password string) (int, error) {
+	parts := strings.Split(storedHash, ":")
+	if len(parts) != 2 {
+		return 0, fmt.Errorf("invalid stored hash format")
+	}
+
+	salt, err := base64.RawStdEncoding.DecodeString(parts[0])
+	if err != nil {
+		return 0, err
+	}
+	expectedHash, err := base64.RawStdEncoding.DecodeString(parts[1])
+	if err != nil {
+		return 0, err
+	}
+
+	hash := argon2.IDKey([]byte(password), salt, 1, 64*1024, 4, 32)
+
+	return subtle.ConstantTimeCompare(hash, expectedHash), nil
 }

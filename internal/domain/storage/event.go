@@ -8,8 +8,10 @@ import (
 )
 
 type IEventStorage interface {
-	GetEventByID(ctx context.Context, placeID string, tripID uuid.UUID) (model.Event, error)
-	CreateEvent(ctx context.Context, event *model.Event) error
-	UpdateEvent(ctx context.Context, event model.Event) error
-	DeleteEvent(ctx context.Context, placeID string, tripID uuid.UUID) error
+	GetEventByID(ctx context.Context, eventID uuid.UUID) (model.Event, error)
+	CreateEvent(ctx context.Context, event model.Event) error
+	UpdateEvent(ctx context.Context, event model.Event) (model.Event, error)
+	DeleteEvent(ctx context.Context, eventID uuid.UUID) error
+	CreateBatchEvents(ctx context.Context, events *[]model.Event) error
+	DeleteEventsByTrip(ctx context.Context, tripID uuid.UUID) error
 }

@@ -87,12 +87,7 @@ func (TripConverter) ToDomain(trip orm.Trip) model.Trip {
 
 	events := make([]model.Event, len(trip.Events))
 	for i, event := range trip.Events {
-		events[i] = model.Event{
-			PlaceID:   event.PlaceID,
-			TripID:    event.TripID,
-			StartTime: event.StartTime,
-			EndTime:   event.EndTime,
-		}
+		events[i] = EventConverter{}.ToDomain(event)
 	}
 
 	area := PlaceConverter{}.ToDomain(trip.Area)
@@ -275,18 +270,17 @@ func (EventConverter) ToDb(event model.Event) orm.Event {
 		TripID:    event.TripID,
 		StartTime: event.StartTime,
 		EndTime:   event.EndTime,
-		// Trip:      TripConverter{}.ToDb(event.Trip),
-		// Place:     PlaceConverter{}.ToDb(event.Place),
+		//Trip:      TripConverter{}.ToDb(event.Trip),
+		//Place:     PlaceConverter{}.ToDb(event.Place),
 	}
 }
 
 func (EventConverter) ToDomain(event orm.Event) model.Event {
 	return model.Event{
+		ID:        event.ID,
 		PlaceID:   event.PlaceID,
 		TripID:    event.TripID,
 		StartTime: event.StartTime,
 		EndTime:   event.EndTime,
-		Trip:      TripConverter{}.ToDomain(event.Trip),
-		Place:     PlaceConverter{}.ToDomain(event.Place),
 	}
 }
