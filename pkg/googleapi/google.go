@@ -84,6 +84,8 @@ func (c *GoogleApiClient) FindPlace(ctx context.Context, input string, fields []
 		"key":       c.apiKey,
 	}
 
+	params["language"] = "ru"
+
 	var result FindPlaceResponse
 
 	_, err := c.client.R().
@@ -122,6 +124,8 @@ func (c *GoogleApiClient) GetPlaceByID(ctx context.Context, placeID string, fiel
 		"key":      c.apiKey,
 	}
 
+	params["language"] = "ru"
+
 	var result GetPlaceDataResponse
 
 	_, err := c.client.R().
@@ -157,6 +161,7 @@ func (c *GoogleApiClient) GetPlaces(ctx context.Context, query map[string]string
 	var result GeocodeResponse
 
 	query["key"] = c.apiKey
+	query["language"] = "ru"
 
 	_, err := c.client.R().
 		SetContext(ctx).
@@ -230,6 +235,8 @@ func (c *GoogleApiClient) GetTimeDistanceMatrix(ctx context.Context, placeIDs []
 		"destinations": placesParams,
 		"key":          c.apiKey,
 	}
+
+	params["language"] = "ru"
 
 	var result DistanceMatrixResponse
 
@@ -355,13 +362,13 @@ func (c *GoogleApiClient) GetPlacesNearby(ctx context.Context,
 	// 		"photo"}),
 	// }
 
-	query["language"] = "ру"
+	query["language"] = "ru"
 	query["location"] = fmt.Sprintf("%f,%f", lat, lng)
 	query["radius"] = fmt.Sprintf("%f", radius)
 	query["type"] = includedTypes[0]
 	query["key"] = c.apiKey
 
-	response, err := c.client.R().
+	resp, err := c.client.R().
 		SetContext(ctx).
 		SetHeader("Content-Type", "application/json").
 		// SetHeader("X-Goog-Api-Key", c.apiKey).
@@ -369,9 +376,10 @@ func (c *GoogleApiClient) GetPlacesNearby(ctx context.Context,
 		// SetHeader("X-Goog-FieldMask", fieldMask).
 		// SetBody(request).
 		SetResult(&result).
-		Post(methodGetPlacesNearby)
 
-	log.Println(string(response.Body()))
+		Get(methodGetPlacesNearby)
+
+	log.Println(resp.Request.URL)
 
 	if err != nil {
 		return []model.GooglePlace{}, err
