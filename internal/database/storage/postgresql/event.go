@@ -106,3 +106,12 @@ func (storage *EventStorage) DeleteEventsByTrip(ctx context.Context, tripID uuid
 
 	return tx.Error
 }
+
+func (storage *EventStorage) DeleteEventsByPlace(ctx context.Context, tripID uuid.UUID, placeID string) error {
+	tx := storage.db.WithContext(ctx).
+		Where("trip_id = ?", tripID).
+		Where("place_id = ?", placeID).
+		Delete(&orm.Event{})
+
+	return tx.Error
+}

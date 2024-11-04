@@ -19,17 +19,22 @@ import (
 type PlaceService struct {
 	placeStorage storage.IPlaceStorage
 	tripStorage  storage.ITripStorage
+	eventStorage storage.IEventStorage
 	googleApi    clients.IGoogleApiClient
 }
 
-func NewPlaceService(placeStorage storage.IPlaceStorage,
+func NewPlaceService(
+	placeStorage storage.IPlaceStorage,
 	tripStorage storage.ITripStorage,
-	googleApi clients.IGoogleApiClient) service.IPlaceService {
+	googleApi clients.IGoogleApiClient,
+	eventStorage storage.IEventStorage,
+) service.IPlaceService {
 
 	return &PlaceService{
 		placeStorage: placeStorage,
 		tripStorage:  tripStorage,
 		googleApi:    googleApi,
+		eventStorage: eventStorage,
 	}
 }
 
@@ -67,12 +72,14 @@ func (service *PlaceService) DeletePlace(ctx context.Context, tripID uuid.UUID, 
 		return model.Trip{}, fmt.Errorf("can't delete place: %w", err)
 	}
 
-	// возможно лучше еще раз в базу сходить просто
-	for i := len(trip.Places) - 1; i >= 0; i-- {
-		if trip.Places[i].ID == placeID {
-			trip.Places = append(trip.Places[:i], trip.Places[i+1:]...)
-			break
-		}
+	err = service.eventStorage.DeleteEventsByPlace(ctx, tripID, placeID)
+	if err != nil {
+		return model.Trip{}, fmt.Errorf("can't delete related events: %w", err)
+	}
+
+	trip, err = service.tripStorage.GetTripByID(ctx, tripID)
+	if err != nil {
+		return model.Trip{}, fmt.Errorf("trip after deleting not found: %w", err)
 	}
 
 	return trip, nil
@@ -129,7 +136,7 @@ func (service *PlaceService) AddPlaceToTrip(ctx context.Context, tripID uuid.UUI
 
 }
 
-func (service *PlaceService) GetPlacesNearby(ctx context.Context, lat float64, lng float64, placesTypes []string) ([]model.GooglePlace, error){
+func (service *PlaceService) GetPlacesNearby(ctx context.Context, lat float64, lng float64, placesTypes []string) ([]model.GooglePlace, error) {
 	maxPlaces := 10
 	rankPreference := "DISTANCE"
 	radius := 20000.
@@ -141,7 +148,7 @@ func (service *PlaceService) GetPlacesNearby(ctx context.Context, lat float64, l
 		lat,
 		lng,
 		radius)
-	
+
 	if err != nil {
 		return []model.GooglePlace{}, fmt.Errorf("error get places nerby: %w", err)
 	}

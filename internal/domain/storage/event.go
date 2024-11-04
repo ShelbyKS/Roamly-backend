@@ -14,4 +14,5 @@ type IEventStorage interface {
 	DeleteEvent(ctx context.Context, eventID uuid.UUID) error
 	CreateBatchEvents(ctx context.Context, events *[]model.Event) error
 	DeleteEventsByTrip(ctx context.Context, tripID uuid.UUID) error
+	DeleteEventsByPlace(ctx context.Context, tripID uuid.UUID, placeID string) error
 }

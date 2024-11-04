@@ -114,7 +114,7 @@ func (app *Roamly) initAPI(router *gin.Engine) {
 	userService := service.NewUserService(userStorage, sessionStorage)
 	authService := service.NewAuthService(userStorage, sessionStorage)
 	tripService := service.NewTripService(tripStorage, placeStorage, googleApi)
-	placeService := service.NewPlaceService(placeStorage, tripStorage, googleApi)
+	placeService := service.NewPlaceService(placeStorage, tripStorage, googleApi, eventStorage)
 	eventService := service.NewEventService(eventStorage, tripStorage, placeStorage)
 
 	middleware.Mw = middleware.InitMiddleware(sessionStorage)
