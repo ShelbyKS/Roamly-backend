@@ -21,4 +21,5 @@ type GooglePlace struct {
 	PlaceID          string   `json:"place_id"`
 	Rating           float64  `json:"rating"`
 	Types            []string `json:"types"`
+	Vicinity         string   `json:"vicinity"`
 }
