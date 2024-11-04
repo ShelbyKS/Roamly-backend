@@ -1334,6 +1334,9 @@
                 "id": {
                     "type": "string"
                 },
+                "name": {
+                    "type": "string"
+                },
                 "place_id": {
                     "type": "string"
                 },
@@ -1487,6 +1490,9 @@
                 "end_time": {
                     "type": "string"
                 },
+                "name": {
+                    "type": "string"
+                },
                 "place_id": {
                     "type": "string"
                 },
@@ -1558,15 +1564,16 @@
         "handler.UpdateEventRequest": {
             "type": "object",
             "required": [
-                "end_time",
-                "id",
-                "start_time"
+                "id"
             ],
             "properties": {
                 "end_time": {
                     "type": "string"
                 },
                 "id": {
+                    "type": "string"
+                },
+                "name": {
                     "type": "string"
                 },
                 "start_time": {

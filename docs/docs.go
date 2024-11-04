@@ -1345,6 +1345,9 @@ const docTemplate = `{
                 "id": {
                     "type": "string"
                 },
+                "name": {
+                    "type": "string"
+                },
                 "place_id": {
                     "type": "string"
                 },
@@ -1498,6 +1501,9 @@ const docTemplate = `{
                 "end_time": {
                     "type": "string"
                 },
+                "name": {
+                    "type": "string"
+                },
                 "place_id": {
                     "type": "string"
                 },
@@ -1569,15 +1575,16 @@ const docTemplate = `{
         "handler.UpdateEventRequest": {
             "type": "object",
             "required": [
-                "end_time",
-                "id",
-                "start_time"
+                "id"
             ],
             "properties": {
                 "end_time": {
                     "type": "string"
                 },
                 "id": {
+                    "type": "string"
+                },
+                "name": {
                     "type": "string"
                 },
                 "start_time": {

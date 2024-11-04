@@ -266,18 +266,18 @@ type EventConverter struct{}
 func (EventConverter) ToDb(event model.Event) orm.Event {
 	return orm.Event{
 		ID:        event.ID,
+		Name:      event.Name,
 		PlaceID:   event.PlaceID,
 		TripID:    event.TripID,
 		StartTime: event.StartTime,
 		EndTime:   event.EndTime,
-		//Trip:      TripConverter{}.ToDb(event.Trip),
-		//Place:     PlaceConverter{}.ToDb(event.Place),
 	}
 }
 
 func (EventConverter) ToDomain(event orm.Event) model.Event {
 	return model.Event{
 		ID:        event.ID,
+		Name:      event.Name,
 		PlaceID:   event.PlaceID,
 		TripID:    event.TripID,
 		StartTime: event.StartTime,

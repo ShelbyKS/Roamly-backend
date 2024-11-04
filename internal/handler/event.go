@@ -39,6 +39,7 @@ func NewEventHandler(router *gin.Engine,
 }
 
 type CreateEventRequest struct {
+	Name      string    `json:"name"`
 	PlaceID   string    `json:"place_id" binding:"required"`
 	TripID    uuid.UUID `json:"trip_id" binding:"required"`
 	StartTime string    `json:"start_time" binding:"required"`
@@ -66,6 +67,7 @@ func (h *EventHandler) CreateEvent(c *gin.Context) {
 
 	// todo: в конвертер
 	event := model.Event{
+		Name:      req.Name,
 		PlaceID:   req.PlaceID,
 		TripID:    req.TripID,
 		StartTime: req.StartTime,
@@ -82,8 +84,9 @@ func (h *EventHandler) CreateEvent(c *gin.Context) {
 
 type UpdateEventRequest struct {
 	ID        uuid.UUID `json:"id" binding:"required"`
-	StartTime string    `json:"start_time" binding:"required"`
-	EndTime   string    `json:"end_time" binding:"required"`
+	Name      string    `json:"name"`
+	StartTime string    `json:"start_time"`
+	EndTime   string    `json:"end_time"`
 }
 
 // @Summary Update event
@@ -108,6 +111,7 @@ func (h *EventHandler) UpdateEvent(c *gin.Context) {
 
 	updatedEvent, err := h.eventService.UpdateEvent(c.Request.Context(), model.Event{
 		ID:        req.ID,
+		Name:      req.Name,
 		StartTime: req.StartTime,
 		EndTime:   req.EndTime,
 	})
