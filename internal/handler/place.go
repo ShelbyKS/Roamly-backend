@@ -2,9 +2,12 @@ package handler
 
 import (
 	"fmt"
+	"net/http"
+	"strconv"
+	"strings"
+
 	"github.com/ShelbyKS/Roamly-backend/internal/domain"
 	"github.com/ShelbyKS/Roamly-backend/internal/middleware"
-	"net/http"
 
 	"github.com/google/uuid"
 
@@ -31,7 +34,8 @@ func NewPlaceHandler(router *gin.Engine, lg *logrus.Logger, placeService service
 	router.GET("/api/v1/place", middleware.Mw.AuthMiddleware(), handler.GetPlaces)
 	router.GET("/api/v1/place/find", middleware.Mw.AuthMiddleware(), handler.FindPlaces)
 	router.GET("/api/v1/place/photo", middleware.Mw.AuthMiddleware(), handler.GetPhoto)
-	router.DELETE("/api/v1/trip/:trip_id/place/:place_id", handler.DeletePlaceFromTrip)
+	router.DELETE("/api/v1/trip/:trip_id/place/:place_id", middleware.Mw.AuthMiddleware(), handler.DeletePlaceFromTrip)
+	router.GET("api/v1/place/recomendations", handler.GetPlacesNearby)
 
 	tripPlaceGroup := router.Group("/api/v1/trip/place")
 	tripPlaceGroup.Use(middleware.Mw.AuthMiddleware())
@@ -93,7 +97,7 @@ func (h *PlaceHandler) AddPlaceToTrip(c *gin.Context) {
 // @Failure 404 {object} map[string]string "Not found"
 // @Failure 500 {object} map[string]string "Internal server error"
 // @Router /api/v1/trip/{trip_id}/place/{place_id} [delete]
-func (h *PlaceHandler) DeletePlaceFromTrip(c *gin.Context) {	
+func (h *PlaceHandler) DeletePlaceFromTrip(c *gin.Context) {
 	tripID := c.Param("trip_id")
 	placeID := c.Param("place_id")
 
@@ -210,4 +214,31 @@ func (h *PlaceHandler) GetPhoto(c *gin.Context) {
 
 	c.Header("Content-Disposition", `inline; filename="`+fileName+`"`)
 	c.Data(http.StatusOK, "text/plain", file)
+}
+
+func (h *PlaceHandler) GetPlacesNearby(c *gin.Context) {
+	lat, ok := c.GetQuery("lat")
+	latFloat, err := strconv.ParseFloat(lat, 64)
+	if !ok || err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "can't get lat:" + err.Error()})
+		return
+	}
+
+	lng, ok := c.GetQuery("lng")
+	lngFloat, err := strconv.ParseFloat(lng, 64)
+	if !ok || err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "can't get lng:" + err.Error()})
+		return
+	}
+	placesTypesString := c.Query("types")
+	if !ok {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "can't get types"})
+		return
+	}
+
+	placesTypes := strings.Split(placesTypesString, ",")
+
+	places, err := h.placeService.GetPlacesNearby(c.Request.Context(), latFloat, lngFloat, placesTypes)
+
+	c.JSON(http.StatusOK, places)
 }
