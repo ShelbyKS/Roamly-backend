@@ -118,7 +118,6 @@ definitions:
         type: string
     required:
     - end_time
-    - place_id
     - start_time
     - trip_id
     type: object
@@ -264,10 +263,6 @@ definitions:
   model.Place:
     properties:
       closing:
-        description: |-
-          Name        string  `json:"name"`
-          Photo       string  `json:"photo"`
-          Rating      float32 `json:"rating"`
         type: string
       googlePlace:
         $ref: '#/definitions/model.GooglePlace'
@@ -275,6 +270,8 @@ definitions:
         type: string
       opening:
         type: string
+      recommendedVisitingDuration:
+        type: integer
       trips:
         items:
           $ref: '#/definitions/model.Trip'

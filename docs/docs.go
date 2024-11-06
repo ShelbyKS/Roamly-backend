@@ -1493,7 +1493,6 @@ const docTemplate = `{
             "type": "object",
             "required": [
                 "end_time",
-                "place_id",
                 "start_time",
                 "trip_id"
             ],
@@ -1727,7 +1726,6 @@ const docTemplate = `{
             "type": "object",
             "properties": {
                 "closing": {
-                    "description": "Name        string  ` + "`" + `json:\"name\"` + "`" + `\nPhoto       string  ` + "`" + `json:\"photo\"` + "`" + `\nRating      float32 ` + "`" + `json:\"rating\"` + "`" + `",
                     "type": "string"
                 },
                 "googlePlace": {
@@ -1738,6 +1736,9 @@ const docTemplate = `{
                 },
                 "opening": {
                     "type": "string"
+                },
+                "recommendedVisitingDuration": {
+                    "type": "integer"
                 },
                 "trips": {
                     "type": "array",
