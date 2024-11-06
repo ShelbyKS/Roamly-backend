@@ -40,7 +40,7 @@ func NewEventHandler(router *gin.Engine,
 
 type CreateEventRequest struct {
 	Name      string    `json:"name"`
-	PlaceID   string    `json:"place_id" binding:"required"`
+	PlaceID   string    `json:"place_id"`
 	TripID    uuid.UUID `json:"trip_id" binding:"required"`
 	StartTime string    `json:"start_time" binding:"required"`
 	EndTime   string    `json:"end_time" binding:"required"`
