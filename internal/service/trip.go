@@ -120,8 +120,8 @@ func (service *TripService) CreateTrip(ctx context.Context, trip model.Trip) (uu
 func (service *TripService) getRecommendedPlacesNames(ctx context.Context, area string) ([]string, error) {
 	//todo: сделать какой-то отдельный файл для промптов
 	var prompt strings.Builder
-	prompt.WriteString(fmt.Sprintf("Напиши список из 10 достопримечательностей обязательных для посещения в %s\n", area))
-	prompt.WriteString("Без описания, через запятую")
+	prompt.WriteString(fmt.Sprintf("Какие главные достопримечательности нужно посетить в %s\n", area))
+	prompt.WriteString("Без описания, через запятую, 10 штук")
 
 	recommendedPlacesStr, err := service.openAIClient.PostPrompt(ctx, prompt.String(), clients.ModelChatGPT4oMini)
 	if err != nil {
