@@ -5,13 +5,14 @@ import (
 )
 
 type TripResponse struct {
-	ID        uuid.UUID     `json:"id"`
-	Name      string        `json:"name"`
-	Users     []GetUser     `json:"users"`
-	StartTime string        `json:"start_time"`
-	EndTime   string        `json:"end_time"`
-	AreaID    string        `json:"area_id"`
-	Area      GooglePlace   `json:"area"`
-	Places    []GooglePlace `json:"places"`
-	Events    []GetEvent    `json:"events"`
+	ID                uuid.UUID     `json:"id"`
+	Name              string        `json:"name"`
+	Users             []GetUser     `json:"users"`
+	StartTime         string        `json:"start_time"`
+	EndTime           string        `json:"end_time"`
+	AreaID            string        `json:"area_id"`
+	Area              GooglePlace   `json:"area"`
+	Places            []GooglePlace `json:"places"`
+	RecommendedPlaces []GooglePlace `json:"recommended_places"`
+	Events            []GetEvent    `json:"events"`
 }

@@ -3,8 +3,6 @@ package chatgpt
 import (
 	"context"
 	"fmt"
-	"log"
-
 	"github.com/go-resty/resty/v2"
 )
 
@@ -98,7 +96,7 @@ func (c *ChatGPTClient) PostPrompt(ctx context.Context, prompt, model string) (s
 	}
 
 	if len(resp.Choices) > 0 {
-		log.Println("respnose from api: ", string(res.Body()))
+		//log.Println("respnose from api: ", string(res.Body()))
 		return resp.Choices[0].Message.Content, nil
 	}
 

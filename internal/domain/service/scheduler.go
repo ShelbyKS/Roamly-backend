@@ -10,4 +10,5 @@ import (
 
 type ISchedulerService interface {
 	ScheduleTrip(ctx context.Context, tripID uuid.UUID) (model.Trip, error)
+	AutoScheduleTrip(ctx context.Context, tripID uuid.UUID) (model.Trip, error)
 }

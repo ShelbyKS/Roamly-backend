@@ -4,25 +4,36 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"strconv"
+	"strings"
+
+	"github.com/google/uuid"
+
 	"github.com/ShelbyKS/Roamly-backend/internal/domain"
 	"github.com/ShelbyKS/Roamly-backend/internal/domain/clients"
 	"github.com/ShelbyKS/Roamly-backend/internal/domain/model"
 	"github.com/ShelbyKS/Roamly-backend/internal/domain/service"
 	"github.com/ShelbyKS/Roamly-backend/internal/domain/storage"
-	"github.com/google/uuid"
 )
 
 type TripService struct {
 	tripStorage     storage.ITripStorage
 	placeStorage    storage.IPlaceStorage
 	googleApiClient clients.IGoogleApiClient
+	openAIClient    clients.IChatClient
 }
 
-func NewTripService(tripStorage storage.ITripStorage, placeStorage storage.IPlaceStorage, googleApiClient clients.IGoogleApiClient) service.ITripService {
+func NewTripService(
+	tripStorage storage.ITripStorage,
+	placeStorage storage.IPlaceStorage,
+	googleApiClient clients.IGoogleApiClient,
+	openAIClient clients.IChatClient,
+) service.ITripService {
 	return &TripService{
 		tripStorage:     tripStorage,
 		placeStorage:    placeStorage,
 		googleApiClient: googleApiClient,
+		openAIClient:    openAIClient,
 	}
 }
 
@@ -83,7 +94,19 @@ func (service *TripService) CreateTrip(ctx context.Context, trip model.Trip) (uu
 		}
 	}
 
+	//todo: вынести в асинхронный пост запрос
+	recommendedPlacesNames, err := service.getRecommendedPlacesNames(ctx, area.GooglePlace.Name)
+	if err != nil {
+		return uuid.Nil, fmt.Errorf("fail to get recommended places names from openai: %w", err)
+	}
+
+	recommendedPlacesDomain, err := service.getRecommendedPlacesDomain(ctx, recommendedPlacesNames)
+	if err != nil {
+		return uuid.Nil, fmt.Errorf("fail to get recommended places domains from google: %w", err)
+	}
+
 	trip.Area = &area
+	trip.RecommendedPlaces = recommendedPlacesDomain
 	trip.ID = uuid.New()
 
 	err = service.tripStorage.CreateTrip(ctx, trip)
@@ -92,6 +115,69 @@ func (service *TripService) CreateTrip(ctx context.Context, trip model.Trip) (uu
 	}
 
 	return trip.ID, nil
+}
+
+func (service *TripService) getRecommendedPlacesNames(ctx context.Context, area string) ([]string, error) {
+	//todo: сделать какой-то отдельный файл для промптов
+	var prompt strings.Builder
+	prompt.WriteString(fmt.Sprintf("Напиши список из 10 достопримечательностей обязательных для посещения в %s\n", area))
+	prompt.WriteString("Без описания, через запятую")
+
+	recommendedPlacesStr, err := service.openAIClient.PostPrompt(ctx, prompt.String(), clients.ModelChatGPT4oMini)
+	if err != nil {
+		return nil, fmt.Errorf("can't get recommended duration: %w", err)
+	}
+
+	places := strings.Split(recommendedPlacesStr, ", ")
+
+	return places, nil
+}
+
+func (service *TripService) getRecommendedPlacesDomain(ctx context.Context, recommendedPlacesNames []string) ([]*model.Place, error) {
+	var recommendedPlacesDomain []*model.Place
+
+	for _, recommendedPlace := range recommendedPlacesNames {
+		places, err := service.googleApiClient.FindPlace(ctx, recommendedPlace, []string{
+			"formatted_address",
+			"name",
+			"rating",
+			"geometry",
+			"photo",
+			"place_id",
+		})
+		if err != nil {
+			return nil, fmt.Errorf("fail to find place %s: %w", recommendedPlace, err)
+		}
+
+		//todo: сделать какой-то отдельный файл для промптов
+		var prompt strings.Builder
+		prompt.WriteString(fmt.Sprintf("Определи оптимальное время для посещения %s\n", places[0].Name))
+		prompt.WriteString("Напиши только  число - время в минутах")
+
+		recommendedDurationStr, err := service.openAIClient.PostPrompt(ctx, prompt.String(), clients.ModelChatGPT4oMini)
+		if err != nil {
+			return nil, fmt.Errorf("can't get recommended duration: %w", err)
+		}
+		recommendedDurationInt, err := strconv.Atoi(recommendedDurationStr)
+		if err != nil {
+			return nil, fmt.Errorf("recommended duration has wrong format: %w", err)
+		}
+
+		placeDomain := model.Place{
+			ID:                          places[0].PlaceID,
+			GooglePlace:                 places[0],
+			RecommendedVisitingDuration: recommendedDurationInt,
+		}
+
+		_, err = service.placeStorage.CreatePlace(ctx, &placeDomain)
+		if err != nil && !errors.Is(err, domain.ErrPlaceAlreadyExists) {
+			return nil, fmt.Errorf("fail to create place: %s: %w", recommendedPlace, err)
+		}
+
+		recommendedPlacesDomain = append(recommendedPlacesDomain, &placeDomain)
+	}
+
+	return recommendedPlacesDomain, nil
 }
 
 func (service *TripService) UpdateTrip(ctx context.Context, trip model.Trip) error {

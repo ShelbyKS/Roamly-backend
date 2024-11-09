@@ -5,14 +5,14 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/ShelbyKS/Roamly-backend/internal/domain"
 	"github.com/google/uuid"
+	"github.com/jackc/pgx/v5/pgconn"
+	"gorm.io/gorm"
 
 	"github.com/ShelbyKS/Roamly-backend/internal/database/orm"
-
+	"github.com/ShelbyKS/Roamly-backend/internal/domain"
 	"github.com/ShelbyKS/Roamly-backend/internal/domain/model"
 	"github.com/ShelbyKS/Roamly-backend/internal/domain/storage"
-	"gorm.io/gorm"
 )
 
 type PlaceStorage struct {
@@ -50,6 +50,10 @@ func (storage *PlaceStorage) CreatePlace(ctx context.Context, place *model.Place
 	// log.Println("in storage", placeModel)
 
 	res := storage.db.WithContext(ctx).Create(&placeModel)
+	if pgErr, ok := res.Error.(*pgconn.PgError); ok && pgErr.Code == "23505" {
+		return model.Place{}, domain.ErrPlaceAlreadyExists
+	}
+
 	if res.Error != nil {
 		return model.Place{}, fmt.Errorf("create place in db: %w", res.Error)
 	}

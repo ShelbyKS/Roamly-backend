@@ -24,6 +24,12 @@ func (TripConverter) ToDto(trip model.Trip) TripResponse {
 		places[i] = placeDto
 	}
 
+	recommendedPlaces := make([]GooglePlace, len(trip.RecommendedPlaces))
+	for i, recommendedPlace := range trip.RecommendedPlaces {
+		placeDto := GooglePlaceConverter{}.ToDto(recommendedPlace.GooglePlace)
+		recommendedPlaces[i] = placeDto
+	}
+
 	// todo: тут не все поля юзера
 	users := make([]GetUser, len(trip.Users))
 	for i, user := range trip.Users {
@@ -49,15 +55,16 @@ func (TripConverter) ToDto(trip model.Trip) TripResponse {
 	area := GooglePlaceConverter{}.ToDto(trip.Area.GooglePlace)
 
 	return TripResponse{
-		ID:        trip.ID,
-		Name:      trip.Name,
-		Users:     users,
-		StartTime: trip.StartTime,
-		EndTime:   trip.EndTime,
-		AreaID:    trip.AreaID,
-		Area:      area,
-		Places:    places,
-		Events:    events,
+		ID:                trip.ID,
+		Name:              trip.Name,
+		Users:             users,
+		StartTime:         trip.StartTime,
+		EndTime:           trip.EndTime,
+		AreaID:            trip.AreaID,
+		Area:              area,
+		Places:            places,
+		Events:            events,
+		RecommendedPlaces: recommendedPlaces,
 	}
 }
 

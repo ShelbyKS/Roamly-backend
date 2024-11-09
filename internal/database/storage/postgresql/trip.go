@@ -33,6 +33,7 @@ func (storage *TripStorage) GetTripByID(ctx context.Context, id uuid.UUID) (mode
 		Preload("Area").
 		Preload("Users").
 		Preload("Places").
+		Preload("RecommendedPlaces").
 		Preload("Events").
 		First(&trip)
 

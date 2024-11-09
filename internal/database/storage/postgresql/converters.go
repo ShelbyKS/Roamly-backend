@@ -1,6 +1,7 @@
 package postgresql
 
 import (
+	"fmt"
 	"github.com/ShelbyKS/Roamly-backend/internal/database/orm"
 	"github.com/ShelbyKS/Roamly-backend/internal/domain/model"
 	"time"
@@ -44,6 +45,12 @@ func (TripConverter) ToDb(trip model.Trip) orm.Trip {
 		tripPlaces = append(tripPlaces, &placeDb)
 	}
 
+	var tripRecommendedPlaces []*orm.Place
+	for _, place := range trip.RecommendedPlaces {
+		placeDb := PlaceConverter{}.ToDb(*place)
+		tripRecommendedPlaces = append(tripRecommendedPlaces, &placeDb)
+	}
+
 	var tripEvents []orm.Event
 	for _, event := range trip.Events {
 		eventDB := EventConverter{}.ToDb(event)
@@ -56,25 +63,34 @@ func (TripConverter) ToDb(trip model.Trip) orm.Trip {
 	}
 
 	return orm.Trip{
-		ID:        trip.ID,
-		Name:      trip.Name,
-		Users:     users,
-		StartTime: trip.StartTime,
-		EndTime:   trip.EndTime,
-		AreaID:    trip.AreaID,
-		Places:    tripPlaces,
-		Events:    tripEvents,
-		Area:      areaDb,
+		ID:                trip.ID,
+		Name:              trip.Name,
+		Users:             users,
+		StartTime:         trip.StartTime,
+		EndTime:           trip.EndTime,
+		AreaID:            trip.AreaID,
+		Places:            tripPlaces,
+		RecommendedPlaces: tripRecommendedPlaces,
+		Events:            tripEvents,
+		Area:              areaDb,
 	}
 }
 
 func (TripConverter) ToDomain(trip orm.Trip) model.Trip {
-	var tripPlaces []*model.Place
 
+	var tripPlaces []*model.Place
 	for _, place := range trip.Places {
 		placeDomain := PlaceConverter{}.ToDomain(*place)
 		tripPlaces = append(tripPlaces, &placeDomain)
 	}
+
+	var tripRecommendedPlaces []*model.Place
+	for _, place := range trip.RecommendedPlaces {
+		placeDomain := PlaceConverter{}.ToDomain(*place)
+		tripRecommendedPlaces = append(tripRecommendedPlaces, &placeDomain)
+	}
+
+	fmt.Println("RECOMS: ", trip.RecommendedPlaces)
 
 	// todo: тут не все поля юзера
 	users := make([]*model.User, len(trip.Users))
@@ -94,15 +110,16 @@ func (TripConverter) ToDomain(trip orm.Trip) model.Trip {
 	area := PlaceConverter{}.ToDomain(trip.Area)
 
 	return model.Trip{
-		ID:        trip.ID,
-		Name:      trip.Name,
-		Users:     users,
-		StartTime: trip.StartTime,
-		EndTime:   trip.EndTime,
-		AreaID:    trip.AreaID,
-		Area:      &area,
-		Places:    tripPlaces,
-		Events:    events,
+		ID:                trip.ID,
+		Name:              trip.Name,
+		Users:             users,
+		StartTime:         trip.StartTime,
+		EndTime:           trip.EndTime,
+		AreaID:            trip.AreaID,
+		Area:              &area,
+		Places:            tripPlaces,
+		RecommendedPlaces: tripRecommendedPlaces,
+		Events:            events,
 	}
 }
 

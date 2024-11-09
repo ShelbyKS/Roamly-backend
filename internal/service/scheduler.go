@@ -41,10 +41,6 @@ func (s *SchedulerService) ScheduleTrip(ctx context.Context, tripID uuid.UUID) (
 		return model.Trip{}, fmt.Errorf("failed to get trip for schedule: %w", err)
 	}
 
-	for _, place := range trip.Places {
-		fmt.Println("DURATION:", place.GooglePlace.Name, place.RecommendedVisitingDuration)
-	}
-
 	timeDistMatrix, err := s.googleApi.GetTimeDistanceMatrix(ctx, trip.GetTripPlaceIDs())
 	if err != nil {
 		return model.Trip{}, fmt.Errorf("failed to get time distance matrix: %w", err)
@@ -62,6 +58,49 @@ func (s *SchedulerService) ScheduleTrip(ctx context.Context, tripID uuid.UUID) (
 	events, err := ParseSchedule(resp)
 	if err != nil {
 		return model.Trip{}, fmt.Errorf("failed to parse schedule: %w", err)
+	}
+
+	err = s.eventStorage.DeleteEventsByTrip(ctx, trip.ID)
+	if err != nil {
+		return model.Trip{}, fmt.Errorf("failed to delete current events: %w", err)
+	}
+
+	err = s.eventStorage.CreateBatchEvents(ctx, &events)
+	if err != nil {
+		return model.Trip{}, fmt.Errorf("failed to save events: %w", err)
+	}
+	trip.Events = events
+
+	return trip, nil
+}
+
+func (s *SchedulerService) AutoScheduleTrip(ctx context.Context, tripID uuid.UUID) (model.Trip, error) {
+	trip, err := s.tripStorage.GetTripByID(ctx, tripID)
+	if err != nil {
+		return model.Trip{}, fmt.Errorf("failed to get trip for schedule: %w", err)
+	}
+
+	timeDistMatrix, err := s.googleApi.GetTimeDistanceMatrix(ctx, trip.GetTripRecommendedPlaceIDs())
+	if err != nil {
+		return model.Trip{}, fmt.Errorf("failed to get time distance matrix: %w", err)
+	}
+
+	prompt := s.generateRequestString(trip, trip.RecommendedPlaces, timeDistMatrix)
+
+	resp, err := s.openAIClient.PostPrompt(ctx, prompt, clients.ModelChatGPT4o)
+	if err != nil {
+		return model.Trip{}, fmt.Errorf("failed to get openai response: %w", err)
+	}
+
+	events, err := ParseSchedule(resp)
+	if err != nil {
+		return model.Trip{}, fmt.Errorf("failed to parse schedule: %w", err)
+	}
+
+	trip.Places = trip.RecommendedPlaces
+	err = s.tripStorage.UpdateTrip(ctx, trip)
+	if err != nil {
+		return model.Trip{}, fmt.Errorf("failed to update trip places: %w", err)
 	}
 
 	err = s.eventStorage.DeleteEventsByTrip(ctx, trip.ID)
