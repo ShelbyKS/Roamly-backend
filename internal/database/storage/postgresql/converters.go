@@ -3,6 +3,7 @@ package postgresql
 import (
 	"github.com/ShelbyKS/Roamly-backend/internal/database/orm"
 	"github.com/ShelbyKS/Roamly-backend/internal/domain/model"
+	"time"
 )
 
 type UserConverter struct{}
@@ -121,8 +122,9 @@ func (PlaceConverter) ToDb(place model.Place) orm.Place {
 		// Closing:     place.Closing,
 		// Opening:     place.Opening,
 		// Rating:      place.Rating,
-		Trips:       trips,
-		GooglePlace: GooglePlaceConverter{}.ToDb(place.GooglePlace),
+		Trips:                       trips,
+		GooglePlace:                 GooglePlaceConverter{}.ToDb(place.GooglePlace),
+		RecommendedVisitingDuration: time.Duration(place.RecommendedVisitingDuration) * time.Minute,
 	}
 }
 
@@ -140,8 +142,9 @@ func (PlaceConverter) ToDomain(place orm.Place) model.Place {
 		// Closing:     place.Closing,
 		// Opening:     place.Opening,
 		// Rating:      place.Rating,
-		Trips:       trips,
-		GooglePlace: GooglePlaceConverter{}.ToDomain(place.GooglePlace),
+		Trips:                       trips,
+		GooglePlace:                 GooglePlaceConverter{}.ToDomain(place.GooglePlace),
+		RecommendedVisitingDuration: int(place.RecommendedVisitingDuration.Minutes()),
 	}
 }
 

@@ -4,6 +4,8 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"strconv"
+	"strings"
 	"time"
 
 	"github.com/google/uuid"
@@ -21,6 +23,7 @@ type PlaceService struct {
 	tripStorage  storage.ITripStorage
 	eventStorage storage.IEventStorage
 	googleApi    clients.IGoogleApiClient
+	openAIClient clients.IChatClient
 }
 
 func NewPlaceService(
@@ -28,6 +31,7 @@ func NewPlaceService(
 	tripStorage storage.ITripStorage,
 	googleApi clients.IGoogleApiClient,
 	eventStorage storage.IEventStorage,
+	openAIClient clients.IChatClient,
 ) service.IPlaceService {
 
 	return &PlaceService{
@@ -35,6 +39,7 @@ func NewPlaceService(
 		tripStorage:  tripStorage,
 		googleApi:    googleApi,
 		eventStorage: eventStorage,
+		openAIClient: openAIClient,
 	}
 }
 
@@ -178,4 +183,34 @@ func (service *PlaceService) GetTimeMatrix(ctx context.Context, places []*model.
 	}
 
 	return timeMatrix
+}
+
+func (service *PlaceService) DetermineRecommendedDuration(ctx context.Context, placeID string) error {
+	place, err := service.placeStorage.GetPlaceByID(ctx, placeID)
+	if err != nil {
+		return fmt.Errorf("can't get place by id %w", err)
+	}
+
+	//todo: сделать какой-то отдельный файл для промптов
+	var prompt strings.Builder
+	prompt.WriteString(fmt.Sprintf("Определи оптимальное время для посещения %s\n", place.GooglePlace.Name))
+	prompt.WriteString("Напиши только  число - время в минутах")
+
+	recommendedDurationStr, err := service.openAIClient.PostPrompt(ctx, prompt.String(), clients.ModelChatGPT4oMini)
+	if err != nil {
+		return fmt.Errorf("can't get recommended duration: %w", err)
+	}
+	recommendedDurationInt, err := strconv.Atoi(recommendedDurationStr)
+	if err != nil {
+		return fmt.Errorf("recommended duration has wrong format: %w", err)
+	}
+
+	place.RecommendedVisitingDuration = recommendedDurationInt
+
+	err = service.placeStorage.UpdatePlace(ctx, place)
+	if err != nil {
+		return fmt.Errorf("can't update place recommended duration: %w", err)
+	}
+
+	return nil
 }

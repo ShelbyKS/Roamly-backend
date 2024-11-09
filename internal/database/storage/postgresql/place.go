@@ -104,3 +104,13 @@ func (storage *PlaceStorage) AppendPlace(ctx context.Context, tripID uuid.UUID, 
 
 	return nil
 }
+
+func (storage *PlaceStorage) UpdatePlace(ctx context.Context, place model.Place) error {
+	placeDB := PlaceConverter{}.ToDb(place)
+
+	tx := storage.db.WithContext(ctx).
+		Model(&orm.Place{ID: place.ID}).
+		Updates(&placeDB)
+
+	return tx.Error
+}

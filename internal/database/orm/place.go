@@ -1,5 +1,7 @@
 package orm
 
+import "time"
+
 type Location struct {
 	Lat float64 `json:"lat"`
 	Lng float64 `json:"lng"`
@@ -31,5 +33,6 @@ type Place struct {
 	// Name        string
 	// Photo string
 	// Rating      float32
-	GooglePlace GooglePlace `gorm:"embedded"`
+	GooglePlace                 GooglePlace `gorm:"embedded"`
+	RecommendedVisitingDuration time.Duration
 }

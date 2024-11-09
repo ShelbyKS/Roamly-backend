@@ -41,6 +41,10 @@ func (s *SchedulerService) ScheduleTrip(ctx context.Context, tripID uuid.UUID) (
 		return model.Trip{}, fmt.Errorf("failed to get trip for schedule: %w", err)
 	}
 
+	for _, place := range trip.Places {
+		fmt.Println("DURATION:", place.GooglePlace.Name, place.RecommendedVisitingDuration)
+	}
+
 	timeDistMatrix, err := s.googleApi.GetTimeDistanceMatrix(ctx, trip.GetTripPlaceIDs())
 	if err != nil {
 		return model.Trip{}, fmt.Errorf("failed to get time distance matrix: %w", err)
@@ -50,7 +54,7 @@ func (s *SchedulerService) ScheduleTrip(ctx context.Context, tripID uuid.UUID) (
 
 	//fmt.Println("PROMT: ", prompt)
 
-	resp, err := s.openAIClient.PostPrompt(ctx, prompt)
+	resp, err := s.openAIClient.PostPrompt(ctx, prompt, clients.ModelChatGPT4o)
 	if err != nil {
 		return model.Trip{}, fmt.Errorf("failed to get openai response: %w", err)
 	}
@@ -83,11 +87,14 @@ func (s *SchedulerService) generateRequestString(trip model.Trip, places []*mode
 	sb.WriteString(fmt.Sprintf("С: %s\n", trip.StartTime))
 	sb.WriteString(fmt.Sprintf("По: %s\n", trip.EndTime))
 
-	sb.WriteString("\nМеста поездки - Название (PlaceID):\n")
+	sb.WriteString("\nМеста поездки - Название:PlaceID:Время на посещение в минутах\n")
 	for i, place := range places {
-		sb.WriteString(fmt.Sprintf("%d. %s (%s)\n", i+1, place.GooglePlace.Name, place.GooglePlace.PlaceID))
+		sb.WriteString(fmt.Sprintf("%d. %s:%s:%d\n", i+1,
+			place.GooglePlace.Name,
+			place.GooglePlace.PlaceID,
+			place.RecommendedVisitingDuration,
+		))
 	}
-	sb.WriteString("\nСКОЛЬКО ВРЕМЕНИ ЗАЙМЁТ ПОСЕЩЕНИЕ ЭТИХ МЕСТ? ВЫДЕЛИ СРЕДНЕЕ ВРЕМЯ\n")
 	//sb.WriteString("Время работы:\n")
 	//for i, place := range places {
 	//	sb.WriteString(fmt.Sprintf("%d. %s - %s\n", i+1, place.Opening, place.Closing))

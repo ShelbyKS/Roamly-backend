@@ -14,12 +14,13 @@ type Photo struct {
 }
 
 type GooglePlace struct {
-	FormattedAddress string   `json:"formatted_address"`
-	Geometry         Geometry `json:"geometry"`
-	Name             string   `json:"name"`
-	Photos           []Photo  `json:"photos"`
-	PlaceID          string   `json:"place_id"`
-	Rating           float64  `json:"rating"`
-	Types            []string `json:"types"`
-	Vicinity         string   `json:"vicinity"`
+	FormattedAddress    string   `json:"formatted_address"`
+	Geometry            Geometry `json:"geometry"`
+	Name                string   `json:"name"`
+	Photos              []Photo  `json:"photos"`
+	PlaceID             string   `json:"place_id"`
+	Rating              float64  `json:"rating"`
+	Types               []string `json:"types"`
+	Vicinity            string   `json:"vicinity"`
+	RecommendedDuration int      `json:"recommended_duration"`
 }

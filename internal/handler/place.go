@@ -1,6 +1,7 @@
 package handler
 
 import (
+	"context"
 	"fmt"
 	"net/http"
 	"strconv"
@@ -84,6 +85,15 @@ func (h *PlaceHandler) AddPlaceToTrip(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, gin.H{"trip": dto.TripConverter{}.ToDto(trip)})
+
+	go func() {
+		ctx := context.Background()
+
+		err = h.placeService.DetermineRecommendedDuration(ctx, req.PlaceID)
+		if err != nil {
+			h.lg.WithError(err).Errorf("failed to determine recommended duration")
+		}
+	}()
 }
 
 // @Summary Delete place from trip
