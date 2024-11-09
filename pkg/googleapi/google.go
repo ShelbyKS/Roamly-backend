@@ -3,25 +3,25 @@ package googleapi
 import (
 	"context"
 	"fmt"
+	"log"
 	"net/http"
 	"strings"
 
 	"github.com/go-resty/resty/v2"
 
 	"github.com/ShelbyKS/Roamly-backend/internal/domain/model"
-	"github.com/ShelbyKS/Roamly-backend/pkg/googleapi/dto"
 )
 
 const (
-	methodFindPlace       = "https://maps.googleapis.com/maps/api/place/findplacefromtext/json"
-	methodGetPlaceData    = "https://maps.googleapis.com/maps/api/place/details/json"
-	methodGetPlace        = "https://maps.googleapis.com/maps/api/place/textsearch/json"
-	methodGetPlacePhoto   = "https://maps.googleapis.com/maps/api/place/photo"
-	methodGetTimeMatrix   = "https://maps.googleapis.com/maps/api/distancematrix/json"
-	methodGetPlacesNearby = "https://places.googleapis.com/v1/places:searchNearby"
-	// methodGetPlacesNearby = "https://maps.googleapis.com/maps/api/place/nearbysearch/json"
+	methodFindPlace     = "https://maps.googleapis.com/maps/api/place/findplacefromtext/json"
+	methodGetPlaceData  = "https://maps.googleapis.com/maps/api/place/details/json"
+	methodGetPlace      = "https://maps.googleapis.com/maps/api/place/textsearch/json"
+	methodGetPlacePhoto = "https://maps.googleapis.com/maps/api/place/photo"
+	methodGetTimeMatrix = "https://maps.googleapis.com/maps/api/distancematrix/json"
+	// methodGetPlacesNearby = "https://places.googleapis.com/v1/places:searchNearby"
+	methodGetPlacesNearby = "https://maps.googleapis.com/maps/api/place/nearbysearch/json"
 
-	fieldMask = "places.formattedAddress,places.displayName,places.rating,places.location,places.photos"
+	fieldMask = "places.formattedAddress,places.displayName,places.rating"
 
 	// "name",
 	// 		"rating",
@@ -301,68 +301,89 @@ func (c *GoogleApiClient) getParsedTimeDistance(placeIDs []string, response Dist
 	return result
 }
 
+type Request struct {
+	IncludeTypes        []string            `json:"includedTypes"`
+	MaxResultCount      int                 `json:"maxResultCount"`
+	RankPreference      string              `json:"rankPreference"`
+	LocationRestriction LocationRestriction `json:"locationRestriction"`
+}
+
+type LocationRestriction struct {
+	Circle Circle `json:"circle"`
+}
+
+type Circle struct {
+	Center Center  `json:"center"`
+	Radius float64 `json:"radius"`
+}
+
+type Center struct {
+	Latitude  float64 `json:"latitude"`
+	Longitude float64 `json:"longitude"`
+}
+
+type PlacesNearby struct {
+	HtmlAttributions []string `json:"html_attributions"`
+	Results          []model.GooglePlace
+	Status           string `json:"status"`
+}
+
 func (c *GoogleApiClient) GetPlacesNearby(ctx context.Context,
 	includedTypes []string,
 	maxPlaces int,
 	rankPrefernce string,
 	lat float64,
 	lng float64,
-	radius float64,
-	languageCode string) ([]model.GooglePlace, error) {
+	radius float64) ([]model.GooglePlace, error) {
 
-	var result dto.PlacesNearbyResult
+	var result PlacesNearby
 
-	request := dto.PlacesNearbyRequest{
-		IncludeTypes:   includedTypes,
-		MaxResultCount: maxPlaces,
-		RankPreference: rankPrefernce,
-		LocationRestriction: dto.LocationRestriction{
-			Circle: dto.Circle{
-				Center: dto.Center{
-					Latitude:  lat,
-					Longitude: lng,
-				},
-				Radius: radius,
-			},
-		},
-		LanguageCode: languageCode,
-	}
+	// request := Request{
+	// 	IncludeTypes:   includedTypes,
+	// 	MaxResultCount: maxPlaces,
+	// 	RankPreference: rankPrefernce,
+	// 	LocationRestriction: LocationRestriction{
+	// 		Circle: Circle{
+	// 			Center: Center{
+	// 				Latitude:  lat,
+	// 				Longitude: lng,
+	// 			},
+	// 			Radius: radius,
+	// 		},
+	// 	},
+	// }
 
-	// query := map[string]string{}
-	// // 	"fields": c.joinFields([]string{
-	// // 		"formatted_address",
-	// // 		"name",
-	// // 		"rating",
-	// // 		"geometry",
-	// // 		"photo"}),
-	// // }
+	query := map[string]string{}
+	// 	"fields": c.joinFields([]string{
+	// 		"formatted_address",
+	// 		"name",
+	// 		"rating",
+	// 		"geometry",
+	// 		"photo"}),
+	// }
 
-	// query["language"] = "ru"
-	// query["location"] = fmt.Sprintf("%f,%f", lat, lng)
-	// query["radius"] = fmt.Sprintf("%f", radius)
-	// query["type"] = includedTypes[0]
-	// query["key"] = c.apiKey
+	query["language"] = "ru"
+	query["location"] = fmt.Sprintf("%f,%f", lat, lng)
+	query["radius"] = fmt.Sprintf("%f", radius)
+	query["type"] = includedTypes[0]
+	query["key"] = c.apiKey
 
-	_, err := c.client.R().
+	resp, err := c.client.R().
 		SetContext(ctx).
 		SetHeader("Content-Type", "application/json").
-		SetHeader("X-Goog-Api-Key", c.apiKey).
-		// SetQueryParams(query).
-		SetHeader("X-Goog-FieldMask", fieldMask).
-		SetBody(request).
+		// SetHeader("X-Goog-Api-Key", c.apiKey).
+		SetQueryParams(query).
+		// SetHeader("X-Goog-FieldMask", fieldMask).
+		// SetBody(request).
 		SetResult(&result).
-		Post(methodGetPlacesNearby)
 
-	// log.Println(string(resp.Body()), "key:", c.apiKey)
+		Get(methodGetPlacesNearby)
+
+	log.Println(resp.Request.URL)
 
 	if err != nil {
 		return []model.GooglePlace{}, err
 	}
 
-	places := make([]model.GooglePlace, len(result.Results))
-	for i, place := range result.Results {
-		places[i] = dto.PlaceConverter{}.ToDomain(place)
-	}
-
-	return places, nil
+	return result.Results, nil
 }

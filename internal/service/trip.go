@@ -86,7 +86,7 @@ func (service *TripService) CreateTrip(ctx context.Context, trip model.Trip) (uu
 	trip.Area = &area
 	trip.ID = uuid.New()
 
-	err = service.tripStorage.CreateTrip(ctx, trip, model.Owner)
+	err = service.tripStorage.CreateTrip(ctx, trip)
 	if err != nil {
 		return uuid.Nil, fmt.Errorf("fail to create trip from storage: %w", err)
 	}
@@ -104,13 +104,4 @@ func (service *TripService) UpdateTrip(ctx context.Context, trip model.Trip) err
 	}
 
 	return nil
-}
-
-func (service *TripService) GetUserRole(ctx context.Context, userID int, tripID uuid.UUID) (model.UserTripRole, error) {
-	role, err := service.tripStorage.GetUserRole(ctx, userID, tripID)
-	if err != nil {
-		return 0, fmt.Errorf("can't get user role: %w", err)
-	}
-
-	return role, nil
 }

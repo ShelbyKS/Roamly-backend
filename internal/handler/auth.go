@@ -159,7 +159,7 @@ func (h *AuthHandler) Logout(c *gin.Context) {
 	}
 
 	c.SetSameSite(http.SameSiteNoneMode) //todo: delete for prod
-	// c.SetCookie("session_token", "", -1, "/", "", true, true)
+	//c.SetCookie("session_token", "", -1, "/", "", true, true)
 	c.SetCookie("session_token", "", -1, "/", "roamly.ru", true, true)
 
 	c.Status(http.StatusNoContent)

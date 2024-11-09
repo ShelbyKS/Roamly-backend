@@ -13,5 +13,4 @@ type ITripService interface {
 	UpdateTrip(ctx context.Context, trip model.Trip) error
 	GetTrips(ctx context.Context, userId int) ([]model.Trip, error)
 	DeleteTrip(ctx context.Context, id uuid.UUID) error
-	GetUserRole(ctx context.Context, userID int, tripID uuid.UUID) (model.UserTripRole, error)
 }

@@ -16,6 +16,5 @@ type IGoogleApiClient interface {
 		rankPrefernce string,
 		lat float64,
 		lng float64,
-		radius float64,
-		languageCode string) ([]model.GooglePlace, error) 
+		radius float64) ([]model.GooglePlace, error) 
 }

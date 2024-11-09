@@ -88,7 +88,7 @@ func (app *Roamly) initDBs() {
 		log.Fatalf("Failed to connect to redis: %v", err)
 	}
 
-	err = pgDB.AutoMigrate(&orm.User{}, &orm.Trip{}, &orm.Place{}, &orm.Event{}, &orm.TripUser{})
+	err = pgDB.AutoMigrate(&orm.User{}, &orm.Trip{}, &orm.Place{}, &orm.Event{})
 	if err != nil {
 		log.Fatalf("Failed to migrate db: %v", err)
 	}
