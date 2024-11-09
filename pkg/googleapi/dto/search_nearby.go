@@ -31,12 +31,19 @@ type DisplayName struct {
 	LanguageCode string `json:"languageCode"`
 }
 
+type EditorialSummary struct {
+	Text         string `json:"text"`
+	LanguageCode string `json:"languageCode"`
+}
+
 type GooglePlace struct {
-	FormattedAddress string      `json:"formattedAddress"`
-	DisplayName      DisplayName `json:"displayName"`
-	Rating           float64     `json:"rating"`
-	Location         Location    `json:"location"`
-	Photos           []Photo     `json:"photos"`
+	ID               string           `json:"id"`
+	FormattedAddress string           `json:"formattedAddress"`
+	DisplayName      DisplayName      `json:"displayName"`
+	Rating           float64          `json:"rating"`
+	Location         Location         `json:"location"`
+	Photos           []Photo          `json:"photos"`
+	EditorialSummary EditorialSummary `json:"editorialSummary"`
 }
 
 type Location struct {

@@ -6,6 +6,7 @@ type PlaceConverter struct{}
 
 func (PlaceConverter) ToDomain(place GooglePlace) model.GooglePlace {
 	return model.GooglePlace{
+		PlaceID:          place.ID,
 		FormattedAddress: place.FormattedAddress,
 		Name:             place.DisplayName.Text,
 		Rating:           place.Rating,
@@ -16,6 +17,7 @@ func (PlaceConverter) ToDomain(place GooglePlace) model.GooglePlace {
 			},
 		},
 		Photos: PhotoConverter{}.ConvertPhotos(place.Photos),
+		EditorialSummary: place.EditorialSummary.Text,
 	}
 }
 

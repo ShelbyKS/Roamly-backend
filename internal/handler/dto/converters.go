@@ -86,6 +86,7 @@ func (GooglePlaceConverter) ToDto(gp model.GooglePlace) GooglePlace {
 		Types:            gp.Types,
 		Photos:           photos,
 		Vicinity:         gp.Vicinity,
+		EditorialSummary: gp.EditorialSummary,
 	}
 }
 
