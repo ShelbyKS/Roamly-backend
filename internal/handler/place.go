@@ -2,7 +2,6 @@ package handler
 
 import (
 	"context"
-	"fmt"
 	"net/http"
 	"strconv"
 	"strings"
@@ -172,25 +171,45 @@ func (h *PlaceHandler) FindPlaces(c *gin.Context) {
 // @Router /api/v1/place [get]
 func (h *PlaceHandler) GetPlaces(c *gin.Context) {
 	// todo: логику унести в сервис, клиента обернуть в сервис
-	qeuryMap := map[string]string{}
+	// qeuryMap := map[string]string{}
+
+	// name := c.Query("name")
+	// qeuryMap["query"] = name
+
+	// qeuryMap["fields"] = "editorial_summary,formatted_address,name,rating,geometry,photos,types"
+
+	// typeQuery := c.GetQuery("type")
+	// if hasType {
+	// 	qeuryMap["type"] = typeQuery
+	// } else {
+	// 	lat := c.Query("lat")
+	// 	lng := c.Query("lng")
+	// 	radius := c.Query("radius")
+	// 	qeuryMap["location"] = fmt.Sprintf("%s,%s", lat, lng)
+	// 	qeuryMap["radius"] = radius
+	// }
 
 	name := c.Query("name")
-	qeuryMap["query"] = name
+	placesType := c.Query("type")
+	pageSize := c.Query("page_size")
+	lat := c.Query("lat")
+	lng := c.Query("lng")
+	radius := c.Query("radius")
+	pageToken := c.Query("page_token")
 
-	qeuryMap["fields"] = "formatted_address,name,rating,geometry,photos,types,editorial_summary"
+	// todo: ХАААААААААААААААААААААААААААААААРДКООООООООООООООООООООД
+	pageSize = "20"
 
-	typeQuery, hasType := c.GetQuery("type")
-	if hasType {
-		qeuryMap["type"] = typeQuery
-	} else {
-		lat := c.Query("lat")
-		lng := c.Query("lng")
-		radius := c.Query("radius")
-		qeuryMap["location"] = fmt.Sprintf("%s,%s", lat, lng)
-		qeuryMap["radius"] = radius
-	}
-
-	places, err := h.client.GetPlaces(c.Request.Context(), qeuryMap)
+	places, err := h.client.GetNewPlaces(c.Request.Context(),
+		name,
+		placesType,
+		convertStringToInt(pageSize),
+		convertStringToFloat64(lat),
+		convertStringToFloat64(lng),
+		convertStringToFloat64(radius),
+		"ru",
+		pageToken,
+	)
 	if err != nil {
 		h.lg.WithError(err).Errorf("failed to get places from google")
 		c.JSON(domain.GetStatusCodeByError(err), gin.H{"error": err.Error()})
@@ -198,6 +217,24 @@ func (h *PlaceHandler) GetPlaces(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, gin.H{"results": places})
+}
+
+func convertStringToInt(s string) int {
+	i, err := strconv.Atoi(s)
+	if err != nil {
+		return 0
+	}
+
+	return i
+}
+
+func convertStringToFloat64(s string) float64 {
+	i, err := strconv.ParseFloat(s, 64)
+	if err != nil {
+		return 0
+	}
+
+	return i
 }
 
 // @Summary Get place photo

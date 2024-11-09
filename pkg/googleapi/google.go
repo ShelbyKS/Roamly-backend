@@ -20,6 +20,7 @@ const (
 	methodGetPlacePhoto   = "https://maps.googleapis.com/maps/api/place/photo"
 	methodGetTimeMatrix   = "https://maps.googleapis.com/maps/api/distancematrix/json"
 	methodGetPlacesNearby = "https://places.googleapis.com/v1/places:searchNearby"
+	methodTextSearch      = "https://places.googleapis.com/v1/places:searchText"
 	// methodGetPlacesNearby = "https://maps.googleapis.com/maps/api/place/nearbysearch/json"
 
 	fieldMask = "places.id,places.formattedAddress,places.displayName,places.rating,places.location,places.photos,places.editorialSummary"
@@ -170,11 +171,13 @@ func (c *GoogleApiClient) GetPlaces(ctx context.Context, query map[string]string
 	query["key"] = c.apiKey
 	query["language"] = "ru"
 
-	_, err := c.client.R().
+	resp, err := c.client.R().
 		SetContext(ctx).
 		SetQueryParams(query).
 		SetResult(&result).
 		Get(methodGetPlace)
+
+	log.Println(string(resp.Body()))
 
 	if err != nil {
 		return []Place{}, err
@@ -361,6 +364,87 @@ func (c *GoogleApiClient) GetPlacesNearby(ctx context.Context,
 		Post(methodGetPlacesNearby)
 
 	log.Println(result.Results[0].ID)
+	// log.Println(string(resp.Body()), "key:", c.apiKey)
+
+	if err != nil {
+		return []model.GooglePlace{}, err
+	}
+
+	places := make([]model.GooglePlace, len(result.Results))
+	for i, place := range result.Results {
+		places[i] = dto.PlaceConverter{}.ToDomain(place)
+	}
+
+	return places, nil
+}
+
+func (c *GoogleApiClient) GetNewPlaces(ctx context.Context,
+	textQuery string,
+	includedType string,
+	pageSize int,
+	lat float64,
+	lng float64,
+	radius float64,
+	languageCode string,
+	pageToken string) ([]model.GooglePlace, error) {
+
+	if radius > 50000 {
+		return nil, fmt.Errorf("error: radius must be lesser than 50000")
+	}
+
+	if pageSize > 20 {
+		return nil, fmt.Errorf("error: page size must be lesser than 20")
+	}
+
+	if includedType == "area" {
+		includedType = "locality"
+	}
+
+	var result dto.TextSearchResult
+	var request dto.TextSearchRequest
+	if includedType == "locality" {
+		request = dto.TextSearchRequest{
+			TextQuery:    textQuery,
+			IncludeTypes: includedType,
+			PageSize:     pageSize,
+			// PageToken:    pageToken,
+			LanguageCode: languageCode,
+		}
+	} else {
+		request = dto.TextSearchRequest{
+			TextQuery: textQuery,
+			// IncludeTypes: includedType,
+			PageSize: pageSize,
+			LocationBias: dto.LocationBias{
+				Circle: dto.Circle{
+					Center: dto.Center{
+						Latitude:  lat,
+						Longitude: lng,
+					},
+					Radius: radius,
+				},
+			},
+			LanguageCode: languageCode,
+		}
+	}
+
+	updatedMask := fieldMask
+	if pageToken != "" {
+		updatedMask += "," + pageToken
+	}
+
+	resp, err := c.client.R().
+		SetContext(ctx).
+		SetHeader("Content-Type", "application/json").
+		SetHeader("X-Goog-Api-Key", c.apiKey).
+		// SetQueryParams(query).
+		SetHeader("X-Goog-FieldMask", updatedMask).
+		SetBody(request).
+		SetResult(&result).
+		Post(methodTextSearch)
+
+	log.Println(string(resp.Body()))
+	// log.Println(result.Results[0].ID)
 	// log.Println(string(resp.Body()), "key:", c.apiKey)
 
 	if err != nil {
