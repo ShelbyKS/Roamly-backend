@@ -41,12 +41,23 @@ func NewTripHandler(
 	tripGroup.Use(middleware.Mw.AuthMiddleware())
 	{
 		tripGroup.GET("/", handler.GetTrips)
-		tripGroup.GET("/:trip_id", handler.GetTripByID)
 		tripGroup.POST("/", handler.CreateTrip)
-		tripGroup.PUT("/", handler.UpdateTrip)
-		tripGroup.DELETE("/:trip_id", handler.DeleteTrip)
+		participantOwnerGroup := tripGroup.PUT("/", handler.UpdateTrip)
+		
+		participantOwnerGroup.Use(middleware.
+			InitTripMiddleware(tripService, []model.UserTripRole{model.Owner, model.Participant}).
+			AccessTripMiddleware()) 
+		{
+			participantOwnerGroup.GET("/:trip_id", handler.GetTripByID)
+		}
 
-		tripGroup.POST("/:trip_id/schedule", handler.ScheduleTrip)
+		tripGroup.Use(middleware.
+			InitTripMiddleware(tripService, []model.UserTripRole{model.Owner}).
+			AccessTripMiddleware()) 
+		{
+			tripGroup.DELETE("/:trip_id", handler.DeleteTrip)
+			tripGroup.POST("/:trip_id/schedule", handler.ScheduleTrip)
+		}
 	}
 }
 
@@ -228,12 +239,53 @@ type UpdateTripRequest struct {
 // @Failure 500 {object} map[string]string
 // @Router /api/v1/trip [put]
 func (h *TripHandler) UpdateTrip(c *gin.Context) {
+	// roleString, ok := c.Get("user_role")
+	// if !ok {
+	// 	h.lg.Errorf("no user role")
+	// 	c.JSON(http.StatusBadRequest, gin.H{"error": "no user role"})
+	// 	return
+	// }
+	
+	// role, ok := roleString.(model.UserTripRole)
+	// if !ok {
+	// 	h.lg.Errorf("can't parse user role")
+	// 	c.JSON(http.StatusBadRequest, gin.H{"error": "can't parse user role"})
+	// 	return
+	// }
+
+
 	var tripReq UpdateTripRequest
 
 	err := c.BindJSON(&tripReq)
 	if err != nil {
 		h.lg.WithError(err).Errorf("failed to parse body")
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	userID, ok := c.Get("user_id")
+	if !ok {
+		h.lg.Errorf("no user id")
+		c.JSON(http.StatusBadRequest, gin.H{"error": "no user id"})
+		return
+	}
+
+	ID, ok := userID.(int)
+	if !ok {
+		h.lg.Errorf("can't parse user id")
+		c.JSON(http.StatusBadRequest, gin.H{"error": "can't parse user id"})
+		return
+	}
+
+	role, err := h.tripService.GetUserRole(c.Request.Context(), ID, tripReq.ID)
+	if !ok {
+		h.lg.WithError(err).Errorf("can't get role")
+		c.JSON(domain.GetStatusCodeByError(err), gin.H{"error": "can't get role"})
+		return
+	}
+	if role != model.Owner {
+		h.lg.Warn("invalid access rights")
+		c.JSON(http.StatusForbidden, gin.H{"error": "access denied"})
 		return
 	}
 

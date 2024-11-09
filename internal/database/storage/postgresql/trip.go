@@ -85,11 +85,35 @@ func (storage *TripStorage) DeleteTrip(ctx context.Context, id uuid.UUID) error 
 	return nil
 }
 
-func (storage *TripStorage) CreateTrip(ctx context.Context, trip model.Trip) error {
-	tripDb := TripConverter{}.ToDb(trip)
-	tx := storage.db.WithContext(ctx).Create(&tripDb)
+// func (storage *TripStorage) CreateTrip(ctx context.Context, trip model.Trip) error {
+// 	tripDb := TripConverter{}.ToDb(trip)
+// 	tx := storage.db.WithContext(ctx).Create(&tripDb)
 
-	return tx.Error
+// 	return tx.Error
+// }
+
+func (storage *TripStorage) CreateTrip(ctx context.Context, trip model.Trip, userRole model.UserTripRole) error {
+	tripDb := TripConverter{}.ToDb(trip)
+
+	tx := storage.db.WithContext(ctx).Begin()
+
+	if err := tx.Create(&tripDb).Error; err != nil {
+		tx.Rollback() 
+		return err
+	}
+
+	tripUser := orm.TripUser{
+		UserID:   trip.Users[0].ID,
+		TripID:   tripDb.ID,
+		UserRole: int(userRole),
+	}
+
+	if err := tx.Create(&tripUser).Error; err != nil {
+		tx.Rollback()
+		return err
+	}
+
+	return tx.Commit().Error
 }
 
 func (storage *TripStorage) UpdateTrip(ctx context.Context, trip model.Trip) error {
@@ -104,4 +128,20 @@ func (storage *TripStorage) UpdateTrip(ctx context.Context, trip model.Trip) err
 	}
 
 	return tx.Error
+}
+
+func (storage *TripStorage) GetUserRole(ctx context.Context, userID int, tripID uuid.UUID) (model.UserTripRole, error) {
+	tripUser := orm.TripUser{
+		UserID: userID,
+		TripID: tripID,
+	} 
+
+	err := storage.db.WithContext(ctx).
+		First(&tripUser).Error
+
+	if err != nil {
+		return 0, err 
+	}
+
+	return model.UserTripRole(tripUser.UserRole), nil 
 }

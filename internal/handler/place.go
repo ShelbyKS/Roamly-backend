@@ -239,6 +239,21 @@ func (h *PlaceHandler) GetPlacesNearby(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "can't get lng:" + err.Error()})
 		return
 	}
+
+	radius, ok := c.GetQuery("radius")
+	radiusFloat, err := strconv.ParseFloat(radius, 64)
+	if !ok || err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "can't get radius:" + err.Error()})
+		return
+	}
+
+	maxPlaces, ok := c.GetQuery("max_places")
+	maxPlacesInt, err := strconv.Atoi(maxPlaces)
+	if !ok || err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "can't get max_places:" + err.Error()})
+		return
+	}
+
 	placesTypesString := c.Query("types")
 	if !ok {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "can't get types"})
@@ -247,7 +262,15 @@ func (h *PlaceHandler) GetPlacesNearby(c *gin.Context) {
 
 	placesTypes := strings.Split(placesTypesString, ",")
 
-	places, err := h.placeService.GetPlacesNearby(c.Request.Context(), latFloat, lngFloat, placesTypes)
+	places, err := h.placeService.GetPlacesNearby(c.Request.Context(),
+		radiusFloat,
+		latFloat,
+		lngFloat,
+		placesTypes,
+		maxPlacesInt)
+	if err != nil {
+		c.JSON(domain.GetStatusCodeByError(err), gin.H{"error": "can't get places nerby: " + err.Error()})
+	}
 
 	c.JSON(http.StatusOK, places)
 }
