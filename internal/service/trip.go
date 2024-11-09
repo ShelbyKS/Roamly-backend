@@ -100,7 +100,7 @@ func (service *TripService) CreateTrip(ctx context.Context, trip model.Trip) (uu
 		return uuid.Nil, fmt.Errorf("fail to get recommended places names from openai: %w", err)
 	}
 
-	recommendedPlacesDomain, err := service.getRecommendedPlacesDomain(ctx, recommendedPlacesNames)
+	recommendedPlacesDomain, err := service.getRecommendedPlacesDomain(ctx, recommendedPlacesNames, area.GooglePlace.Name)
 	if err != nil {
 		return uuid.Nil, fmt.Errorf("fail to get recommended places domains from google: %w", err)
 	}
@@ -133,11 +133,12 @@ func (service *TripService) getRecommendedPlacesNames(ctx context.Context, area 
 	return places, nil
 }
 
-func (service *TripService) getRecommendedPlacesDomain(ctx context.Context, recommendedPlacesNames []string) ([]*model.Place, error) {
+func (service *TripService) getRecommendedPlacesDomain(ctx context.Context, recommendedPlacesNames []string, area string) ([]*model.Place, error) {
 	var recommendedPlacesDomain []*model.Place
 
 	for _, recommendedPlace := range recommendedPlacesNames {
-		places, err := service.googleApiClient.FindPlace(ctx, recommendedPlace, []string{
+		searchStr := fmt.Sprintf("%s %s", area, recommendedPlace)
+		places, err := service.googleApiClient.FindPlace(ctx, searchStr, []string{
 			"formatted_address",
 			"name",
 			"rating",
