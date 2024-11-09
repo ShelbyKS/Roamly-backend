@@ -110,7 +110,7 @@ func (app *Roamly) initAPI(router *gin.Engine) {
 	// }
 	googleApi := googleapi.NewClient(app.config.GoogleApiKey) //todo: move to external
 
-	schedulerService := service.NewShedulerService(openAIClient, googleApi, tripStorage, eventStorage)
+	schedulerService := service.NewShedulerService(openAIClient, googleApi, tripStorage, eventStorage, placeStorage)
 	userService := service.NewUserService(userStorage, sessionStorage)
 	authService := service.NewAuthService(userStorage, sessionStorage)
 	tripService := service.NewTripService(tripStorage, placeStorage, googleApi, openAIClient)

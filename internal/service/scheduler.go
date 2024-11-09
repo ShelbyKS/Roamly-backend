@@ -19,6 +19,7 @@ type SchedulerService struct {
 	googleApi    clients.IGoogleApiClient
 	tripStorage  storage.ITripStorage
 	eventStorage storage.IEventStorage
+	placeStorage storage.IPlaceStorage
 }
 
 func NewShedulerService(
@@ -26,12 +27,14 @@ func NewShedulerService(
 	googleApi clients.IGoogleApiClient,
 	tripStorage storage.ITripStorage,
 	eventStorage storage.IEventStorage,
+	placeStorage storage.IPlaceStorage,
 ) service.ISchedulerService {
 	return &SchedulerService{
 		openAIClient: openAIClient,
 		googleApi:    googleApi,
 		tripStorage:  tripStorage,
 		eventStorage: eventStorage,
+		placeStorage: placeStorage,
 	}
 }
 
@@ -97,11 +100,14 @@ func (s *SchedulerService) AutoScheduleTrip(ctx context.Context, tripID uuid.UUI
 		return model.Trip{}, fmt.Errorf("failed to parse schedule: %w", err)
 	}
 
-	trip.Places = trip.RecommendedPlaces
-	err = s.tripStorage.UpdateTrip(ctx, trip)
-	if err != nil {
-		return model.Trip{}, fmt.Errorf("failed to update trip places: %w", err)
+	//todo: batch
+	for _, place := range trip.RecommendedPlaces {
+		err = s.placeStorage.AppendPlaceToTrip(ctx, place.ID, trip.ID)
+		if err != nil {
+			return model.Trip{}, fmt.Errorf("failed to append place: %w", err)
+		}
 	}
+	trip.Places = trip.RecommendedPlaces
 
 	err = s.eventStorage.DeleteEventsByTrip(ctx, trip.ID)
 	if err != nil {
