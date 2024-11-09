@@ -226,6 +226,7 @@ type DistanceMatrixResponse struct {
 	DestinationAddresses []string `json:"destination_addresses"`
 	OriginAddresses      []string `json:"origin_addresses"`
 	Rows                 []Row    `json:"rows"`
+	Status               string   `json:"status"`
 }
 
 func (c *GoogleApiClient) GetTimeDistanceMatrix(ctx context.Context, placeIDs []string) (model.DistanceMatrix, error) {
@@ -234,6 +235,8 @@ func (c *GoogleApiClient) GetTimeDistanceMatrix(ctx context.Context, placeIDs []
 	for _, placeID := range placeIDs {
 		placeIDsQuery = append(placeIDsQuery, "place_id:"+placeID)
 	}
+
+	fmt.Println("LEN: ", len(placeIDsQuery))
 
 	placesParams := strings.Join(placeIDsQuery, "|")
 
@@ -260,6 +263,8 @@ func (c *GoogleApiClient) GetTimeDistanceMatrix(ctx context.Context, placeIDs []
 	if resp.StatusCode() != http.StatusOK {
 		return nil, fmt.Errorf("error get time distance matrix: received status '%s'", resp.Status())
 	}
+
+	fmt.Println("GOOGLE result: ", result.Status)
 
 	parsedMatrix := c.getParsedTimeDistance(placeIDs, result)
 
