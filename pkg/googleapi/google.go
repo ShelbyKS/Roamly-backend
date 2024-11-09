@@ -3,6 +3,7 @@ package googleapi
 import (
 	"context"
 	"fmt"
+	"log"
 	"net/http"
 	"strings"
 
@@ -21,7 +22,7 @@ const (
 	methodGetPlacesNearby = "https://places.googleapis.com/v1/places:searchNearby"
 	// methodGetPlacesNearby = "https://maps.googleapis.com/maps/api/place/nearbysearch/json"
 
-	fieldMask = "places.formattedAddress,places.displayName,places.rating,places.location,places.photos"
+	fieldMask = "places.id,places.formattedAddress,places.displayName,places.rating,places.location,places.photos,places.editorialSummary"
 
 	// "name",
 	// 		"rating",
@@ -42,14 +43,20 @@ type Photo struct {
 	PhotoReference string `json:"photo_reference"`
 }
 
+type EditorialSummary struct {
+	Overview string `json:"overview"`
+	Language string `json:"language"`
+}
+
 type Place struct {
-	FormattedAddress string   `json:"formatted_address"`
-	Geometry         Geometry `json:"geometry"`
-	Name             string   `json:"name"`
-	Photos           []Photo  `json:"photos"`
-	PlaceID          string   `json:"place_id"`
-	Rating           float64  `json:"rating"`
-	Types            []string `json:"types"`
+	FormattedAddress string           `json:"formatted_address"`
+	Geometry         Geometry         `json:"geometry"`
+	Name             string           `json:"name"`
+	Photos           []Photo          `json:"photos"`
+	PlaceID          string           `json:"place_id"`
+	Rating           float64          `json:"rating"`
+	Types            []string         `json:"types"`
+	EditorialSummary EditorialSummary `json:"editorial_summary"`
 }
 
 type Result struct {
@@ -353,6 +360,7 @@ func (c *GoogleApiClient) GetPlacesNearby(ctx context.Context,
 		SetResult(&result).
 		Post(methodGetPlacesNearby)
 
+	log.Println(result.Results[0].ID)
 	// log.Println(string(resp.Body()), "key:", c.apiKey)
 
 	if err != nil {

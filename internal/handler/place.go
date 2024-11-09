@@ -177,7 +177,7 @@ func (h *PlaceHandler) GetPlaces(c *gin.Context) {
 	name := c.Query("name")
 	qeuryMap["query"] = name
 
-	qeuryMap["fields"] = "formatted_address,name,rating,geometry"
+	qeuryMap["fields"] = "formatted_address,name,rating,geometry,photos,types,editorial_summary"
 
 	typeQuery, hasType := c.GetQuery("type")
 	if hasType {
@@ -185,8 +185,9 @@ func (h *PlaceHandler) GetPlaces(c *gin.Context) {
 	} else {
 		lat := c.Query("lat")
 		lng := c.Query("lng")
+		radius := c.Query("radius")
 		qeuryMap["location"] = fmt.Sprintf("%s,%s", lat, lng)
-		qeuryMap["radius"] = "20000"
+		qeuryMap["radius"] = radius
 	}
 
 	places, err := h.client.GetPlaces(c.Request.Context(), qeuryMap)
