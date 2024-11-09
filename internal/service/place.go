@@ -141,10 +141,16 @@ func (service *PlaceService) AddPlaceToTrip(ctx context.Context, tripID uuid.UUI
 
 }
 
-func (service *PlaceService) GetPlacesNearby(ctx context.Context, lat float64, lng float64, placesTypes []string) ([]model.GooglePlace, error) {
-	maxPlaces := 10
-	rankPreference := "DISTANCE"
-	radius := 20000.
+func (service *PlaceService) GetPlacesNearby(ctx context.Context,
+	radius float64,
+	lat float64,
+	lng float64,
+	placesTypes []string, maxPlaces int) ([]model.GooglePlace, error) {
+
+	// maxPlaces := 10
+	rankPreference := "POPULARITY"
+	languageCode := "ru"
+	// radius := 20000.
 
 	places, err := service.googleApi.GetPlacesNearby(ctx,
 		placesTypes,
@@ -152,7 +158,8 @@ func (service *PlaceService) GetPlacesNearby(ctx context.Context, lat float64, l
 		rankPreference,
 		lat,
 		lng,
-		radius)
+		radius,
+		languageCode)
 
 	if err != nil {
 		return []model.GooglePlace{}, fmt.Errorf("error get places nerby: %w", err)
