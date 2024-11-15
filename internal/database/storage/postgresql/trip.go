@@ -120,14 +120,29 @@ func (storage *TripStorage) CreateTrip(ctx context.Context, trip model.Trip, use
 func (storage *TripStorage) UpdateTrip(ctx context.Context, trip model.Trip) error {
 	tripDb := TripConverter{}.ToDb(trip)
 
-	tx := storage.db.WithContext(ctx).
-		Model(&orm.Trip{ID: trip.ID}).
-		Updates(&tripDb)
+	tx := storage.db.WithContext(ctx).Begin()
+	defer tx.Rollback()
 
-	if tx.RowsAffected == 0 {
-		return domain.ErrTripNotFound
+	if err := tx.Model(&orm.Trip{ID: trip.ID}).Updates(&tripDb).Error; err != nil {
+		return err
 	}
 
+	if trip.RecommendedPlaces != nil {
+		err := tx.Model(&orm.Trip{ID: trip.ID}).
+			Association("RecommendedPlaces").
+			Append(tripDb.RecommendedPlaces)
+
+		if err != nil {
+			tx.Rollback()
+			return err
+		}
+	}
+
+	//if tx.RowsAffected == 0 {
+	//	return domain.ErrTripNotFound
+	//}
+
+	tx.Commit()
 	return tx.Error
 }
 
