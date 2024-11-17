@@ -109,7 +109,7 @@ func (service *TripService) CreateTrip(ctx context.Context, trip model.Trip) (uu
 	trip.RecommendedPlaces = recommendedPlacesDomain
 	trip.ID = uuid.New()
 
-	err = service.tripStorage.CreateTrip(ctx, trip)
+	err = service.tripStorage.CreateTrip(ctx, trip, model.Owner)
 	if err != nil {
 		return uuid.Nil, fmt.Errorf("fail to create trip from storage: %w", err)
 	}

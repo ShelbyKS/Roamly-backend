@@ -88,7 +88,7 @@ func (storage *TripStorage) DeleteTrip(ctx context.Context, id uuid.UUID) error 
 	return nil
 }
 
-func (storage *TripStorage) CreateTrip(ctx context.Context, trip model.Trip) error {
+func (storage *TripStorage) CreateTrip(ctx context.Context, trip model.Trip, userRole model.UserTripRole) error {
 	tripDb := TripConverter{}.ToDb(trip)
 
 	tripUser := orm.TripUser{
