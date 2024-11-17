@@ -42,7 +42,7 @@ func NewTripHandler(
 	tripGroup.Use(middleware.Mw.AuthMiddleware())
 	{
 		tripGroup.GET("/", handler.GetTrips)
-		tripGroup.GET("/:trip_id", handler.GetTripByID)
+		// tripGroup.GET("/:trip_id", handler.GetTripByID)
 		tripGroup.POST("/", handler.CreateTrip)
 
 		tripGroup.PUT("/",

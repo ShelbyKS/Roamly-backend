@@ -112,7 +112,7 @@ func (storage *TripStorage) CreateTrip(ctx context.Context, trip model.Trip, use
 		return err
 	}
 
-	return tx.Error
+	return tx.Commit().Error
 }
 
 func (storage *TripStorage) UpdateTrip(ctx context.Context, trip model.Trip) error {
