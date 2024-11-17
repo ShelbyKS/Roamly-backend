@@ -144,3 +144,20 @@ func (storage *TripStorage) GetUserRole(ctx context.Context, userID int, tripID 
 
 	return model.UserTripRole(tripUser.UserRole), nil
 }
+
+func (storage *TripStorage) GetTripByEventID(ctx context.Context, eventID uuid.UUID) (model.Trip, error) {
+	event := orm.Event{
+		ID: eventID,
+	}
+
+	err := storage.db.
+		WithContext(ctx).
+		Preload("Trip").
+		First(&event).Error
+
+	if err != nil {
+		return model.Trip{}, err
+	}
+
+	return TripConverter{}.ToDomain(event.Trip), nil
+}

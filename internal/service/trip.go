@@ -192,3 +192,21 @@ func (service *TripService) UpdateTrip(ctx context.Context, trip model.Trip) err
 
 	return nil
 }
+
+func (service *TripService) GetUserRole(ctx context.Context, userID int, tripID uuid.UUID) (model.UserTripRole, error) {
+	role, err := service.tripStorage.GetUserRole(ctx, userID, tripID)
+	if err != nil {
+		return -1, fmt.Errorf("can't get user role: %w", err)
+	}
+
+	return role, nil
+}
+
+func (service *TripService) GetTripByEventID(ctx context.Context, eventID uuid.UUID) (model.Trip, error) {
+	trip, err := service.tripStorage.GetTripByEventID(ctx, eventID)
+	if err != nil {
+		return model.Trip{}, err
+	}
+
+	return trip, nil
+}

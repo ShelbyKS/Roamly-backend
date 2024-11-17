@@ -1,8 +1,9 @@
 package handler
 
 import (
-	"github.com/ShelbyKS/Roamly-backend/internal/middleware"
 	"net/http"
+
+	"github.com/ShelbyKS/Roamly-backend/internal/middleware"
 
 	"github.com/ShelbyKS/Roamly-backend/internal/domain"
 	"github.com/ShelbyKS/Roamly-backend/internal/domain/model"
@@ -15,27 +16,42 @@ import (
 
 type EventHandler struct {
 	eventService service.IEventService
+	tripService  service.ITripService
 	lg           *logrus.Logger
 }
 
 func NewEventHandler(router *gin.Engine,
-	lg *logrus.Logger, eventService service.IEventService) {
+	lg *logrus.Logger,
+	eventService service.IEventService,
+	tripService service.ITripService) {
 
 	handler := &EventHandler{
 		lg:           lg,
 		eventService: eventService,
+		tripService:  tripService,
 	}
 
 	tripEventGroup := router.Group("/api/v1/trip/event")
 	tripEventGroup.Use(middleware.Mw.AuthMiddleware())
 	{
-		tripEventGroup.POST("/", handler.CreateEvent)
-		tripEventGroup.GET("/", handler.GetEvent)
-		tripEventGroup.PUT("/", handler.UpdateEvent)
-		tripEventGroup.DELETE("/", handler.DeleteEvent)
+		tripEventGroup.POST("/",
+			middleware.AccessTripsEventFromBodyByTripIDMiddleware(tripService, middleware.ForOwnerAndEditor),
+			handler.CreateEvent)
+		tripEventGroup.GET("/",
+			middleware.AccessTripsEventsFromQueryMiddleware(tripService, middleware.ForAll),
+			handler.GetEvent)
+		tripEventGroup.PUT("/",
+			middleware.AccessTripsEventFromBodyByEventIDMiddleware(tripService, middleware.ForOwnerAndEditor),
+			handler.UpdateEvent)
+		tripEventGroup.DELETE("/",
+			middleware.AccessTripsEventsFromQueryMiddleware(tripService, middleware.ForOwnerAndEditor),
+			handler.DeleteEvent)
 	}
 
-	router.DELETE("/api/v1/trip/:trip_id/event", middleware.Mw.AuthMiddleware(), handler.DeleteAllEvents)
+	router.DELETE("/api/v1/trip/:trip_id/event",
+		middleware.Mw.AuthMiddleware(),
+		middleware.AccessTripMiddleware(tripService, middleware.ForOwnerAndEditor),
+		handler.DeleteAllEvents)
 }
 
 type CreateEventRequest struct {

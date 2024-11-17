@@ -25,49 +25,6 @@ var (
 	ForAll            = []model.UserTripRole{model.Owner, model.Editor, model.Reader}
 )
 
-func InitTripMiddleware(tripService service.ITripService, userRoles []model.UserTripRole) *TripMiddleware {
-	return &TripMiddleware{
-		tripService:    tripService,
-		validUserRoles: userRoles,
-	}
-}
-
-// func (mw *TripMiddleware) AccessTripMiddleware() gin.HandlerFunc {
-// 	return func(c *gin.Context) {
-// 		userID, ok := c.Get("user_id")
-// 		if !ok {
-// 			c.JSON(http.StatusBadRequest, gin.H{"error": "No user id"})
-// 			c.Abort()
-// 		}
-// 		userIDInt, ok := userID.(int)
-// 		if !ok {
-// 			c.JSON(http.StatusBadRequest, gin.H{"error": "can't parse user id"})
-// 			c.Abort()
-// 		}
-
-// 		tripID := c.Param("trip_id")
-// 		tripIDuuid, err := uuid.Parse(tripID)
-// 		if !ok {
-// 			c.JSON(http.StatusBadRequest, gin.H{"error": "can't parse trip id"})
-// 			c.Abort()
-// 		}
-
-// 		role, err := mw.tripService.GetUserRole(c.Request.Context(), userIDInt, tripIDuuid)
-// 		if err != nil {
-// 			c.JSON(http.StatusUnauthorized, gin.H{"error": "can't get role: " + err.Error()})
-// 			c.Abort()
-// 			return
-// 		}
-// 		if !slices.Contains(mw.validUserRoles, role) {
-// 			log.Println("roles:",mw.validUserRoles, role)
-// 			c.JSON(http.StatusForbidden, gin.H{"error": "access denied"})
-// 			c.Abort()
-// 		}
-
-// 		// c.Set("user_role", role)
-// 		c.Next()
-// 	}
-// }
 
 func AccessTripMiddleware(tripService service.ITripService, userRoles []model.UserTripRole) gin.HandlerFunc {
 	return func(c *gin.Context) {
@@ -120,7 +77,7 @@ func AccessTripFromBodyMiddleware(tripService service.ITripService, userRoles []
 			return
 		}
 
-		// Клонируем тело запроса
+		// Клонируем тело запроса (дважды бади читать нельзя)
 		var bodyBuffer bytes.Buffer
 		_, err := io.Copy(&bodyBuffer, c.Request.Body)
 		if err != nil {
@@ -165,4 +122,3 @@ func AccessTripFromBodyMiddleware(tripService service.ITripService, userRoles []
 	}
 }
 
-// var Mw *Middleware
