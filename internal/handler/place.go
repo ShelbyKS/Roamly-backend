@@ -1,7 +1,6 @@
 package handler
 
 import (
-	"context"
 	"fmt"
 	"net/http"
 	"strconv"
@@ -9,7 +8,6 @@ import (
 
 	"github.com/ShelbyKS/Roamly-backend/internal/domain"
 	"github.com/ShelbyKS/Roamly-backend/internal/middleware"
-	"github.com/google/uuid"
 
 	"github.com/ShelbyKS/Roamly-backend/internal/domain/service"
 	"github.com/ShelbyKS/Roamly-backend/internal/handler/dto"
@@ -31,100 +29,16 @@ func NewPlaceHandler(router *gin.Engine, lg *logrus.Logger, placeService service
 		client:       client,
 	}
 
+	// api := router.Group("/api/v1")
 	router.GET("/api/v1/place", middleware.Mw.AuthMiddleware(), handler.GetPlaces)
 	router.GET("/api/v1/place/find", middleware.Mw.AuthMiddleware(), handler.FindPlaces)
 	router.GET("/api/v1/place/photo", middleware.Mw.AuthMiddleware(), handler.GetPhoto)
-	router.DELETE("/api/v1/trip/:trip_id/place/:place_id", middleware.Mw.AuthMiddleware(), handler.DeletePlaceFromTrip)
 	router.GET("api/v1/place/recomendations", handler.GetPlacesNearby)
-
-	tripPlaceGroup := router.Group("/api/v1/trip/place")
-	tripPlaceGroup.Use(middleware.Mw.AuthMiddleware())
-	{
-		tripPlaceGroup.POST("/", handler.AddPlaceToTrip)
-	}
 }
 
 type AddPlaceToTripRequest struct {
 	TripID  string `json:"trip_id" form:"trip_id" binding:"required"`
 	PlaceID string `json:"place_id" form:"place_id" binding:"required"`
-}
-
-// @Summary Add place to trip
-// @Description Add a place to a specific trip by their IDs
-// @Tags place
-// @Accept json
-// @Produce json
-// @Param trip-place body AddPlaceToTripRequest true "JSON containing trip and place IDs"
-// @Success 200 {object} dto.TripResponse
-// @Failure 400 {object} map[string]string "Bad request"
-// @Failure 404 {object} map[string]string "Not found"
-// @Failure 500 {object} map[string]string "Internal server error"
-// @Router /api/v1/trip/place [post]
-func (h *PlaceHandler) AddPlaceToTrip(c *gin.Context) {
-	var req AddPlaceToTripRequest
-
-	err := c.Bind(&req)
-	if err != nil {
-		h.lg.WithError(err).Errorf("failed to parse body")
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
-		return
-	}
-
-	tripUUID, err := uuid.Parse(req.TripID)
-	if err != nil {
-		h.lg.WithError(err).Errorf("invalid trip_id")
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid trip_id format"})
-		return
-	}
-
-	trip, err := h.placeService.AddPlaceToTrip(c.Request.Context(), tripUUID, req.PlaceID)
-	if err != nil {
-		h.lg.WithError(err).Errorf("failed to add place to trip")
-		c.JSON(domain.GetStatusCodeByError(err), gin.H{"error": err.Error()})
-		return
-	}
-
-	c.JSON(http.StatusOK, gin.H{"trip": dto.TripConverter{}.ToDto(trip)})
-
-	go func() {
-		ctx := context.Background()
-
-		err = h.placeService.DetermineRecommendedDuration(ctx, req.PlaceID)
-		if err != nil {
-			h.lg.WithError(err).Errorf("failed to determine recommended duration")
-		}
-	}()
-}
-
-// @Summary Delete place from trip
-// @Description Delete place from a specific trip by their IDs
-// @Tags place
-// @Accept json
-// @Produce json
-// @Success 200 {object} dto.TripResponse
-// @Failure 400 {object} map[string]string "Bad request"
-// @Failure 404 {object} map[string]string "Not found"
-// @Failure 500 {object} map[string]string "Internal server error"
-// @Router /api/v1/trip/{trip_id}/place/{place_id} [delete]
-func (h *PlaceHandler) DeletePlaceFromTrip(c *gin.Context) {
-	tripID := c.Param("trip_id")
-	placeID := c.Param("place_id")
-
-	tripUUID, err := uuid.Parse(tripID)
-	if err != nil {
-		h.lg.WithError(err).Errorf("invalid trip_id format")
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid trip_id format"})
-		return
-	}
-
-	trip, err := h.placeService.DeletePlace(c.Request.Context(), tripUUID, placeID)
-	if err != nil {
-		h.lg.WithError(err).Errorf("failed to remove place from trip")
-		c.JSON(domain.GetStatusCodeByError(err), gin.H{"error": err.Error()})
-		return
-	}
-
-	c.JSON(http.StatusOK, gin.H{"trip": dto.TripConverter{}.ToDto(trip)})
 }
 
 // @Summary Find places

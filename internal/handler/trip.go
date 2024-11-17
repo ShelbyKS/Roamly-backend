@@ -1,6 +1,7 @@
 package handler
 
 import (
+	"context"
 	"net/http"
 
 	"github.com/ShelbyKS/Roamly-backend/internal/handler/dto"
@@ -43,11 +44,32 @@ func NewTripHandler(
 		tripGroup.GET("/", handler.GetTrips)
 		tripGroup.GET("/:trip_id", handler.GetTripByID)
 		tripGroup.POST("/", handler.CreateTrip)
-		tripGroup.PUT("/", handler.UpdateTrip)
-		tripGroup.DELETE("/:trip_id", handler.DeleteTrip)
+
+		tripGroup.PUT("/",
+			middleware.AccessTripFromBodyMiddleware(tripService, middleware.ForOwnerAndEditor),
+			handler.UpdateTrip)
+
+		tripGroup.GET("/:trip_id",
+			middleware.AccessTripMiddleware(tripService, middleware.ForAll),
+			handler.GetTripByID)
+
+		tripGroup.DELETE("/:trip_id",
+			middleware.AccessTripMiddleware(tripService, middleware.ForOwner),
+			handler.DeleteTrip)
 
 		tripGroup.POST("/:trip_id/schedule", handler.ScheduleTrip)
 		tripGroup.POST("/:trip_id/schedule/auto", handler.AutoScheduleTrip)
+		tripGroup.POST("/:trip_id/schedule",
+			middleware.AccessTripMiddleware(tripService, middleware.ForOwnerAndEditor),
+			handler.ScheduleTrip)
+
+		tripGroup.DELETE("/:trip_id/place/:place_id",
+			middleware.AccessTripMiddleware(tripService, middleware.ForOwnerAndEditor),
+			handler.DeletePlaceFromTrip)
+
+		tripGroup.POST("/place",
+			middleware.AccessTripMiddleware(tripService, middleware.ForOwnerAndEditor),
+			handler.AddPlaceToTrip)
 	}
 }
 
@@ -303,6 +325,84 @@ func (h *TripHandler) AutoScheduleTrip(c *gin.Context) {
 	trip, err := h.schedulerService.AutoScheduleTrip(c.Request.Context(), tripID)
 	if err != nil {
 		h.lg.WithError(err).Errorf("failed to auto schedule trip with id=%d", tripID)
+		c.JSON(domain.GetStatusCodeByError(err), gin.H{"error": err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"trip": dto.TripConverter{}.ToDto(trip)})
+}
+
+// @Summary Add place to trip
+// @Description Add a place to a specific trip by their IDs
+// @Tags place
+// @Accept json
+// @Produce json
+// @Param trip-place body AddPlaceToTripRequest true "JSON containing trip and place IDs"
+// @Success 200 {object} dto.TripResponse
+// @Failure 400 {object} map[string]string "Bad request"
+// @Failure 404 {object} map[string]string "Not found"
+// @Failure 500 {object} map[string]string "Internal server error"
+// @Router /api/v1/trip/place [post]
+func (h *TripHandler) AddPlaceToTrip(c *gin.Context) {
+	var req AddPlaceToTripRequest
+
+	err := c.Bind(&req)
+	if err != nil {
+		h.lg.WithError(err).Errorf("failed to parse body")
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	tripUUID, err := uuid.Parse(req.TripID)
+	if err != nil {
+		h.lg.WithError(err).Errorf("invalid trip_id")
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid trip_id format"})
+		return
+	}
+
+	trip, err := h.placesService.AddPlaceToTrip(c.Request.Context(), tripUUID, req.PlaceID)
+	if err != nil {
+		h.lg.WithError(err).Errorf("failed to add place to trip")
+		c.JSON(domain.GetStatusCodeByError(err), gin.H{"error": err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"trip": dto.TripConverter{}.ToDto(trip)})
+
+	go func() {
+		ctx := context.Background()
+
+		err = h.placesService.DetermineRecommendedDuration(ctx, req.PlaceID)
+		if err != nil {
+			h.lg.WithError(err).Errorf("failed to determine recommended duration")
+		}
+	}()
+}
+
+// @Summary Delete place from trip
+// @Description Delete place from a specific trip by their IDs
+// @Tags place
+// @Accept json
+// @Produce json
+// @Success 200 {object} dto.TripResponse
+// @Failure 400 {object} map[string]string "Bad request"
+// @Failure 404 {object} map[string]string "Not found"
+// @Failure 500 {object} map[string]string "Internal server error"
+// @Router /api/v1/trip/{trip_id}/place/{place_id} [delete]
+func (h *TripHandler) DeletePlaceFromTrip(c *gin.Context) {
+	tripID := c.Param("trip_id")
+	placeID := c.Param("place_id")
+
+	tripUUID, err := uuid.Parse(tripID)
+	if err != nil {
+		h.lg.WithError(err).Errorf("invalid trip_id format")
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid trip_id format"})
+		return
+	}
+
+	trip, err := h.placesService.DeletePlace(c.Request.Context(), tripUUID, placeID)
+	if err != nil {
+		h.lg.WithError(err).Errorf("failed to remove place from trip")
 		c.JSON(domain.GetStatusCodeByError(err), gin.H{"error": err.Error()})
 		return
 	}
