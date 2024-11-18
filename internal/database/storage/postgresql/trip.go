@@ -34,6 +34,7 @@ func (storage *TripStorage) GetTripByID(ctx context.Context, id uuid.UUID) (mode
 		Model(&orm.Trip{}).
 		Preload("Area").
 		Preload("Users").
+		Preload("TripUsers").
 		Preload("Places").
 		Preload("RecommendedPlaces").
 		Preload("Events").
@@ -53,7 +54,7 @@ func (storage *TripStorage) GetTripByID(ctx context.Context, id uuid.UUID) (mode
 func (storage *TripStorage) GetTrips(ctx context.Context, userId int) ([]model.Trip, error) {
 	var user orm.User
 
-	err := storage.db.
+	err := storage.db.WithContext(ctx).
 		Preload("Trips").
 		Preload("Trips.Area").
 		Preload("Trips.Users").
@@ -91,7 +92,7 @@ func (storage *TripStorage) DeleteTrip(ctx context.Context, id uuid.UUID) error 
 func (storage *TripStorage) CreateTrip(ctx context.Context, trip model.Trip, userRole model.UserTripRole) error {
 	tripDb := TripConverter{}.ToDb(trip)
 
-	tripUser := orm.TripUser{
+	tripUser := orm.TripUsers{
 		UserID:   trip.Users[0].ID,
 		TripID:   tripDb.ID,
 		UserRole: int(userRole),
@@ -100,7 +101,7 @@ func (storage *TripStorage) CreateTrip(ctx context.Context, trip model.Trip, use
 	tripDb.Users = []*orm.User{}
 
 	tx := storage.db.WithContext(ctx).Begin()
-	if err := storage.db.Create(&tripDb).Error; err != nil {
+	if err := tx.Create(&tripDb).Error; err != nil {
 		tx.Rollback()
 		log.Println("create trip err:", err)
 		return err
@@ -130,7 +131,7 @@ func (storage *TripStorage) UpdateTrip(ctx context.Context, trip model.Trip) err
 }
 
 func (storage *TripStorage) GetUserRole(ctx context.Context, userID int, tripID uuid.UUID) (model.UserTripRole, error) {
-	tripUser := orm.TripUser{
+	tripUser := orm.TripUsers{
 		UserID: userID,
 		TripID: tripID,
 	}

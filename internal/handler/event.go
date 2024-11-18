@@ -3,15 +3,15 @@ package handler
 import (
 	"net/http"
 
-	"github.com/ShelbyKS/Roamly-backend/internal/middleware"
+	"github.com/gin-gonic/gin"
+	"github.com/google/uuid"
+	"github.com/sirupsen/logrus"
 
+	"github.com/ShelbyKS/Roamly-backend/internal/middleware"
 	"github.com/ShelbyKS/Roamly-backend/internal/domain"
 	"github.com/ShelbyKS/Roamly-backend/internal/domain/model"
 	"github.com/ShelbyKS/Roamly-backend/internal/domain/service"
 	"github.com/ShelbyKS/Roamly-backend/internal/handler/dto"
-	"github.com/gin-gonic/gin"
-	"github.com/google/uuid"
-	"github.com/sirupsen/logrus"
 )
 
 type EventHandler struct {
@@ -20,11 +20,12 @@ type EventHandler struct {
 	lg           *logrus.Logger
 }
 
-func NewEventHandler(router *gin.Engine,
+func NewEventHandler(
+	router *gin.Engine,
 	lg *logrus.Logger,
 	eventService service.IEventService,
-	tripService service.ITripService) {
-
+	tripService service.ITripService,
+) {
 	handler := &EventHandler{
 		lg:           lg,
 		eventService: eventService,
@@ -51,7 +52,8 @@ func NewEventHandler(router *gin.Engine,
 	router.DELETE("/api/v1/trip/:trip_id/event",
 		middleware.Mw.AuthMiddleware(),
 		middleware.AccessTripMiddleware(tripService, middleware.ForOwnerAndEditor),
-		handler.DeleteAllEvents)
+		handler.DeleteAllEvents,
+	)
 }
 
 type CreateEventRequest struct {
@@ -146,7 +148,7 @@ func (h *EventHandler) UpdateEvent(c *gin.Context) {
 // @Accept json
 // @Produce json
 // @Param event_id query string true "Event ID"
-// @Success 204 {object} map[string]string
+// @Success 204
 // @Failure 404 {object} map[string]string
 // @Failure 500 {object} map[string]string
 // @Router /api/v1/trip/event [delete]
@@ -201,7 +203,7 @@ func (h *EventHandler) GetEvent(c *gin.Context) {
 // @Accept json
 // @Produce json
 // @Param trip_id query string true "Trip ID"
-// @Success 204 {object} map[string]string
+// @Success 204
 // @Failure 404 {object} map[string]string
 // @Failure 500 {object} map[string]string
 // @Router /api/v1/trip/{trip_id}/event [delete]

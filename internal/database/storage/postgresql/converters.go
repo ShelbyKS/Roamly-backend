@@ -1,7 +1,7 @@
 package postgresql
 
 import (
-	"fmt"
+	"database/sql"
 	"github.com/ShelbyKS/Roamly-backend/internal/database/orm"
 	"github.com/ShelbyKS/Roamly-backend/internal/domain/model"
 	"time"
@@ -90,15 +90,18 @@ func (TripConverter) ToDomain(trip orm.Trip) model.Trip {
 		tripRecommendedPlaces = append(tripRecommendedPlaces, &placeDomain)
 	}
 
-	fmt.Println("RECOMS: ", trip.RecommendedPlaces)
+	roleMap := make(map[int]model.UserTripRole)
+	for _, tripUser := range trip.TripUsers {
+		roleMap[tripUser.UserID] = model.UserTripRole(tripUser.UserRole)
+	}
 
-	// todo: тут не все поля юзера
 	users := make([]*model.User, len(trip.Users))
 	for i, user := range trip.Users {
 		users[i] = &model.User{
 			ID:       user.ID,
 			Login:    user.Login,
 			Password: user.Password,
+			Role:     roleMap[user.ID].String(),
 		}
 	}
 
@@ -302,5 +305,28 @@ func (EventConverter) ToDomain(event orm.Event) model.Event {
 		TripID:    event.TripID,
 		StartTime: event.StartTime,
 		EndTime:   event.EndTime,
+	}
+}
+
+type InviteConverter struct{}
+
+func (InviteConverter) ToDb(invite model.Invite) orm.Invite {
+	return orm.Invite{
+		Token:  invite.Token,
+		TripID: invite.TripID,
+		Access: invite.Access,
+		Enable: sql.NullBool{Bool: invite.Enable, Valid: true},
+	}
+}
+
+func (InviteConverter) ToDomain(invite orm.Invite) model.Invite {
+	tripDomain := TripConverter{}.ToDomain(invite.Trip)
+
+	return model.Invite{
+		Token:  invite.Token,
+		TripID: invite.TripID,
+		Trip:   tripDomain,
+		Access: invite.Access,
+		Enable: invite.Enable.Bool,
 	}
 }

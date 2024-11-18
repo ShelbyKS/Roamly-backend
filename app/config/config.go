@@ -14,6 +14,7 @@ type Config struct {
 	LogLevel     string `envconfig:"LOG_LEVEL"`
 	GoogleApiKey string `envconfig:"GOOGLE_API_KEY"`
 	OpenAiKey    string `envconfig:"OPEN_AI_KEY"`
+	JWTSecret    string `envconfig:"JWT_SECRET"`
 
 	Postgres PostgresConfig
 	Redis    RedisConfig

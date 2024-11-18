@@ -88,7 +88,7 @@ func (app *Roamly) initDBs() {
 		log.Fatalf("Failed to connect to redis: %v", err)
 	}
 
-	err = pgDB.AutoMigrate(&orm.User{}, &orm.Trip{}, &orm.Place{}, &orm.Event{})
+	err = pgDB.AutoMigrate(&orm.User{}, &orm.Trip{}, &orm.Place{}, &orm.Event{}, &orm.TripUsers{}, &orm.Invite{})
 	if err != nil {
 		log.Fatalf("Failed to migrate db: %v", err)
 	}
@@ -103,6 +103,7 @@ func (app *Roamly) initAPI(router *gin.Engine) {
 	tripStorage := postgresql.NewTripStorage(app.pgDB)
 	placeStorage := postgresql.NewPlaceStorage(app.pgDB)
 	eventStorage := postgresql.NewEventStorage(app.pgDB)
+	inviteStorage := postgresql.NewInviteStorage(app.pgDB)
 
 	openAIClient := chatgpt.NewChatGPTClient(app.config.OpenAiKey) //todo: move to external
 	// if err != nil {
@@ -116,6 +117,7 @@ func (app *Roamly) initAPI(router *gin.Engine) {
 	tripService := service.NewTripService(tripStorage, placeStorage, googleApi, openAIClient)
 	placeService := service.NewPlaceService(placeStorage, tripStorage, googleApi, eventStorage, openAIClient)
 	eventService := service.NewEventService(eventStorage, tripStorage, placeStorage)
+	inviteService := service.NewInviteService(inviteStorage, app.config.JWTSecret)
 
 	middleware.Mw = middleware.InitMiddleware(sessionStorage)
 	router.Use(middleware.Mw.CORSMiddleware())
@@ -125,6 +127,7 @@ func (app *Roamly) initAPI(router *gin.Engine) {
 	handler.NewTripHandler(router, app.logger, tripService, placeService, schedulerService)
 	handler.NewPlaceHandler(router, app.logger, placeService, *googleApi)
 	handler.NewEventHandler(router, app.logger, eventService, tripService)
+	handler.NewInviteHandler(router, app.logger, inviteService)
 
 	router.GET("/api/v1/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
 }
