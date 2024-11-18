@@ -307,34 +307,6 @@ func (h *TripHandler) ScheduleTrip(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"trip": dto.TripConverter{}.ToDto(trip)})
 }
 
-// @Summary Schedule trip
-// @Description Schedule places in trip
-// @Tags trip
-// @Produce json
-// @Param trip_id path string true "Trip ID"
-// @Success 200 {object} model.Trip
-// @Failure 400 {object} map[string]string
-// @Failure 404 {object} map[string]string
-// @Failure 500 {object} map[string]string
-// @Router /api/v1/trip/{trip_id}/schedule/auto [post]
-func (h *TripHandler) AutoScheduleTrip(c *gin.Context) {
-	idString := c.Param("trip_id")
-	tripID, err := uuid.Parse(idString)
-	if err != nil {
-		h.lg.WithError(err).Errorf("failed to parse query")
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
-		return
-	}
-
-	trip, err := h.schedulerService.AutoScheduleTrip(c.Request.Context(), tripID)
-	if err != nil {
-		h.lg.WithError(err).Errorf("failed to auto schedule trip with id=%d", tripID)
-		c.JSON(domain.GetStatusCodeByError(err), gin.H{"error": err.Error()})
-		return
-	}
-
-	c.JSON(http.StatusOK, gin.H{"trip": dto.TripConverter{}.ToDto(trip)})
-}
 
 // @Summary Add place to trip
 // @Description Add a place to a specific trip by their IDs
