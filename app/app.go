@@ -124,7 +124,7 @@ func (app *Roamly) initAPI(router *gin.Engine) {
 	handler.NewUserHandler(router, app.logger, userService)
 	handler.NewTripHandler(router, app.logger, tripService, placeService, schedulerService)
 	handler.NewPlaceHandler(router, app.logger, placeService, *googleApi)
-	handler.NewEventHandler(router, app.logger, eventService)
+	handler.NewEventHandler(router, app.logger, eventService, tripService)
 
 	router.GET("/api/v1/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
 }
