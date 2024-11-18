@@ -9,4 +9,5 @@ type User struct {
 	Password  string    `json:"password"`
 	ImageURL  string    `json:"image_url"`
 	CreatedAt time.Time `json:"created_at"`
+	Role      string    `json:"role"`
 }

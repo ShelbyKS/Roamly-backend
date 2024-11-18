@@ -397,7 +397,7 @@ const docTemplate = `{
                             "additionalProperties": {
                                 "type": "array",
                                 "items": {
-                                    "$ref": "#/definitions/dto.GooglePlace"
+                                    "$ref": "#/definitions/dto.PlaceGoogle"
                                 }
                             }
                         }
@@ -833,7 +833,10 @@ const docTemplate = `{
                 ],
                 "responses": {
                     "204": {
-                        "description": "No Content",
+                        "description": "No Content"
+                    },
+                    "404": {
+                        "description": "Not Found",
                         "schema": {
                             "type": "object",
                             "additionalProperties": {
@@ -841,8 +844,101 @@ const docTemplate = `{
                             }
                         }
                     },
-                    "404": {
-                        "description": "Not Found",
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/trip/invite": {
+            "post": {
+                "description": "Enable trip invitation by access",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "invite"
+                ],
+                "summary": "Enable trip invitation",
+                "parameters": [
+                    {
+                        "description": "Invitation data",
+                        "name": "event",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/handler.EnableInvitationRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "invite_token: bla_bla",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "description": "Disable trip invitation by access",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "invite"
+                ],
+                "summary": "Disable trip invitation",
+                "parameters": [
+                    {
+                        "description": "Invitation data",
+                        "name": "event",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/handler.DisableInvitationRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "No Content"
+                    },
+                    "400": {
+                        "description": "Bad Request",
                         "schema": {
                             "type": "object",
                             "additionalProperties": {
@@ -1057,7 +1153,54 @@ const docTemplate = `{
                 ],
                 "responses": {
                     "204": {
-                        "description": "No Content",
+                        "description": "No Content"
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/trip/{trip_id}/invite": {
+            "get": {
+                "description": "Get trip invite tokens",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "invite"
+                ],
+                "summary": "Trip invitations",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "array",
+                                "items": {
+                                    "$ref": "#/definitions/dto.InviteResponse"
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
                         "schema": {
                             "type": "object",
                             "additionalProperties": {
@@ -1137,6 +1280,62 @@ const docTemplate = `{
             }
         },
         "/api/v1/trip/{trip_id}/schedule": {
+            "post": {
+                "description": "Schedule places in trip",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "trip"
+                ],
+                "summary": "Schedule trip",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Trip ID",
+                        "name": "trip_id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/model.Trip"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/trip/{trip_id}/schedule/auto": {
             "post": {
                 "description": "Schedule places in trip",
                 "produces": [
@@ -1332,7 +1531,7 @@ const docTemplate = `{
             "type": "object",
             "properties": {
                 "location": {
-                    "$ref": "#/definitions/dto.Location"
+                    "$ref": "#/definitions/internal_handler_dto.Location"
                 }
             }
         },
@@ -1374,14 +1573,34 @@ const docTemplate = `{
                 "login": {
                     "type": "string"
                 },
-                "password": {
+                "role": {
                     "type": "string"
                 }
             }
         },
-        "dto.GooglePlace": {
+        "dto.InviteResponse": {
             "type": "object",
             "properties": {
+                "access": {
+                    "type": "string"
+                },
+                "enable": {
+                    "type": "boolean"
+                },
+                "token": {
+                    "type": "string"
+                },
+                "trip_id": {
+                    "type": "string"
+                }
+            }
+        },
+        "dto.PlaceGoogle": {
+            "type": "object",
+            "properties": {
+                "editorial_summary": {
+                    "type": "string"
+                },
                 "formatted_address": {
                     "type": "string"
                 },
@@ -1394,7 +1613,7 @@ const docTemplate = `{
                 "photos": {
                     "type": "array",
                     "items": {
-                        "$ref": "#/definitions/dto.Photo"
+                        "$ref": "#/definitions/internal_handler_dto.Photo"
                     }
                 },
                 "place_id": {
@@ -1402,6 +1621,9 @@ const docTemplate = `{
                 },
                 "rating": {
                     "type": "number"
+                },
+                "recommended_duration": {
+                    "type": "integer"
                 },
                 "types": {
                     "type": "array",
@@ -1414,30 +1636,11 @@ const docTemplate = `{
                 }
             }
         },
-        "dto.Location": {
-            "type": "object",
-            "properties": {
-                "lat": {
-                    "type": "number"
-                },
-                "lng": {
-                    "type": "number"
-                }
-            }
-        },
-        "dto.Photo": {
-            "type": "object",
-            "properties": {
-                "photo_reference": {
-                    "type": "string"
-                }
-            }
-        },
         "dto.TripResponse": {
             "type": "object",
             "properties": {
                 "area": {
-                    "$ref": "#/definitions/dto.GooglePlace"
+                    "$ref": "#/definitions/dto.PlaceGoogle"
                 },
                 "area_id": {
                     "type": "string"
@@ -1460,7 +1663,13 @@ const docTemplate = `{
                 "places": {
                     "type": "array",
                     "items": {
-                        "$ref": "#/definitions/dto.GooglePlace"
+                        "$ref": "#/definitions/dto.PlaceGoogle"
+                    }
+                },
+                "recommended_places": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/dto.PlaceGoogle"
                     }
                 },
                 "start_time": {
@@ -1533,6 +1742,36 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "start_time": {
+                    "type": "string"
+                }
+            }
+        },
+        "handler.DisableInvitationRequest": {
+            "type": "object",
+            "required": [
+                "access",
+                "trip_id"
+            ],
+            "properties": {
+                "access": {
+                    "type": "string"
+                },
+                "trip_id": {
+                    "type": "string"
+                }
+            }
+        },
+        "handler.EnableInvitationRequest": {
+            "type": "object",
+            "required": [
+                "access",
+                "trip_id"
+            ],
+            "properties": {
+                "access": {
+                    "type": "string"
+                },
+                "trip_id": {
                     "type": "string"
                 }
             }
@@ -1637,6 +1876,25 @@ const docTemplate = `{
                 }
             }
         },
+        "internal_handler_dto.Location": {
+            "type": "object",
+            "properties": {
+                "lat": {
+                    "type": "number"
+                },
+                "lng": {
+                    "type": "number"
+                }
+            }
+        },
+        "internal_handler_dto.Photo": {
+            "type": "object",
+            "properties": {
+                "photo_reference": {
+                    "type": "string"
+                }
+            }
+        },
         "model.Event": {
             "type": "object",
             "properties": {
@@ -1671,6 +1929,9 @@ const docTemplate = `{
         "model.GooglePlace": {
             "type": "object",
             "properties": {
+                "editorial_summary": {
+                    "type": "string"
+                },
                 "formatted_address": {
                     "type": "string"
                 },
@@ -1778,6 +2039,12 @@ const docTemplate = `{
                         "$ref": "#/definitions/model.Place"
                     }
                 },
+                "recommended_places": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/model.Place"
+                    }
+                },
                 "start_time": {
                     "type": "string"
                 },
@@ -1808,6 +2075,9 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "password": {
+                    "type": "string"
+                },
+                "role": {
                     "type": "string"
                 }
             }

@@ -46,7 +46,7 @@ type AddPlaceToTripRequest struct {
 // @Tags place
 // @Produce json
 // @Param searchString query string true "Search string to search places"
-// @Success 200 {object} map[string][]dto.GooglePlace "List of found places"
+// @Success 200 {object} map[string][]dto.PlaceGoogle "List of found places"
 // @Failure 400 {object} map[string]string "Bad request"
 // @Failure 404 {object} map[string]string "Not found"
 // @Failure 500 {object} map[string]string "Internal server error"
@@ -61,7 +61,7 @@ func (h *PlaceHandler) FindPlaces(c *gin.Context) {
 		return
 	}
 
-	placesDto := make([]dto.GooglePlace, len(places))
+	placesDto := make([]dto.PlaceGoogle, len(places))
 	for i, place := range places {
 		placesDto[i] = dto.GooglePlaceConverter{}.ToDto(place.GooglePlace)
 	}

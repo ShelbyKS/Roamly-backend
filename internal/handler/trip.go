@@ -30,7 +30,6 @@ func NewTripHandler(
 	placesService service.IPlaceService,
 	schedulerService service.ISchedulerService,
 ) {
-
 	handler := &TripHandler{
 		lg:               lg,
 		tripService:      tripService,
@@ -205,7 +204,7 @@ func (h *TripHandler) CreateTrip(c *gin.Context) {
 	userID, ok := c.Get("user_id")
 	if !ok {
 		h.lg.Errorf("Fail to get user_id from context")
-		c.JSON(domain.GetStatusCodeByError(err), gin.H{"error": "Fail to get user_id from context"})
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Fail to get user_id from context"})
 		return
 	}
 

@@ -10,7 +10,7 @@ func (UserConverter) ToDto(user model.User) GetUser {
 	return GetUser{
 		ID:        user.ID,
 		Login:     user.Login,
-		Password:  user.Password,
+		Role:      user.Role,
 		CreatedAt: user.CreatedAt,
 	}
 }
@@ -18,13 +18,13 @@ func (UserConverter) ToDto(user model.User) GetUser {
 type TripConverter struct{}
 
 func (TripConverter) ToDto(trip model.Trip) TripResponse {
-	places := make([]GooglePlace, len(trip.Places))
+	places := make([]PlaceGoogle, len(trip.Places))
 	for i, place := range trip.Places {
 		placeDto := GooglePlaceConverter{}.ToDto(place.GooglePlace)
 		places[i] = placeDto
 	}
 
-	recommendedPlaces := make([]GooglePlace, len(trip.RecommendedPlaces))
+	recommendedPlaces := make([]PlaceGoogle, len(trip.RecommendedPlaces))
 	for i, recommendedPlace := range trip.RecommendedPlaces {
 		placeDto := GooglePlaceConverter{}.ToDto(recommendedPlace.GooglePlace)
 		recommendedPlaces[i] = placeDto
@@ -36,7 +36,7 @@ func (TripConverter) ToDto(trip model.Trip) TripResponse {
 		users[i] = GetUser{
 			ID:    user.ID,
 			Login: user.Login,
-			Email: user.Email,
+			Role:  user.Role,
 		}
 	}
 
@@ -78,13 +78,13 @@ func (PhotoConverter) ToDb(photo model.Photo) Photo {
 
 type GooglePlaceConverter struct{}
 
-func (GooglePlaceConverter) ToDto(gp model.GooglePlace) GooglePlace {
+func (GooglePlaceConverter) ToDto(gp model.GooglePlace) PlaceGoogle {
 	photos := make([]Photo, len(gp.Photos))
 	for i, photo := range gp.Photos {
 		photos[i] = PhotoConverter{}.ToDb(photo)
 	}
 
-	return GooglePlace{
+	return PlaceGoogle{
 		FormattedAddress: gp.FormattedAddress,
 		Geometry:         GeometryConverter{}.ToDto(gp.Geometry),
 		Name:             gp.Name,
@@ -124,5 +124,16 @@ func (EventConverter) ToDto(event model.Event) GetEvent {
 		TripID:    event.TripID,
 		StartTime: event.StartTime,
 		EndTime:   event.EndTime,
+	}
+}
+
+type InviteConverter struct{}
+
+func (InviteConverter) ToDto(invitation model.Invite) InviteResponse {
+	return InviteResponse{
+		Token:  invitation.Token,
+		TripID: invitation.TripID,
+		Access: invitation.Access,
+		Enable: invitation.Enable,
 	}
 }

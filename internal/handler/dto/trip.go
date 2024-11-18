@@ -11,8 +11,8 @@ type TripResponse struct {
 	StartTime         string        `json:"start_time"`
 	EndTime           string        `json:"end_time"`
 	AreaID            string        `json:"area_id"`
-	Area              GooglePlace   `json:"area"`
-	Places            []GooglePlace `json:"places"`
-	RecommendedPlaces []GooglePlace `json:"recommended_places"`
+	Area              PlaceGoogle   `json:"area"`
+	Places            []PlaceGoogle `json:"places"`
+	RecommendedPlaces []PlaceGoogle `json:"recommended_places"`
 	Events            []GetEvent    `json:"events"`
 }

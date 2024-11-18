@@ -7,6 +7,6 @@ type User struct {
 	Login     string
 	Email     string
 	Password  string
-	Trips     []*Trip   `gorm:"many2many:trip_user;constraint:OnDelete:CASCADE;"`
+	Trips     []*Trip   `gorm:"many2many:trip_users;constraint:OnDelete:CASCADE;"`
 	CreatedAt time.Time `gorm:"autoCreateTime"`
 }

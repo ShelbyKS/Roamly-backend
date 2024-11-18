@@ -10,7 +10,7 @@ type Event struct {
 	PlaceID string    `gorm:"default:null"`
 	TripID  uuid.UUID `gorm:"index"`
 	Place   Place
-	Trip    Trip
+	Trip    Trip `gorm:"constraint:OnDelete:CASCADE;"`
 
 	StartTime string `gorm:"type:TIME"`
 	EndTime   string `gorm:"type:TIME"`

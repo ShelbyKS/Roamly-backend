@@ -11,14 +11,16 @@ type Trip struct {
 	EndTime           string `gorm:"type:TIME"`
 	AreaID            string
 	Area              Place
-	Users             []*User  `gorm:"many2many:trip_users;constraint:OnDelete:CASCADE;"`
-	Places            []*Place `gorm:"many2many:trip_place;constraint:OnDelete:CASCADE;"`
-	RecommendedPlaces []*Place `gorm:"many2many:trip_recommended_place;constraint:OnDelete:CASCADE;"`
-	Events            []Event  `gorm:"constraint:OnDelete:CASCADE;"`
+	Users             []*User     `gorm:"many2many:trip_users;constraint:OnDelete:CASCADE;"`
+	TripUsers         []TripUsers `gorm:"foreignKey:TripID"`
+	Places            []*Place    `gorm:"many2many:trip_place;constraint:OnDelete:CASCADE;"`
+	RecommendedPlaces []*Place    `gorm:"many2many:trip_recommended_place;constraint:OnDelete:CASCADE;"`
+	Events            []Event     `gorm:"constraint:OnDelete:CASCADE;"`
+	Invites           []Invite    `gorm:"foreignKey:TripID;constraint:OnDelete:CASCADE;"`
 }
 
-type TripUser struct {
+type TripUsers struct {
 	UserID   int       `gorm:"primaryKey"`
 	TripID   uuid.UUID `gorm:"primaryKey"`
-	UserRole int
+	UserRole int       `gorm:"column:user_role"`
 }

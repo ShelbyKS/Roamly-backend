@@ -2,7 +2,7 @@ definitions:
   dto.Geometry:
     properties:
       location:
-        $ref: '#/definitions/dto.Location'
+        $ref: '#/definitions/internal_handler_dto.Location'
     type: object
   dto.GetEvent:
     properties:
@@ -29,11 +29,24 @@ definitions:
         type: integer
       login:
         type: string
-      password:
+      role:
         type: string
     type: object
-  dto.GooglePlace:
+  dto.InviteResponse:
     properties:
+      access:
+        type: string
+      enable:
+        type: boolean
+      token:
+        type: string
+      trip_id:
+        type: string
+    type: object
+  dto.PlaceGoogle:
+    properties:
+      editorial_summary:
+        type: string
       formatted_address:
         type: string
       geometry:
@@ -42,12 +55,14 @@ definitions:
         type: string
       photos:
         items:
-          $ref: '#/definitions/dto.Photo'
+          $ref: '#/definitions/internal_handler_dto.Photo'
         type: array
       place_id:
         type: string
       rating:
         type: number
+      recommended_duration:
+        type: integer
       types:
         items:
           type: string
@@ -55,22 +70,10 @@ definitions:
       vicinity:
         type: string
     type: object
-  dto.Location:
-    properties:
-      lat:
-        type: number
-      lng:
-        type: number
-    type: object
-  dto.Photo:
-    properties:
-      photo_reference:
-        type: string
-    type: object
   dto.TripResponse:
     properties:
       area:
-        $ref: '#/definitions/dto.GooglePlace'
+        $ref: '#/definitions/dto.PlaceGoogle'
       area_id:
         type: string
       end_time:
@@ -85,7 +88,11 @@ definitions:
         type: string
       places:
         items:
-          $ref: '#/definitions/dto.GooglePlace'
+          $ref: '#/definitions/dto.PlaceGoogle'
+        type: array
+      recommended_places:
+        items:
+          $ref: '#/definitions/dto.PlaceGoogle'
         type: array
       start_time:
         type: string
@@ -136,6 +143,26 @@ definitions:
     - end_time
     - name
     - start_time
+    type: object
+  handler.DisableInvitationRequest:
+    properties:
+      access:
+        type: string
+      trip_id:
+        type: string
+    required:
+    - access
+    - trip_id
+    type: object
+  handler.EnableInvitationRequest:
+    properties:
+      access:
+        type: string
+      trip_id:
+        type: string
+    required:
+    - access
+    - trip_id
     type: object
   handler.LoginRequest:
     properties:
@@ -205,6 +232,18 @@ definitions:
     - login
     - password
     type: object
+  internal_handler_dto.Location:
+    properties:
+      lat:
+        type: number
+      lng:
+        type: number
+    type: object
+  internal_handler_dto.Photo:
+    properties:
+      photo_reference:
+        type: string
+    type: object
   model.Event:
     properties:
       endTime:
@@ -227,6 +266,8 @@ definitions:
     type: object
   model.GooglePlace:
     properties:
+      editorial_summary:
+        type: string
       formatted_address:
         type: string
       geometry:
@@ -297,6 +338,10 @@ definitions:
         items:
           $ref: '#/definitions/model.Place'
         type: array
+      recommended_places:
+        items:
+          $ref: '#/definitions/model.Place'
+        type: array
       start_time:
         type: string
       users:
@@ -317,6 +362,8 @@ definitions:
       login:
         type: string
       password:
+        type: string
+      role:
         type: string
     type: object
 info:
@@ -568,7 +615,7 @@ paths:
           schema:
             additionalProperties:
               items:
-                $ref: '#/definitions/dto.GooglePlace'
+                $ref: '#/definitions/dto.PlaceGoogle'
               type: array
             type: object
         "400":
@@ -826,6 +873,37 @@ paths:
       responses:
         "204":
           description: No Content
+        "404":
+          description: Not Found
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Delete trip events
+      tags:
+      - event
+  /api/v1/trip/{trip_id}/invite:
+    get:
+      description: Get trip invite tokens
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties:
+              items:
+                $ref: '#/definitions/dto.InviteResponse'
+              type: array
+            type: object
+        "400":
+          description: Bad Request
           schema:
             additionalProperties:
               type: string
@@ -842,9 +920,9 @@ paths:
             additionalProperties:
               type: string
             type: object
-      summary: Delete trip events
+      summary: Trip invitations
       tags:
-      - event
+      - invite
   /api/v1/trip/{trip_id}/place/{place_id}:
     delete:
       consumes:
@@ -915,6 +993,43 @@ paths:
       summary: Schedule trip
       tags:
       - trip
+  /api/v1/trip/{trip_id}/schedule/auto:
+    post:
+      description: Schedule places in trip
+      parameters:
+      - description: Trip ID
+        in: path
+        name: trip_id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/model.Trip'
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "404":
+          description: Not Found
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Schedule trip
+      tags:
+      - trip
   /api/v1/trip/event:
     delete:
       consumes:
@@ -931,10 +1046,6 @@ paths:
       responses:
         "204":
           description: No Content
-          schema:
-            additionalProperties:
-              type: string
-            type: object
         "404":
           description: Not Found
           schema:
@@ -1054,6 +1165,73 @@ paths:
       summary: Update event
       tags:
       - event
+  /api/v1/trip/invite:
+    delete:
+      consumes:
+      - application/json
+      description: Disable trip invitation by access
+      parameters:
+      - description: Invitation data
+        in: body
+        name: event
+        required: true
+        schema:
+          $ref: '#/definitions/handler.DisableInvitationRequest'
+      produces:
+      - application/json
+      responses:
+        "204":
+          description: No Content
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Disable trip invitation
+      tags:
+      - invite
+    post:
+      consumes:
+      - application/json
+      description: Enable trip invitation by access
+      parameters:
+      - description: Invitation data
+        in: body
+        name: event
+        required: true
+        schema:
+          $ref: '#/definitions/handler.EnableInvitationRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 'invite_token: bla_bla'
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Enable trip invitation
+      tags:
+      - invite
   /api/v1/trip/place:
     post:
       consumes:
