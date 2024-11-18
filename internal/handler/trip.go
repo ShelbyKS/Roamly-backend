@@ -57,8 +57,8 @@ func NewTripHandler(
 			middleware.AccessTripMiddleware(tripService, middleware.ForOwner),
 			handler.DeleteTrip)
 
-		tripGroup.POST("/:trip_id/schedule", handler.ScheduleTrip)
-		tripGroup.POST("/:trip_id/schedule/auto", handler.AutoScheduleTrip)
+		// tripGroup.POST("/:trip_id/schedule", handler.ScheduleTrip)
+		// tripGroup.POST("/:trip_id/schedule/auto", handler.AutoScheduleTrip)
 		tripGroup.POST("/:trip_id/schedule",
 			middleware.AccessTripMiddleware(tripService, middleware.ForOwnerAndEditor),
 			handler.ScheduleTrip)
