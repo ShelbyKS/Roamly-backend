@@ -14,7 +14,8 @@ import (
 	"github.com/google/uuid"
 )
 
-func AccessTripsEventsFromQueryMiddleware(tripService service.ITripService, userRoles []model.UserTripRole) gin.HandlerFunc {
+// проверяет доступ к поездке по event_id из квери
+func AccessTripByEventIdFromQueryMiddleware(tripService service.ITripService, userRoles []model.UserTripRole) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		userID, ok := c.Get("user_id")
 		if !ok {
@@ -57,7 +58,8 @@ func AccessTripsEventsFromQueryMiddleware(tripService service.ITripService, user
 	}
 }
 
-func AccessTripsEventFromBodyByTripIDMiddleware(tripService service.ITripService, userRoles []model.UserTripRole) gin.HandlerFunc {
+// проверяет доступ к поездке по trip_id из body
+func AccessTripByTripIdFromBodyMiddleware(tripService service.ITripService, userRoles []model.UserTripRole) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		userID, ok := c.Get("user_id")
 		if !ok {
@@ -117,7 +119,8 @@ func AccessTripsEventFromBodyByTripIDMiddleware(tripService service.ITripService
 	}
 }
 
-func AccessTripsEventFromBodyByEventIDMiddleware(tripService service.ITripService, userRoles []model.UserTripRole) gin.HandlerFunc {
+// проверяет доступ к поездке по id (является id event) из body
+func AccessTripByIdOfEventFromBody(tripService service.ITripService, userRoles []model.UserTripRole) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		userID, ok := c.Get("user_id")
 		if !ok {

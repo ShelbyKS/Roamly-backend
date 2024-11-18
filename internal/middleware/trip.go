@@ -26,24 +26,29 @@ var (
 )
 
 
+// получает доступ к поездке по trip_id из квери
 func AccessTripMiddleware(tripService service.ITripService, userRoles []model.UserTripRole) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		userID, ok := c.Get("user_id")
 		if !ok {
 			c.JSON(http.StatusBadRequest, gin.H{"error": "No user id"})
 			c.Abort()
+			return
 		}
 		userIDInt, ok := userID.(int)
 		if !ok {
 			c.JSON(http.StatusBadRequest, gin.H{"error": "can't parse user id"})
 			c.Abort()
+			return
 		}
 
 		tripID := c.Param("trip_id")
 		tripIDuuid, err := uuid.Parse(tripID)
+		log.Println(tripID)
 		if !ok {
 			c.JSON(http.StatusBadRequest, gin.H{"error": "can't parse trip id"})
 			c.Abort()
+			return
 		}
 
 		role, err := tripService.GetUserRole(c.Request.Context(), userIDInt, tripIDuuid)
@@ -56,12 +61,14 @@ func AccessTripMiddleware(tripService service.ITripService, userRoles []model.Us
 			log.Println("roles:", userRoles, role)
 			c.JSON(http.StatusForbidden, gin.H{"error": "access denied"})
 			c.Abort()
+			return
 		}
 
 		c.Next()
 	}
 }
 
+// получает доступ к поездке по id поездки из боди
 func AccessTripFromBodyMiddleware(tripService service.ITripService, userRoles []model.UserTripRole) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		userID, ok := c.Get("user_id")

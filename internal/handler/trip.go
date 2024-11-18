@@ -68,11 +68,11 @@ func NewTripHandler(
 			handler.DeletePlaceFromTrip)
 
 		tripGroup.POST("/place",
-			middleware.AccessTripFromBodyMiddleware(tripService, middleware.ForOwnerAndEditor),
+			middleware.AccessTripByTripIdFromBodyMiddleware(tripService, middleware.ForOwnerAndEditor),
 			handler.AddPlaceToTrip)
 
 		tripGroup.POST("/:trip_id/schedule/auto",
-			middleware.AccessTripFromBodyMiddleware(tripService, middleware.ForOwnerAndEditor),
+			middleware.AccessTripMiddleware(tripService, middleware.ForOwnerAndEditor),
 			handler.AutoScheduleTrip)
 	}
 }

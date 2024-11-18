@@ -35,16 +35,16 @@ func NewEventHandler(router *gin.Engine,
 	tripEventGroup.Use(middleware.Mw.AuthMiddleware())
 	{
 		tripEventGroup.POST("/",
-			middleware.AccessTripsEventFromBodyByTripIDMiddleware(tripService, middleware.ForOwnerAndEditor),
+			middleware.AccessTripByTripIdFromBodyMiddleware(tripService, middleware.ForOwnerAndEditor),
 			handler.CreateEvent)
 		tripEventGroup.GET("/",
-			middleware.AccessTripsEventsFromQueryMiddleware(tripService, middleware.ForAll),
+			middleware.AccessTripByEventIdFromQueryMiddleware(tripService, middleware.ForAll),
 			handler.GetEvent)
 		tripEventGroup.PUT("/",
-			middleware.AccessTripsEventFromBodyByEventIDMiddleware(tripService, middleware.ForOwnerAndEditor),
+			middleware.AccessTripByIdOfEventFromBody(tripService, middleware.ForOwnerAndEditor),
 			handler.UpdateEvent)
 		tripEventGroup.DELETE("/",
-			middleware.AccessTripsEventsFromQueryMiddleware(tripService, middleware.ForOwnerAndEditor),
+			middleware.AccessTripByEventIdFromQueryMiddleware(tripService, middleware.ForOwnerAndEditor),
 			handler.DeleteEvent)
 	}
 
