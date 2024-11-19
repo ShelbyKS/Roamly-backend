@@ -102,30 +102,6 @@ services:
     depends_on:
       - kafka1
 
-  producer:
-    build:
-      context: ..
-      dockerfile: cmd/producer/producer.Dockerfile
-    depends_on:
-      - kafka1
-    networks:
-      - kafka
-    environment:
-      - KAFKA_BROKERS=kafka:9092
-    restart: always
-
-  consumer:
-    build:
-      context: ../
-      dockerfile: cmd/consumer/consumer.Dockerfile
-    depends_on:
-      - kafka1
-    networks:
-      - kafka
-    environment:
-      - KAFKA_BROKERS=kafka:9092
-    restart: always
-
 networks:
   kafka:
   back:
