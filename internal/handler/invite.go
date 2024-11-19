@@ -14,6 +14,7 @@ import (
 
 type InviteHandler struct {
 	inviteService service.IInviteService
+	tripService   service.ITripService
 	lg            *logrus.Logger
 }
 
@@ -21,18 +22,34 @@ func NewInviteHandler(
 	router *gin.Engine,
 	lg *logrus.Logger,
 	inviteService service.IInviteService,
+	tripService service.ITripService,
 ) {
 	handler := &InviteHandler{
 		lg:            lg,
 		inviteService: inviteService,
+		tripService:   tripService,
 	}
 
 	tripInviteGroup := router.Group("/api/v1/trip")
 	tripInviteGroup.Use(middleware.Mw.AuthMiddleware())
 	{
-		tripInviteGroup.POST("/invite/", handler.EnableInvitation)
-		tripInviteGroup.DELETE("/invite/", handler.DisableInvitation)
-		tripInviteGroup.GET("/:trip_id/invite", handler.GetTripInvitations)
+		tripInviteGroup.POST(
+			"/invite/",
+			middleware.AccessTripByTripIdFromBodyMiddleware(tripService, middleware.ForOwner),
+			handler.EnableInvitation,
+		)
+		tripInviteGroup.DELETE(
+			"/invite/",
+			middleware.AccessTripByTripIdFromBodyMiddleware(tripService, middleware.ForOwner),
+			handler.DisableInvitation,
+		)
+
+		tripInviteGroup.GET(
+			"/:trip_id/invite",
+			middleware.AccessTripMiddleware(tripService, middleware.ForOwnerAndEditor),
+			handler.GetTripInvitations,
+		)
+
 		tripInviteGroup.POST("/join/:invite_token", handler.JoinTrip)
 	}
 }
@@ -147,8 +164,18 @@ func (h *InviteHandler) GetTripInvitations(c *gin.Context) {
 	})
 }
 
+// @Summary Join trip
+// @Description Join trip via invite_token
+// @Tags invite
+// @Accept json
+// @Produce json
+// @Param event path string true "Invite token"
+// @Success 200 {object} map[string]string "trip_id: bla_bla"
+// @Failure 400 {object} map[string]string
+// @Failure 500 {object} map[string]string
+// @Router /api/v1/trip/join/{invite_token} [post]
 func (h *InviteHandler) JoinTrip(c *gin.Context) {
-	inviteToken := c.Param("trip_id")
+	inviteToken := c.Param("invite_token")
 
 	userID, ok := c.Get("user_id")
 	if !ok {

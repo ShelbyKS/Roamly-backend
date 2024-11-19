@@ -3,6 +3,7 @@ package postgresql
 import (
 	"context"
 	"errors"
+	"fmt"
 	"github.com/ShelbyKS/Roamly-backend/internal/database/orm"
 	"github.com/ShelbyKS/Roamly-backend/internal/domain"
 	"github.com/google/uuid"
@@ -88,14 +89,16 @@ func (storage *InviteStorage) GetInvitesByTripID(ctx context.Context, tripID uui
 }
 
 func (storage *InviteStorage) GetInviteByToken(ctx context.Context, token string) (model.Invite, error) {
-	inviteDB := orm.Invite{
-		Token: token,
-	}
+	inviteDB := &orm.Invite{}
+
+	fmt.Println("TOKEN:", token)
 
 	tx := storage.db.WithContext(ctx).
+		Model(&orm.Invite{}).
+		Where("token = ?", token).
 		Preload("Trip").
 		Preload("Trip.Users").
-		First(&inviteDB)
+		First(inviteDB)
 
 	if errors.Is(tx.Error, gorm.ErrRecordNotFound) {
 		return model.Invite{}, domain.ErrInviteNotFound
@@ -105,7 +108,7 @@ func (storage *InviteStorage) GetInviteByToken(ctx context.Context, token string
 		return model.Invite{}, tx.Error
 	}
 
-	return InviteConverter{}.ToDomain(inviteDB), nil
+	return InviteConverter{}.ToDomain(*inviteDB), nil
 }
 
 func (storage *InviteStorage) JoinTripByInvite(ctx context.Context, invite model.Invite, userID int) error {

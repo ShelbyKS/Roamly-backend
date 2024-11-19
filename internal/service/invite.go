@@ -97,6 +97,8 @@ func (s *InviteService) DisableInvitation(ctx context.Context, invite model.Invi
 }
 
 func (s *InviteService) JoinTrip(ctx context.Context, inviteToken string, userID int) (uuid.UUID, error) {
+	fmt.Println("TOKEN1: ", inviteToken)
+
 	invitation, err := s.inviteStorage.GetInviteByToken(ctx, inviteToken)
 	if err != nil {
 		return uuid.Nil, fmt.Errorf("failed to get invite from storage: %w", err)

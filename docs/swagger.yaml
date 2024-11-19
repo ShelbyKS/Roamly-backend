@@ -1232,6 +1232,41 @@ paths:
       summary: Enable trip invitation
       tags:
       - invite
+  /api/v1/trip/join/{invite_token}:
+    post:
+      consumes:
+      - application/json
+      description: Join trip via invite_token
+      parameters:
+      - description: Invite token
+        in: path
+        name: event
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 'trip_id: bla_bla'
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Join trip
+      tags:
+      - invite
   /api/v1/trip/place:
     post:
       consumes:
