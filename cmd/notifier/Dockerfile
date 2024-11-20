@@ -12,7 +12,7 @@ WORKDIR /app/cmd/notifier
 
 RUN go build -o notifier
 
-FROM ubuntu:lates AS build-release-stage
+FROM ubuntu:latest AS build-release-stage
 
 WORKDIR /
 

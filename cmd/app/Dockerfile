@@ -12,7 +12,7 @@ WORKDIR /app/cmd/app
 
 RUN go build -o main
 
-FROM ubuntu:lates AS build-release-stage
+FROM ubuntu:latest AS build-release-stage
 
 WORKDIR /
 
