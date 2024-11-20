@@ -16,6 +16,8 @@ services:
         condition: service_started
       redis:
         condition: service_started
+      kafka:
+        condition: service_started
 
   notifier:
     container_name: notifier

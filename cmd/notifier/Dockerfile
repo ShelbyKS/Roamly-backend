@@ -12,7 +12,7 @@ WORKDIR /app/cmd/notifier
 
 RUN go build -o notifier
 
-FROM gcr.io/distroless/base-debian11 AS build-release-stage
+FROM ubuntu:lates AS build-release-stage
 
 WORKDIR /
 
