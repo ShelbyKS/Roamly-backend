@@ -10,4 +10,5 @@ type ISessionStorage interface {
 	Add(ctx context.Context, session model.Session) error
 	DeleteByToken(ctx context.Context, token string) error
 	SessionExists(ctx context.Context, token string) (model.Session, error)
+	GetTokensByUserID(ctx context.Context, userID int) ([]string, error)
 }

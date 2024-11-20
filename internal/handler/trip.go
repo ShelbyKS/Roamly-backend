@@ -263,6 +263,7 @@ func (h *TripHandler) UpdateTrip(c *gin.Context) {
 		return
 	}
 
+	
 	err = h.tripService.UpdateTrip(c.Request.Context(), model.Trip{
 		ID:        tripReq.ID,
 		Name:      tripReq.Name,
