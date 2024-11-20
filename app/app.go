@@ -113,7 +113,7 @@ func (app *Roamly) initAPI(router *gin.Engine) {
 	googleApi := googleapi.NewClient(app.config.GoogleApiKey) //todo: move to external
 
 	producer := kafka.NewMessageBrokerProducer(app.config.Kafka.Host, app.config.Kafka.Port, app.config.Kafka.Topic)
-	schedulerService := service.NewShedulerService(openAIClient, googleApi, tripStorage, eventStorage, placeStorage)
+	schedulerService := service.NewShedulerService(openAIClient, googleApi, tripStorage, eventStorage, placeStorage, sessionStorage, producer)
 	userService := service.NewUserService(userStorage, sessionStorage)
 	authService := service.NewAuthService(userStorage, sessionStorage)
 	tripService := service.NewTripService(tripStorage, placeStorage, googleApi, openAIClient, sessionStorage, producer)

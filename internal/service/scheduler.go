@@ -20,6 +20,8 @@ type SchedulerService struct {
 	tripStorage  storage.ITripStorage
 	eventStorage storage.IEventStorage
 	placeStorage storage.IPlaceStorage
+	sessionStorage storage.ISessionStorage
+	messageProducer clients.IMessageProdcuer
 }
 
 func NewShedulerService(
@@ -28,6 +30,8 @@ func NewShedulerService(
 	tripStorage storage.ITripStorage,
 	eventStorage storage.IEventStorage,
 	placeStorage storage.IPlaceStorage,
+	sessionStorage storage.ISessionStorage,
+	messageProducer clients.IMessageProdcuer,
 ) service.ISchedulerService {
 	return &SchedulerService{
 		openAIClient: openAIClient,
@@ -35,6 +39,8 @@ func NewShedulerService(
 		tripStorage:  tripStorage,
 		eventStorage: eventStorage,
 		placeStorage: placeStorage,
+		sessionStorage: sessionStorage,
+		messageProducer: messageProducer,
 	}
 }
 
@@ -73,6 +79,20 @@ func (s *SchedulerService) ScheduleTrip(ctx context.Context, tripID uuid.UUID) (
 		return model.Trip{}, fmt.Errorf("failed to save events: %w", err)
 	}
 	trip.Events = events
+
+	users := trip.Users
+	// var cookies []string
+	for _, user := range users {
+		cooks, _ := s.sessionStorage.GetTokensByUserID(ctx, user.ID)
+		// cookies = append(cookies, cooks...)
+		var message model.Message
+		message.Payload.Action = "trip_events_update"
+		message.Payload.TripID = trip.ID
+		message.Payload.Author = fmt.Sprintf("%d", user.ID)
+		message.Payload.Message = "Поездка спланирована"
+		message.Clients = cooks
+		s.messageProducer.SendMessage(message)
+	}
 
 	return trip, nil
 }
@@ -119,6 +139,18 @@ func (s *SchedulerService) AutoScheduleTrip(ctx context.Context, tripID uuid.UUI
 		return model.Trip{}, fmt.Errorf("failed to save events: %w", err)
 	}
 	trip.Events = events
+
+	users := trip.Users
+	for _, user := range users {
+		cooks, _ := s.sessionStorage.GetTokensByUserID(ctx, user.ID)
+		var message model.Message
+		message.Payload.Action = "trip_events_update"
+		message.Payload.TripID = trip.ID
+		message.Payload.Author = fmt.Sprintf("%d", user.ID)
+		message.Payload.Message = "Поездка спланирована"
+		message.Clients = cooks
+		s.messageProducer.SendMessage(message)
+	}
 
 	return trip, nil
 }
