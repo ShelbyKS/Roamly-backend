@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"log"
 
 	"github.com/ShelbyKS/Roamly-backend/internal/domain"
 
@@ -113,24 +114,32 @@ func (service *EventService) CreateEvent(ctx context.Context, event model.Event)
 }
 
 func (service *EventService) UpdateEvent(ctx context.Context, event model.Event) (model.Event, error) {
+	log.Println("START_UPDATING_EVENT: ")
 	updatedEvent, err := service.eventStorage.UpdateEvent(ctx, event)
 	if errors.Is(err, domain.ErrEventNotFound) {
+		log.Println("START_UPDATING_EVENT: NOT FOUND")
 		return model.Event{}, err
 	}
 	if err != nil {
+		log.Println("START_UPDATING_EVENT: ERR:", err)
 		return model.Event{}, fmt.Errorf("fail to update event in storage: %w", err)
 	}
+	
 
 	updatedEvent, err = service.eventStorage.GetEventByID(ctx, updatedEvent.ID)
 	if errors.Is(err, domain.ErrEventNotFound) {
+		log.Println("START_UPDATING_EVENT: NOT FOUND 2x")
 		return model.Event{}, err
 	}
 	if err != nil {
+		log.Println("START_UPDATING_EVENT: ERR 2x", err)
 		return model.Event{}, fmt.Errorf("fail to get event from storage: %w", err)
 	}
 
-	tripFound, _ := service.tripStorage.GetTripByEventID(ctx, event.ID)
+	tripFound, err := service.tripStorage.GetTripByEventID(ctx, event.ID)
+	log.Println("TRIP_FOUND: ", tripFound, "error:", err, "TRIP_ID: ", tripFound.ID)
 	users := tripFound.Users
+	log.Println("USERS: ", tripFound.Users)
 	// var cookies []string
 	for _, user := range users {
 		cooks, _ := service.sessionStorage.GetTokensByUserID(ctx, user.ID)
