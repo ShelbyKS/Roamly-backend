@@ -306,7 +306,6 @@ func (h *TripHandler) ScheduleTrip(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"trip": dto.TripConverter{}.ToDto(trip)})
 }
 
-
 // @Summary Add place to trip
 // @Description Add a place to a specific trip by their IDs
 // @Tags place

@@ -18,6 +18,7 @@ type Config struct {
 
 	Postgres PostgresConfig
 	Redis    RedisConfig
+	Kafka    KafkaConfig
 }
 
 type PostgresConfig struct {
@@ -33,6 +34,13 @@ type RedisConfig struct {
 	Host     string `envconfig:"REDIS_HOST"`
 	Port     string `envconfig:"REDIS_PORT"`
 	Password string `envconfig:"REDIS_PASSWORD"`
+}
+
+type KafkaConfig struct {
+	Host  string `envconfig:"KAFKA_HOST"`
+	Port  string `envconfig:"KAFKA_PORT"`
+	Topic string `envconfig:"KAFKA_TOPIC"`
+	Group string `envconfig:"KAFKA_GROUP"`
 }
 
 func LoadConfig() *Config {

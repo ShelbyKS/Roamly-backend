@@ -26,6 +26,7 @@ import (
 	"github.com/ShelbyKS/Roamly-backend/internal/service"
 	"github.com/ShelbyKS/Roamly-backend/pkg/chatgpt"
 	"github.com/ShelbyKS/Roamly-backend/pkg/googleapi"
+	"github.com/ShelbyKS/Roamly-backend/pkg/kafka"
 )
 
 type Roamly struct {
@@ -50,7 +51,7 @@ func (app *Roamly) Run() {
 	app.initExternalClients()
 	app.initAPI(r)
 
-	if err := r.Run(":" + "8080"); err != nil {
+	if err := r.Run(":" + app.config.ServerPort); err != nil {
 		log.Fatalf("Failed to start server: %v", err)
 	}
 }
@@ -111,10 +112,11 @@ func (app *Roamly) initAPI(router *gin.Engine) {
 	// }
 	googleApi := googleapi.NewClient(app.config.GoogleApiKey) //todo: move to external
 
+	producer := kafka.NewMessageBrokerProducer(app.config.Kafka.Host, app.config.Kafka.Port, app.config.Kafka.Topic)
 	schedulerService := service.NewShedulerService(openAIClient, googleApi, tripStorage, eventStorage, placeStorage)
 	userService := service.NewUserService(userStorage, sessionStorage)
 	authService := service.NewAuthService(userStorage, sessionStorage)
-	tripService := service.NewTripService(tripStorage, placeStorage, googleApi, openAIClient)
+	tripService := service.NewTripService(tripStorage, placeStorage, googleApi, openAIClient, sessionStorage, producer)
 	placeService := service.NewPlaceService(placeStorage, tripStorage, googleApi, eventStorage, openAIClient)
 	eventService := service.NewEventService(eventStorage, tripStorage, placeStorage)
 	inviteService := service.NewInviteService(inviteStorage, app.config.JWTSecret)
