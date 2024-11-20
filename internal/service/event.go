@@ -146,7 +146,7 @@ func (service *EventService) UpdateEvent(ctx context.Context, event model.Event)
 		// cookies = append(cookies, cooks...)
 		var message model.Message
 		message.Payload.Action = "trip_events_update"
-		message.Payload.TripID = event.TripID
+		message.Payload.TripID = tripFound.ID
 		message.Payload.Author = fmt.Sprintf("%d", user.ID)
 		message.Payload.Message = "Событие поездки обновлено"
 		message.Clients = cooks
