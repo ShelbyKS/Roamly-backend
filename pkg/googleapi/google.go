@@ -23,11 +23,6 @@ const (
 	// methodGetPlacesNearby = "https://maps.googleapis.com/maps/api/place/nearbysearch/json"
 
 	fieldMask = "places.id,places.formattedAddress,places.displayName,places.rating,places.location,places.photos,places.editorialSummary"
-
-	// "name",
-	// 		"rating",
-	// 		"geometry",
-	// 		"photo"
 )
 
 type Location struct {

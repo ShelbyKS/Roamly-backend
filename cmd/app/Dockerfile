@@ -14,6 +14,8 @@ RUN go build -o main
 
 FROM ubuntu:latest AS build-release-stage
 
+RUN apt-get update && apt-get install -y ca-certificates
+
 WORKDIR /
 
 COPY --from=build-stage /app/cmd/app/main /main
