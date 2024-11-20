@@ -144,6 +144,16 @@ definitions:
     - name
     - start_time
     type: object
+  handler.DeleteMemberRequest:
+    properties:
+      member_id:
+        type: integer
+      trip_id:
+        type: string
+    required:
+    - member_id
+    - trip_id
+    type: object
   handler.DisableInvitationRequest:
     properties:
       access:
@@ -199,6 +209,19 @@ definitions:
         type: string
     required:
     - id
+    type: object
+  handler.UpdateMemberRequest:
+    properties:
+      access:
+        type: string
+      member_id:
+        type: integer
+      trip_id:
+        type: string
+    required:
+    - access
+    - member_id
+    - trip_id
     type: object
   handler.UpdateTripRequest:
     properties:
@@ -1265,6 +1288,69 @@ paths:
               type: string
             type: object
       summary: Join trip
+      tags:
+      - invite
+  /api/v1/trip/member:
+    delete:
+      consumes:
+      - application/json
+      description: Update member access for trip
+      parameters:
+      - description: Member data
+        in: body
+        name: event
+        required: true
+        schema:
+          $ref: '#/definitions/handler.DeleteMemberRequest'
+      produces:
+      - application/json
+      responses:
+        "204":
+          description: No Content
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Update member access
+      tags:
+      - invite
+    post:
+      consumes:
+      - application/json
+      description: Update member access for trip
+      parameters:
+      - description: Member access data
+        in: body
+        name: event
+        required: true
+        schema:
+          $ref: '#/definitions/handler.UpdateMemberRequest'
+      produces:
+      - application/json
+      responses:
+        "204":
+          description: No Content
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Update member access
       tags:
       - invite
   /api/v1/trip/place:

@@ -127,3 +127,22 @@ func (storage *InviteStorage) JoinTripByInvite(ctx context.Context, invite model
 
 	return tx.Error
 }
+
+func (storage *InviteStorage) UpdateMember(ctx context.Context, tripID uuid.UUID, userID int, role model.UserTripRole) error {
+	tx := storage.db.WithContext(ctx).
+		Model(&orm.TripUsers{}).
+		Where("trip_id = ? AND user_id = ?", tripID, userID).
+		Updates(&orm.TripUsers{UserRole: int(role)})
+
+	return tx.Error
+}
+
+func (storage *InviteStorage) DeleteMember(ctx context.Context, tripID uuid.UUID, userID int) error {
+	tx := storage.db.WithContext(ctx).
+		Delete(&orm.TripUsers{
+			UserID: userID,
+			TripID: tripID,
+		})
+
+	return tx.Error
+}

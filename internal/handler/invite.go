@@ -50,6 +50,18 @@ func NewInviteHandler(
 			handler.GetTripInvitations,
 		)
 
+		tripInviteGroup.POST(
+			"/member/",
+			middleware.AccessTripByTripIdFromBodyMiddleware(tripService, middleware.ForOwner),
+			handler.UpdateMember,
+		)
+
+		tripInviteGroup.DELETE(
+			"/member/",
+			middleware.AccessTripByTripIdFromBodyMiddleware(tripService, middleware.ForOwner),
+			handler.DeleteMember,
+		)
+
 		tripInviteGroup.POST("/join/:invite_token", handler.JoinTrip)
 	}
 }
@@ -199,4 +211,73 @@ func (h *InviteHandler) JoinTrip(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, gin.H{"trip_id": tripID})
+}
+
+type UpdateMemberRequest struct {
+	TripID   uuid.UUID `json:"trip_id" binding:"required"`
+	MemberID int       `json:"member_id" binding:"required"`
+	Access   string    `json:"access" binding:"required"`
+}
+
+// @Summary Update member access
+// @Description Update member access for trip
+// @Tags invite
+// @Accept json
+// @Produce json
+// @Param event body UpdateMemberRequest true "Member access data"
+// @Success 204
+// @Failure 400 {object} map[string]string
+// @Failure 500 {object} map[string]string
+// @Router /api/v1/trip/member [post]
+func (h *InviteHandler) UpdateMember(c *gin.Context) {
+	var req UpdateMemberRequest
+
+	if err := c.BindJSON(&req); err != nil {
+		h.lg.WithError(err).Errorf("failed to parse body")
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	err := h.inviteService.UpdateMember(c.Request.Context(), req.TripID, req.MemberID, req.Access)
+	if err != nil {
+		h.lg.WithError(err).Errorf("failed to update trip member %d role", req.MemberID)
+		c.JSON(domain.GetStatusCodeByError(err), gin.H{"error": err.Error()})
+		return
+	}
+
+	c.Status(http.StatusNoContent)
+}
+
+type DeleteMemberRequest struct {
+	TripID   uuid.UUID `json:"trip_id" binding:"required"`
+	MemberID int       `json:"member_id" binding:"required"`
+}
+
+// @Summary Update member access
+// @Description Update member access for trip
+// @Tags invite
+// @Accept json
+// @Produce json
+// @Param event body DeleteMemberRequest true "Member data"
+// @Success 204
+// @Failure 400 {object} map[string]string
+// @Failure 500 {object} map[string]string
+// @Router /api/v1/trip/member [delete]
+func (h *InviteHandler) DeleteMember(c *gin.Context) {
+	var req DeleteMemberRequest
+
+	if err := c.BindJSON(&req); err != nil {
+		h.lg.WithError(err).Errorf("failed to parse body")
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	err := h.inviteService.DeleteMember(c.Request.Context(), req.TripID, req.MemberID)
+	if err != nil {
+		h.lg.WithError(err).Errorf("failed to update trip member %d role", req.MemberID)
+		c.JSON(domain.GetStatusCodeByError(err), gin.H{"error": err.Error()})
+		return
+	}
+
+	c.Status(http.StatusNoContent)
 }

@@ -15,4 +15,6 @@ type IInviteStorage interface {
 	GetInvitesByTripID(ctx context.Context, tripID uuid.UUID) ([]model.Invite, error)
 	GetInviteByToken(ctx context.Context, token string) (model.Invite, error)
 	JoinTripByInvite(ctx context.Context, invite model.Invite, userID int) error
+	UpdateMember(ctx context.Context, tripID uuid.UUID, userID int, role model.UserTripRole) error
+	DeleteMember(ctx context.Context, tripID uuid.UUID, userID int) error
 }

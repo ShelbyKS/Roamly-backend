@@ -17,12 +17,14 @@ import (
 
 type InviteService struct {
 	inviteStorage storage.IInviteStorage
+	tripStorage   storage.ITripStorage
 	jwtKey        string
 }
 
-func NewInviteService(inviteStorage storage.IInviteStorage, jwtKey string) service.IInviteService {
+func NewInviteService(inviteStorage storage.IInviteStorage, tripStorage storage.ITripStorage, jwtKey string) service.IInviteService {
 	return &InviteService{
 		inviteStorage: inviteStorage,
+		tripStorage:   tripStorage,
 		jwtKey:        jwtKey,
 	}
 }
@@ -97,8 +99,6 @@ func (s *InviteService) DisableInvitation(ctx context.Context, invite model.Invi
 }
 
 func (s *InviteService) JoinTrip(ctx context.Context, inviteToken string, userID int) (uuid.UUID, error) {
-	fmt.Println("TOKEN1: ", inviteToken)
-
 	invitation, err := s.inviteStorage.GetInviteByToken(ctx, inviteToken)
 	if err != nil {
 		return uuid.Nil, fmt.Errorf("failed to get invite from storage: %w", err)
@@ -120,4 +120,49 @@ func (s *InviteService) JoinTrip(ctx context.Context, inviteToken string, userID
 	}
 
 	return invitation.TripID, nil
+}
+
+func (s *InviteService) UpdateMember(ctx context.Context, tripID uuid.UUID, userID int, access string) error {
+	role, err := model.RoleFromString(access)
+	if err != nil {
+		return fmt.Errorf("invalid access role: %w", err)
+	}
+
+	//trip, err := s.tripStorage.GetTripByID(ctx, tripID)
+	//if errors.Is(err, domain.ErrTripNotFound) {
+	//	return err
+	//}
+	//if err != nil {
+	//	return fmt.Errorf("fail to get trip from storage: %w", err)
+	//}
+
+	//todo: check that member is not owner
+
+	//todo: need to forbid to update member to owner
+
+	err = s.inviteStorage.UpdateMember(ctx, tripID, userID, role)
+	if err != nil {
+		return fmt.Errorf("failed to update member role storage: %w", err)
+	}
+
+	return nil
+}
+
+func (s *InviteService) DeleteMember(ctx context.Context, tripID uuid.UUID, userID int) error {
+	//trip, err := s.tripStorage.GetTripByID(ctx, tripID)
+	//if errors.Is(err, domain.ErrTripNotFound) {
+	//	return err
+	//}
+	//if err != nil {
+	//	return fmt.Errorf("fail to get trip from storage: %w", err)
+	//}
+
+	//todo: check that member is not owner
+
+	err := s.inviteStorage.DeleteMember(ctx, tripID, userID)
+	if err != nil {
+		return fmt.Errorf("failed to delete member in storage: %w", err)
+	}
+
+	return nil
 }
