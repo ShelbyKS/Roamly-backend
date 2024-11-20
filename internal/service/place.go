@@ -19,11 +19,13 @@ import (
 )
 
 type PlaceService struct {
-	placeStorage storage.IPlaceStorage
-	tripStorage  storage.ITripStorage
-	eventStorage storage.IEventStorage
-	googleApi    clients.IGoogleApiClient
-	openAIClient clients.IChatClient
+	placeStorage    storage.IPlaceStorage
+	tripStorage     storage.ITripStorage
+	eventStorage    storage.IEventStorage
+	googleApi       clients.IGoogleApiClient
+	openAIClient    clients.IChatClient
+	sessionStorage  storage.ISessionStorage
+	messageProducer clients.IMessageProdcuer
 }
 
 func NewPlaceService(
@@ -32,14 +34,18 @@ func NewPlaceService(
 	googleApi clients.IGoogleApiClient,
 	eventStorage storage.IEventStorage,
 	openAIClient clients.IChatClient,
+	sessionStorage storage.ISessionStorage,
+	messageProducer clients.IMessageProdcuer,
 ) service.IPlaceService {
 
 	return &PlaceService{
-		placeStorage: placeStorage,
-		tripStorage:  tripStorage,
-		googleApi:    googleApi,
-		eventStorage: eventStorage,
-		openAIClient: openAIClient,
+		placeStorage:    placeStorage,
+		tripStorage:     tripStorage,
+		googleApi:       googleApi,
+		eventStorage:    eventStorage,
+		openAIClient:    openAIClient,
+		sessionStorage:  sessionStorage,
+		messageProducer: messageProducer,
 	}
 }
 
@@ -85,6 +91,21 @@ func (service *PlaceService) DeletePlace(ctx context.Context, tripID uuid.UUID, 
 	trip, err = service.tripStorage.GetTripByID(ctx, tripID)
 	if err != nil {
 		return model.Trip{}, fmt.Errorf("trip after deleting not found: %w", err)
+	}
+
+	// trip, _ := service.tripStorage.GetTripByID(ctx, trip.ID)
+	users := trip.Users
+	// var cookies []string
+	for _, user := range users {
+		cooks, _ := service.sessionStorage.GetTokensByUserID(ctx, user.ID)
+		// cookies = append(cookies, cooks...)
+		var message model.Message
+		message.Payload.Action = "trip_places_update"
+		message.Payload.TripID = trip.ID
+		message.Payload.Author = fmt.Sprintf("%d", user.ID)
+		message.Payload.Message = "Из поездки удалено место"
+		message.Clients = cooks
+		service.messageProducer.SendMessage(message)
 	}
 
 	return trip, nil
@@ -136,6 +157,21 @@ func (service *PlaceService) AddPlaceToTrip(ctx context.Context, tripID uuid.UUI
 	}
 
 	trip.Places = append(trip.Places, &newPlace)
+
+	// tripFound, _ := service.tripStorage.GetTripByID(ctx, trip.ID)
+	users := trip.Users
+	// var cookies []string
+	for _, user := range users {
+		cooks, _ := service.sessionStorage.GetTokensByUserID(ctx, user.ID)
+		// cookies = append(cookies, cooks...)
+		var message model.Message
+		message.Payload.Action = "trip_places_update"
+		message.Payload.TripID = trip.ID
+		message.Payload.Author = fmt.Sprintf("%d", user.ID)
+		message.Payload.Message = "В поездку добавлено новое место"
+		message.Clients = cooks
+		service.messageProducer.SendMessage(message)
+	}
 
 	return trip, nil
 
