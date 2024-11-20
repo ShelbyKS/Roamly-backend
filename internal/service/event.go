@@ -129,7 +129,7 @@ func (service *EventService) UpdateEvent(ctx context.Context, event model.Event)
 		return model.Event{}, fmt.Errorf("fail to get event from storage: %w", err)
 	}
 
-	tripFound, _ := service.tripStorage.GetTripByID(ctx, event.TripID)
+	tripFound, _ := service.tripStorage.GetTripByEventID(ctx, event.ID)
 	users := tripFound.Users
 	// var cookies []string
 	for _, user := range users {
