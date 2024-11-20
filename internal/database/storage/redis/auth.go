@@ -4,9 +4,10 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"github.com/ShelbyKS/Roamly-backend/internal/domain"
 	"strconv"
 	"time"
+
+	"github.com/ShelbyKS/Roamly-backend/internal/domain"
 
 	"github.com/redis/go-redis/v9"
 
@@ -33,7 +34,33 @@ func (s *SessionStorage) Add(ctx context.Context, session model.Session) error {
 	if err != nil {
 		return fmt.Errorf("failed to add session: %w", err)
 	}
+
+	userKey := fmt.Sprintf("user:%d", session.UserID)
+
+	err = s.client.LPush(ctx, userKey, session.Token).Err()
+	if err != nil {
+		return fmt.Errorf("failed to add token to user list: %w", err)
+	}
+
+	err = s.client.Expire(ctx, userKey, duration).Err()
+	if err != nil {
+		return fmt.Errorf("failed to set expiration for user list: %w", err)
+	}
+
 	return nil
+}
+
+func (s *SessionStorage) GetTokensByUserID(ctx context.Context, userID int) ([]string, error) {
+	userKey := fmt.Sprintf("user:%d", userID)
+
+	tokens, err := s.client.LRange(ctx, userKey, 0, -1).Result()
+	if err == redis.Nil {
+		return nil, nil
+	} else if err != nil {
+		return nil, fmt.Errorf("failed to get tokens for user %d: %w", userID, err)
+	}
+
+	return tokens, nil
 }
 
 func (s *SessionStorage) DeleteByToken(ctx context.Context, token string) error {

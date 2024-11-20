@@ -2,11 +2,12 @@ volumes:
   postgres_data:
   redis_data:
   front_bundle:
+  kafka-data:
 
 services:
   backend:
     container_name: backend
-    image: shelby12/roamly:latest
+    image: shelby12/roamly_backend:latest
     restart: always
     env_file:
       - .env
@@ -14,6 +15,16 @@ services:
       postgres:
         condition: service_started
       redis:
+        condition: service_started
+
+  notifier:
+    container_name: notifier
+    image: shelby12/roamly_notifier:latest
+    restart: always
+    env_file:
+      - .env
+    depends_on:
+      kafka:
         condition: service_started
 
   nginx:
@@ -53,3 +64,18 @@ services:
       REDIS_HOST: ${REDIS_HOST}
       REDIS_PORT: ${REDIS_PORT}
       REDIS_PASSWORD: ${REDIS_PASSWORD}
+
+  kafka:
+    image: 'bitnami/kafka:latest'
+    container_name: kafka
+    volumes:
+      - kafka-data:/bitnami/kafka/data
+    environment:
+      KAFKA_CFG_NODE_ID: ${KAFKA_CFG_NODE_ID}
+      KAFKA_CFG_PROCESS_ROLES: ${KAFKA_CFG_PROCESS_ROLES}
+      KAFKA_CFG_LISTENERS: ${KAFKA_CFG_LISTENERS}
+      KAFKA_CFG_LISTENER_SECURITY_PROTOCOL_MAP: ${KAFKA_CFG_LISTENER_SECURITY_PROTOCOL_MAP}
+      KAFKA_CFG_CONTROLLER_QUORUM_VOTERS: ${KAFKA_CFG_CONTROLLER_QUORUM_VOTERS}
+      KAFKA_CFG_CONTROLLER_LISTENER_NAMES: ${KAFKA_CFG_CONTROLLER_LISTENER_NAMES}
+      ALLOW_PLAINTEXT_LISTENER: ${ALLOW_PLAINTEXT_LISTENER}
+      KAFKA_CFG_AUTO_CREATE_TOPICS_ENABLE: ${KAFKA_CFG_AUTO_CREATE_TOPICS_ENABLE}

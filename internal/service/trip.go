@@ -21,6 +21,8 @@ type TripService struct {
 	placeStorage    storage.IPlaceStorage
 	googleApiClient clients.IGoogleApiClient
 	openAIClient    clients.IChatClient
+	sessionStorage  storage.ISessionStorage
+	messageProducer clients.IMessageProdcuer
 }
 
 func NewTripService(
@@ -28,12 +30,16 @@ func NewTripService(
 	placeStorage storage.IPlaceStorage,
 	googleApiClient clients.IGoogleApiClient,
 	openAIClient clients.IChatClient,
+	sessionStorage storage.ISessionStorage,
+	messageProducer clients.IMessageProdcuer,
 ) service.ITripService {
 	return &TripService{
 		tripStorage:     tripStorage,
 		placeStorage:    placeStorage,
 		googleApiClient: googleApiClient,
 		openAIClient:    openAIClient,
+		sessionStorage:  sessionStorage,
+		messageProducer: messageProducer,
 	}
 }
 
@@ -189,6 +195,26 @@ func (service *TripService) UpdateTrip(ctx context.Context, trip model.Trip) err
 	if err != nil {
 		return fmt.Errorf("fail to update trip from storage: %w", err)
 	}
+
+	//go func() {
+	tripFound, _ := service.tripStorage.GetTripByID(ctx, trip.ID)
+	users := tripFound.Users
+	// var cookies []string
+	for _, user := range users {
+		cooks, _ := service.sessionStorage.GetTokensByUserID(ctx, user.ID)
+		// cookies = append(cookies, cooks...)
+		var message model.Message
+		message.Payload.Action = "trip_update"
+		message.Payload.TripID = trip.ID
+		message.Payload.Author = fmt.Sprintf("%d", user.ID)
+		message.Payload.Message = "Поездка обновилась"
+		message.Clients = cooks
+		service.messageProducer.SendMessage(message)
+	}
+	// if err != nil {
+	// 	return fmt.Errorf("fail to get trip from storage while updating: %w", err)
+	// }
+	//}()
 
 	return nil
 }

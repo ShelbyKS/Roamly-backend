@@ -18,15 +18,25 @@ jobs:
 #        run: |
 #          echo "${{ secrets.ENV_FILE }}" > .env
 
-      - name: 'Build Docker image'
+      - name: 'Build Docker image backend'
         run:
-          sudo docker build -t shelby12/roamly:${GITHUB_SHA::8} -f ./cmd/app/Dockerfile . &&
-          sudo docker tag shelby12/roamly:${GITHUB_SHA::8} shelby12/roamly:latest
+          sudo docker build -t shelby12/roamly_backend:${GITHUB_SHA::8} -f ./cmd/app/Dockerfile . &&
+          sudo docker tag shelby12/roamly_backend:${GITHUB_SHA::8} shelby12/roamly_backend:latest
 
-      - name: 'Push Docker image'
+      - name: 'Build Docker image notifier'
         run:
-          docker push shelby12/roamly:latest &&
-          docker push shelby12/roamly:${GITHUB_SHA::8}
+          sudo docker build -t shelby12/roamly_notifier:${GITHUB_SHA::8} -f ./cmd/notifier/Dockerfile . &&
+          sudo docker tag shelby12/roamly_notifier:${GITHUB_SHA::8} shelby12/roamly_notifier:latest
+
+      - name: 'Push Docker image backend'
+        run:
+          docker push shelby12/roamly_backend:latest &&
+          docker push shelby12/roamly_backend:${GITHUB_SHA::8}
+
+      - name: 'Push Docker image notifier'
+        run:
+          docker push shelby12/roamly_notifier:latest &&
+          docker push shelby12/roamly_notifier:${GITHUB_SHA::8}
 
   deploy:
     runs-on: ubuntu-latest
@@ -40,7 +50,8 @@ jobs:
           username: ubuntu
           key: ${{ secrets.PRIVATE_KEY }}
           script: |
-            sudo docker pull shelby12/roamly:latest
+            sudo docker pull shelby12/roamly_backend:latest
+            sudo docker pull shelby12/roamly_notifier:latest
 
       - name: Run backend
         uses: appleboy/ssh-action@master
