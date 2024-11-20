@@ -154,6 +154,7 @@ func (storage *TripStorage) GetTripByEventID(ctx context.Context, eventID uuid.U
 	err := storage.db.
 		WithContext(ctx).
 		Preload("Trip").
+		Preload("Trip.Users").
 		First(&event).Error
 
 	if err != nil {
