@@ -58,6 +58,7 @@ func (storage *TripStorage) GetTrips(ctx context.Context, userId int) ([]model.T
 		Preload("Trips").
 		Preload("Trips.Area").
 		Preload("Trips.Users").
+		Preload("Trips.TripUsers").
 		First(&user, userId).Error
 	if err != nil {
 		return []model.Trip{}, err
