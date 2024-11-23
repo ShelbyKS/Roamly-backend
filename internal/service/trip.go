@@ -101,18 +101,18 @@ func (service *TripService) CreateTrip(ctx context.Context, trip model.Trip) (uu
 	}
 
 	//todo: вынести в асинхронный пост запрос
-	//recommendedPlacesNames, err := service.getRecommendedPlacesNames(ctx, area.GooglePlace.Name)
-	//if err != nil {
-	//	return uuid.Nil, fmt.Errorf("fail to get recommended places names from openai: %w", err)
-	//}
+	recommendedPlacesNames, err := service.getRecommendedPlacesNames(ctx, area.GooglePlace.Name)
+	if err != nil {
+		return uuid.Nil, fmt.Errorf("fail to get recommended places names from openai: %w", err)
+	}
 
-	//recommendedPlacesDomain, err := service.getRecommendedPlacesDomain(ctx, recommendedPlacesNames, area.GooglePlace.Name)
-	//if err != nil {
-	//	return uuid.Nil, fmt.Errorf("fail to get recommended places domains from google: %w", err)
-	//}
+	recommendedPlacesDomain, err := service.getRecommendedPlacesDomain(ctx, recommendedPlacesNames, area.GooglePlace.Name)
+	if err != nil {
+		return uuid.Nil, fmt.Errorf("fail to get recommended places domains from google: %w", err)
+	}
 
 	trip.Area = &area
-	//trip.RecommendedPlaces = recommendedPlacesDomain
+	trip.RecommendedPlaces = recommendedPlacesDomain
 	trip.ID = uuid.New()
 
 	err = service.tripStorage.CreateTrip(ctx, trip, model.Owner)
