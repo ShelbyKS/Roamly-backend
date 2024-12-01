@@ -2,18 +2,16 @@ package handler
 
 import (
 	"context"
-	"net/http"
-
-	"github.com/ShelbyKS/Roamly-backend/internal/handler/dto"
-	"github.com/ShelbyKS/Roamly-backend/internal/middleware"
-
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 	"github.com/sirupsen/logrus"
+	"net/http"
 
 	"github.com/ShelbyKS/Roamly-backend/internal/domain"
 	"github.com/ShelbyKS/Roamly-backend/internal/domain/model"
 	"github.com/ShelbyKS/Roamly-backend/internal/domain/service"
+	"github.com/ShelbyKS/Roamly-backend/internal/handler/dto"
+	"github.com/ShelbyKS/Roamly-backend/internal/middleware"
 )
 
 type TripHandler struct {
@@ -233,6 +231,15 @@ func (h *TripHandler) CreateTrip(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, gin.H{"id": id})
+
+	go func() {
+		ctx := context.Background()
+
+		err = h.tripService.DetermineRecommendedPlaces(ctx, id)
+		if err != nil {
+			h.lg.WithError(err).Errorf("failed to determine recommended places")
+		}
+	}()
 }
 
 type UpdateTripRequest struct {

@@ -4,10 +4,9 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"github.com/google/uuid"
 	"strconv"
 	"strings"
-
-	"github.com/google/uuid"
 
 	"github.com/ShelbyKS/Roamly-backend/internal/domain"
 	"github.com/ShelbyKS/Roamly-backend/internal/domain/clients"
@@ -100,19 +99,7 @@ func (service *TripService) CreateTrip(ctx context.Context, trip model.Trip) (uu
 		}
 	}
 
-	//todo: вынести в асинхронный пост запрос
-	recommendedPlacesNames, err := service.getRecommendedPlacesNames(ctx, area.GooglePlace.Name)
-	if err != nil {
-		return uuid.Nil, fmt.Errorf("fail to get recommended places names from openai: %w", err)
-	}
-
-	recommendedPlacesDomain, err := service.getRecommendedPlacesDomain(ctx, recommendedPlacesNames, area.GooglePlace.Name)
-	if err != nil {
-		return uuid.Nil, fmt.Errorf("fail to get recommended places domains from google: %w", err)
-	}
-
 	trip.Area = &area
-	trip.RecommendedPlaces = recommendedPlacesDomain
 	trip.ID = uuid.New()
 
 	err = service.tripStorage.CreateTrip(ctx, trip, model.Owner)
@@ -121,6 +108,32 @@ func (service *TripService) CreateTrip(ctx context.Context, trip model.Trip) (uu
 	}
 
 	return trip.ID, nil
+}
+
+func (service *TripService) DetermineRecommendedPlaces(ctx context.Context, tripID uuid.UUID) error {
+	trip, err := service.tripStorage.GetTripByID(ctx, tripID)
+	if err != nil {
+		return fmt.Errorf("fail to get trip from storage: %w", err)
+	}
+
+	recommendedPlacesNames, err := service.getRecommendedPlacesNames(ctx, trip.Area.GooglePlace.Name)
+	if err != nil {
+		return fmt.Errorf("fail to get recommended places names from openai: %w", err)
+	}
+
+	recommendedPlacesDomain, err := service.getRecommendedPlacesDomain(ctx, recommendedPlacesNames, trip.Area.GooglePlace.Name)
+	if err != nil {
+		return fmt.Errorf("fail to get recommended places domains from google: %w", err)
+	}
+
+	trip.RecommendedPlaces = recommendedPlacesDomain
+
+	err = service.tripStorage.UpdateTrip(ctx, trip)
+	if err != nil {
+		return fmt.Errorf("fail to update trip from storage: %w", err)
+	}
+
+	return nil
 }
 
 func (service *TripService) getRecommendedPlacesNames(ctx context.Context, area string) ([]string, error) {
@@ -196,10 +209,8 @@ func (service *TripService) UpdateTrip(ctx context.Context, trip model.Trip) err
 		return fmt.Errorf("fail to update trip from storage: %w", err)
 	}
 
-	//go func() {
 	tripFound, _ := service.tripStorage.GetTripByID(ctx, trip.ID)
 	users := tripFound.Users
-	// var cookies []string
 	for _, user := range users {
 		cooks, _ := service.sessionStorage.GetTokensByUserID(ctx, user.ID)
 		// cookies = append(cookies, cooks...)
@@ -211,10 +222,6 @@ func (service *TripService) UpdateTrip(ctx context.Context, trip model.Trip) err
 		message.Clients = cooks
 		service.messageProducer.SendMessage(message)
 	}
-	// if err != nil {
-	// 	return fmt.Errorf("fail to get trip from storage while updating: %w", err)
-	// }
-	//}()
 
 	return nil
 }

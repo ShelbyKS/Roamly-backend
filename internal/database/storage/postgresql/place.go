@@ -62,7 +62,7 @@ func (storage *PlaceStorage) CreatePlace(ctx context.Context, place *model.Place
 }
 
 func (storage *PlaceStorage) AppendPlaceToTrip(ctx context.Context, placeID string, tripID uuid.UUID) error {
-	err := storage.db.
+	err := storage.db.WithContext(ctx).
 		Model(&orm.Trip{
 			ID: tripID,
 		}).
