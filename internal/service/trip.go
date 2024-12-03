@@ -250,5 +250,23 @@ func (service *TripService) RemoveUserFromTrip(ctx context.Context, userID int, 
 		return err
 	}
 
+	trip, err := service.tripStorage.GetTripByID(ctx, tripID)
+	if err != nil {
+		return err
+	}
+
+	// var cookies []string
+	for _, user := range trip.Users {
+		cooks, _ := service.sessionStorage.GetTokensByUserID(ctx, user.ID)
+		// cookies = append(cookies, cooks...)
+		var message model.Message
+		message.Payload.Action = "trip_users_update"
+		message.Payload.TripID = trip.ID
+		message.Payload.Author = fmt.Sprintf("%d", user.ID)
+		message.Payload.Message = "Пользователь покинул поездку"
+		message.Clients = cooks
+		service.messageProducer.SendMessage(message)
+	}
+
 	return nil
 }

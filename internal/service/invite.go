@@ -10,15 +10,18 @@ import (
 	"github.com/google/uuid"
 
 	"github.com/ShelbyKS/Roamly-backend/internal/domain"
+	"github.com/ShelbyKS/Roamly-backend/internal/domain/clients"
 	"github.com/ShelbyKS/Roamly-backend/internal/domain/model"
 	"github.com/ShelbyKS/Roamly-backend/internal/domain/service"
 	"github.com/ShelbyKS/Roamly-backend/internal/domain/storage"
 )
 
 type InviteService struct {
-	inviteStorage storage.IInviteStorage
-	tripStorage   storage.ITripStorage
-	jwtKey        string
+	inviteStorage   storage.IInviteStorage
+	tripStorage     storage.ITripStorage
+	sessionStorage  storage.ISessionStorage
+	messageProducer clients.IMessageProdcuer
+	jwtKey          string
 }
 
 func NewInviteService(inviteStorage storage.IInviteStorage, tripStorage storage.ITripStorage, jwtKey string) service.IInviteService {
@@ -117,6 +120,20 @@ func (s *InviteService) JoinTrip(ctx context.Context, inviteToken string, userID
 	err = s.inviteStorage.JoinTripByInvite(ctx, invitation, userID)
 	if err != nil {
 		return uuid.Nil, fmt.Errorf("failed to join trip in storage: %w", err)
+	}
+
+	users := invitation.Trip.Users
+	// var cookies []string
+	for _, user := range users {
+		cooks, _ := s.sessionStorage.GetTokensByUserID(ctx, user.ID)
+		// cookies = append(cookies, cooks...)
+		var message model.Message
+		message.Payload.Action = "trip_users_update"
+		message.Payload.TripID = invitation.Trip.ID
+		message.Payload.Author = fmt.Sprintf("%d", user.ID)
+		message.Payload.Message = "Из поездки удалено место"
+		message.Clients = cooks
+		s.messageProducer.SendMessage(message)
 	}
 
 	return invitation.TripID, nil
