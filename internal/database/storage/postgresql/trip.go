@@ -179,3 +179,20 @@ func (storage *TripStorage) GetTripByEventID(ctx context.Context, eventID uuid.U
 
 	return TripConverter{}.ToDomain(event.Trip), nil
 }
+
+func (storage *TripStorage) RemoveUserFromTrip(ctx context.Context, userID int, tripID uuid.UUID) error {
+	tripUser := orm.TripUsers{
+		UserID: userID,
+		TripID: tripID,
+	}
+
+	err := storage.db.
+		WithContext(ctx).
+		Delete(&tripUser).Error
+
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
