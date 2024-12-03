@@ -255,3 +255,12 @@ func (service *TripService) GetTripByEventID(ctx context.Context, eventID uuid.U
 
 	return trip, nil
 }
+
+func (service *TripService) RemoveUserFromTrip(ctx context.Context, userID int, tripID uuid.UUID) error {
+	err := service.tripStorage.RemoveUserFromTrip(ctx, userID, tripID)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}

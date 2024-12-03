@@ -15,4 +15,5 @@ type ITripStorage interface {
 	DeleteTrip(ctx context.Context, id uuid.UUID) error
 	GetUserRole(ctx context.Context, userID int, tripID uuid.UUID) (model.UserTripRole, error)
 	GetTripByEventID(ctx context.Context, eventID uuid.UUID) (model.Trip, error)
+	RemoveUserFromTrip(ctx context.Context, userID int, tripID uuid.UUID) error
 }
