@@ -133,6 +133,18 @@ func (service *TripService) DetermineRecommendedPlaces(ctx context.Context, trip
 		return fmt.Errorf("fail to update trip from storage: %w", err)
 	}
 
+	users := trip.Users
+	for _, user := range users {
+		cooks, _ := service.sessionStorage.GetTokensByUserID(ctx, user.ID)
+		var message model.Message
+		message.Payload.Action = "trip_auto_planning_enable"
+		message.Payload.TripID = trip.ID
+		message.Payload.Author = fmt.Sprintf("%d", user.ID)
+		message.Payload.Message = "Вам доступно экспресс планирование!"
+		message.Clients = cooks
+		service.messageProducer.SendMessage(message)
+	}
+
 	return nil
 }
 
