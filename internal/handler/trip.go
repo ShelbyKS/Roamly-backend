@@ -2,10 +2,11 @@ package handler
 
 import (
 	"context"
+	"net/http"
+
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 	"github.com/sirupsen/logrus"
-	"net/http"
 
 	"github.com/ShelbyKS/Roamly-backend/internal/domain"
 	"github.com/ShelbyKS/Roamly-backend/internal/domain/model"
@@ -71,6 +72,11 @@ func NewTripHandler(
 		tripGroup.POST("/:trip_id/schedule/auto",
 			middleware.AccessTripMiddleware(tripService, middleware.ForOwnerAndEditor),
 			handler.AutoScheduleTrip)
+
+		tripGroup.DELETE("/:trip_id/user",
+			middleware.AccessTripMiddleware(tripService, middleware.ForAll),
+			handler.DeleteUserFromTrip,
+		)
 	}
 }
 
@@ -389,6 +395,50 @@ func (h *TripHandler) DeletePlaceFromTrip(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, gin.H{"trip": dto.TripConverter{}.ToDto(trip)})
+}
+
+// @Summary Delete user from trip
+// @Description Delete user from a specific trip by their IDs
+// @Tags place
+// @Accept json
+// @Produce json
+// @Success 200 {object} dto.TripResponse
+// @Failure 400 {object} map[string]string "Bad request"
+// @Failure 404 {object} map[string]string "Not found"
+// @Failure 500 {object} map[string]string "Internal server error"
+// @Router /api/v1/trip/{trip_id}/user [delete]
+func (h *TripHandler) DeleteUserFromTrip(c *gin.Context) {
+	tripID := c.Param("trip_id")
+
+	tripUUID, err := uuid.Parse(tripID)
+	if err != nil {
+		h.lg.WithError(err).Errorf("invalid trip_id format")
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid trip_id format"})
+		return
+	}
+
+	userId, ok := c.Get("user_id")
+	if !ok {
+		h.lg.Warningln("No user_id in context")
+		c.JSON(http.StatusBadRequest, gin.H{"error": "no user_id in context"})
+		return
+	}
+	id, ok := userId.(int)
+	if !ok {
+		h.lg.Warningln("failed to parse user_id to int")
+		c.JSON(http.StatusBadRequest, gin.H{"error": "failed to parse user_id to int"})
+		return
+	}
+
+	err = h.tripService.RemoveUserFromTrip(c.Request.Context(), id, tripUUID)
+	if err != nil {
+		h.lg.WithError(err).Errorf("failed to remove user from trip")
+		c.JSON(domain.GetStatusCodeByError(err), gin.H{"error": err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{})
+	// c.Status()
 }
 
 // @Summary Schedule trip
