@@ -183,12 +183,12 @@ type GeocodeResponse struct {
 func (c *GoogleApiClient) GetPlaces(ctx context.Context, query map[string]string) ([]Place, error) {
 	var result GeocodeResponse
 
-	lat, err := strconv.ParseFloat(query["lat"], 64)
+	lat, err := strconv.ParseFloat(strings.Split(query["location"], ",")[0], 64)
 	if err != nil {
 		return nil, fmt.Errorf("invalid latitude: %v", err)
 	}
 
-	lng, err := strconv.ParseFloat(query["lng"], 64)
+	lng, err := strconv.ParseFloat(strings.Split(query["location"], ",")[1], 64)
 	if err != nil {
 		return nil, fmt.Errorf("invalid longitude: %v", err)
 	}
