@@ -183,6 +183,23 @@ type GeocodeResponse struct {
 func (c *GoogleApiClient) GetPlaces(ctx context.Context, query map[string]string) ([]Place, error) {
 	var result GeocodeResponse
 
+	query["key"] = c.apiKey
+	query["language"] = "ru"
+
+	_, err := c.client.R().
+		SetContext(ctx).
+		SetQueryParams(query).
+		SetResult(&result).
+		Get(methodGetPlace)
+
+	if err != nil {
+		return nil, err
+	}
+
+	if _, ok := query["type"]; ok {
+		return result.Results, nil
+	}
+
 	lat, err := strconv.ParseFloat(strings.Split(query["location"], ",")[0], 64)
 	if err != nil {
 		return nil, fmt.Errorf("invalid latitude: %v", err)
@@ -196,19 +213,6 @@ func (c *GoogleApiClient) GetPlaces(ctx context.Context, query map[string]string
 	radius, err := strconv.ParseFloat(query["radius"], 64)
 	if err != nil {
 		return nil, fmt.Errorf("invalid radius: %v", err)
-	}
-
-	query["key"] = c.apiKey
-	query["language"] = "ru"
-
-	_, err = c.client.R().
-		SetContext(ctx).
-		SetQueryParams(query).
-		SetResult(&result).
-		Get(methodGetPlace)
-
-	if err != nil {
-		return nil, err
 	}
 
 	var filteredPlaces []Place
