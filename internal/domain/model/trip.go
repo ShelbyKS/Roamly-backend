@@ -31,3 +31,20 @@ func (trip *Trip) GetTripRecommendedPlaceIDs() []string {
 	}
 	return placeIDs
 }
+
+func (trip *Trip) GetTopRecommendations() ([]string, []*Place) {
+	size := 10
+	if len(trip.RecommendedPlaces) < size {
+		size = len(trip.RecommendedPlaces)
+	}
+
+	placeIDs := make([]string, size)
+	places := make([]*Place, size)
+
+	for i := 0; i < size; i++ {
+		placeIDs[i] = trip.RecommendedPlaces[i].ID
+		places[i] = trip.RecommendedPlaces[i]
+	}
+
+	return placeIDs, places
+}
