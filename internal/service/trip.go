@@ -22,6 +22,7 @@ type TripService struct {
 	openAIClient    clients.IChatClient
 	sessionStorage  storage.ISessionStorage
 	messageProducer clients.IMessageProdcuer
+	aiChatStorage   storage.IAIChatStorage
 }
 
 func NewTripService(
@@ -31,6 +32,7 @@ func NewTripService(
 	openAIClient clients.IChatClient,
 	sessionStorage storage.ISessionStorage,
 	messageProducer clients.IMessageProdcuer,
+	aiChatStorage storage.IAIChatStorage,
 ) service.ITripService {
 	return &TripService{
 		tripStorage:     tripStorage,
@@ -39,6 +41,7 @@ func NewTripService(
 		openAIClient:    openAIClient,
 		sessionStorage:  sessionStorage,
 		messageProducer: messageProducer,
+		aiChatStorage:   aiChatStorage,
 	}
 }
 
@@ -107,6 +110,18 @@ func (service *TripService) CreateTrip(ctx context.Context, trip model.Trip) (uu
 		return uuid.Nil, fmt.Errorf("fail to create trip from storage: %w", err)
 	}
 
+	aiChatMsg := model.ChatMessage{
+		TripID:  trip.ID,
+		Role:    model.RoleSystem,
+		Content: "Ты помощник для планирования путешествия",
+	}
+	_, err = service.openAIClient.PostPrompt(ctx, []model.ChatMessage{aiChatMsg}, clients.ModelChatGPT4o)
+
+	err = service.aiChatStorage.SaveAIChatMessage(ctx, aiChatMsg)
+	if err != nil {
+		return uuid.Nil, fmt.Errorf("fail to save AI chat message: %w", err)
+	}
+
 	return trip.ID, nil
 }
 
@@ -121,7 +136,7 @@ func (service *TripService) DetermineRecommendedPlaces(ctx context.Context, trip
 		return fmt.Errorf("fail to get recommended places names from openai: %w", err)
 	}
 
-	recommendedPlacesDomain, err := service.getRecommendedPlacesDomain(ctx, recommendedPlacesNames, trip.Area.GooglePlace.Name)
+	recommendedPlacesDomain, err := service.GetRecommendedPlacesDomain(ctx, recommendedPlacesNames, trip.Area.GooglePlace.Name)
 	if err != nil {
 		return fmt.Errorf("fail to get recommended places domains from google: %w", err)
 	}
@@ -136,7 +151,7 @@ func (service *TripService) DetermineRecommendedPlaces(ctx context.Context, trip
 	users := trip.Users
 	for _, user := range users {
 		cooks, _ := service.sessionStorage.GetTokensByUserID(ctx, user.ID)
-		var message model.Message
+		var message model.NotifyMessage
 		message.Payload.Action = "trip_auto_planning_enable"
 		message.Payload.TripID = trip.ID
 		message.Payload.Author = fmt.Sprintf("%d", user.ID)
@@ -154,7 +169,11 @@ func (service *TripService) getRecommendedPlacesNames(ctx context.Context, area 
 	prompt.WriteString(fmt.Sprintf("Какие главные достопримечательности нужно посетить в %s\n", area))
 	prompt.WriteString("Без описания, через запятую, 8 штук")
 
-	recommendedPlacesStr, err := service.openAIClient.PostPrompt(ctx, prompt.String(), clients.ModelChatGPT4oMini)
+	recommendedPlacesStr, err := service.openAIClient.PostPrompt(ctx, []model.ChatMessage{{
+		Role:    model.RoleUser,
+		Content: prompt.String(),
+	}}, clients.ModelChatGPT4oMini)
+
 	if err != nil {
 		return nil, fmt.Errorf("can't get recommended duration: %w", err)
 	}
@@ -164,7 +183,7 @@ func (service *TripService) getRecommendedPlacesNames(ctx context.Context, area 
 	return places, nil
 }
 
-func (service *TripService) getRecommendedPlacesDomain(ctx context.Context, recommendedPlacesNames []string, area string) ([]*model.Place, error) {
+func (service *TripService) GetRecommendedPlacesDomain(ctx context.Context, recommendedPlacesNames []string, area string) ([]*model.Place, error) {
 	var recommendedPlacesDomain []*model.Place
 
 	for _, recommendedPlace := range recommendedPlacesNames {
@@ -186,7 +205,11 @@ func (service *TripService) getRecommendedPlacesDomain(ctx context.Context, reco
 		prompt.WriteString(fmt.Sprintf("Определи оптимальное время для посещения %s\n", places[0].Name))
 		prompt.WriteString("Напиши только  число - время в минутах")
 
-		recommendedDurationStr, err := service.openAIClient.PostPrompt(ctx, prompt.String(), clients.ModelChatGPT4oMini)
+		recommendedDurationStr, err := service.openAIClient.PostPrompt(ctx, []model.ChatMessage{{
+			Role:    model.RoleUser,
+			Content: prompt.String(),
+		}}, clients.ModelChatGPT4oMini)
+
 		if err != nil {
 			return nil, fmt.Errorf("can't get recommended duration: %w", err)
 		}
@@ -226,7 +249,7 @@ func (service *TripService) UpdateTrip(ctx context.Context, trip model.Trip) err
 	for _, user := range users {
 		cooks, _ := service.sessionStorage.GetTokensByUserID(ctx, user.ID)
 		// cookies = append(cookies, cooks...)
-		var message model.Message
+		var message model.NotifyMessage
 		message.Payload.Action = "trip_update"
 		message.Payload.TripID = trip.ID
 		message.Payload.Author = fmt.Sprintf("%d", user.ID)

@@ -3,16 +3,17 @@ package model
 import "github.com/google/uuid"
 
 type Trip struct {
-	ID                uuid.UUID `json:"id"`
-	Name              string    `json:"name"`
-	StartTime         string    `json:"start_time"`
-	EndTime           string    `json:"end_time"`
-	AreaID            string    `json:"area_id"`
-	Area              *Place    `json:"area"`
-	Users             []*User   `json:"users"`
-	Places            []*Place  `json:"places"`
-	RecommendedPlaces []*Place  `json:"recommended_places"`
-	Events            []Event   `json:"events"`
+	ID                uuid.UUID     `json:"id"`
+	Name              string        `json:"name"`
+	StartTime         string        `json:"start_time"`
+	EndTime           string        `json:"end_time"`
+	AreaID            string        `json:"area_id"`
+	Area              *Place        `json:"area"`
+	Users             []*User       `json:"users"`
+	Places            []*Place      `json:"places"`
+	RecommendedPlaces []*Place      `json:"recommended_places"`
+	Events            []Event       `json:"events"`
+	AIChat            []ChatMessage `json:"ai_chat"`
 }
 
 func (trip *Trip) GetTripPlaceIDs() []string {

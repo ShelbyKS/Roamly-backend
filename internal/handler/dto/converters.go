@@ -137,3 +137,13 @@ func (InviteConverter) ToDto(invitation model.Invite) InviteResponse {
 		Enable: invitation.Enable,
 	}
 }
+
+type AIChatConverter struct{}
+
+func (AIChatConverter) ToDto(message model.ChatMessage) ChatMessageResponse {
+	return ChatMessageResponse{
+		Role:      message.Role,
+		Content:   message.Content,
+		CreatedAt: message.CreatedAt,
+	}
+}

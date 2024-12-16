@@ -2,10 +2,11 @@ package clients
 
 import (
 	"context"
+	"github.com/ShelbyKS/Roamly-backend/internal/domain/model"
 )
 
 type IChatClient interface {
-	PostPrompt(ctx context.Context, prompt, model string) (string, error)
+	PostPrompt(ctx context.Context, messages []model.ChatMessage, model string) (string, error)
 }
 
 const (

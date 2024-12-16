@@ -3,9 +3,8 @@ package postgresql
 import (
 	"context"
 	"errors"
-	"log"
-
 	"gorm.io/gorm"
+	"log"
 
 	"github.com/ShelbyKS/Roamly-backend/internal/domain"
 	"github.com/ShelbyKS/Roamly-backend/internal/domain/model"

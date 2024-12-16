@@ -3,42 +3,9 @@ package chatgpt
 import (
 	"context"
 	"fmt"
+	"github.com/ShelbyKS/Roamly-backend/internal/domain/model"
 	"github.com/go-resty/resty/v2"
 )
-
-// type ChatGPTClient struct {
-// 	client *chatgpt.Client
-// }
-
-// func NewChatGPTClient(apiKey string) (*ChatGPTClient, error) {
-// 	client, err := chatgpt.NewClient(apiKey)
-// 	if err != nil {
-// 		return nil, err
-// 	}
-
-// 	return &ChatGPTClient{
-// 		client: client,
-// 	}, nil
-// }
-
-// func (c *ChatGPTClient) PostPrompt(ctx context.Context, prompt string) (string, error) {
-// 	resp, err := c.client.Send(ctx, &chatgpt.ChatCompletionRequest{
-// 		Model: chatgpt.ChatGPTModel("gpt-4o-mini"),
-// 		Messages: []chatgpt.ChatMessage{
-// 			{
-// 				Role:    chatgpt.ChatGPTModelRoleSystem,
-// 				Content: prompt,
-// 			},
-// 		},
-// 	})
-// 	if err != nil {
-// 		return "", fmt.Errorf("can't send message to chatgpt: %w", err)
-// 	}
-
-// 	return resp.Object, nil
-// }
-
-// package main
 
 const (
 	url = "https://api.openai.com/v1/chat/completions"
@@ -57,14 +24,9 @@ func NewChatGPTClient(apiKey string) *ChatGPTClient {
 }
 
 type Request struct {
-	Model       string           `json:"model"`
-	Messages    []MessageRequest `json:"messages"`
-	Temperature float64          `json:"temperature"`
-}
-
-type MessageRequest struct {
-	Role    string `json:"role"`
-	Content string `json:"content"`
+	Model       string              `json:"model"`
+	Messages    []model.ChatMessage `json:"messages"`
+	Temperature float64             `json:"temperature"`
 }
 
 type Response struct {
@@ -75,10 +37,10 @@ type Response struct {
 	} `json:"choices"`
 }
 
-func (c *ChatGPTClient) PostPrompt(ctx context.Context, prompt, model string) (string, error) {
+func (c *ChatGPTClient) PostPrompt(ctx context.Context, messages []model.ChatMessage, model string) (string, error) {
 	req := Request{
 		Model:       model,
-		Messages:    []MessageRequest{{Role: "user", Content: prompt}},
+		Messages:    messages,
 		Temperature: 0.7,
 	}
 

@@ -27,7 +27,7 @@ func NewMessageBrokerProducer(host string, port string, topic string) *MessageBr
 	}
 }
 
-func (m *MessageBrokerProducer) SendMessage(msg model.Message) error {
+func (m *MessageBrokerProducer) SendMessage(msg model.NotifyMessage) error {
 	jsonMessage, err := json.Marshal(msg)
 	if err != nil {
 		return fmt.Errorf("Failed to serialize message: %w", err)
@@ -41,19 +41,6 @@ func (m *MessageBrokerProducer) SendMessage(msg model.Message) error {
 	if err != nil {
 		return fmt.Errorf("Failed to produce message: %w", err)
 	}
-
-	// event := <-deliveryChan
-	// rcv := event.(*kafka.Message)
-	// if rcv.TopicPartition.Error != nil {
-	// 	return fmt.Errorf("Delivery failed: %v", rcv.TopicPartition.Error)
-	// }
-
-	// else {
-	// 	return fmt.Errorf("Delivered message to topic %s [%d] at offset %v\n",
-	// 		*rcv.TopicPartition.Topic, rcv.TopicPartition.Partition, rcv.TopicPartition.Offset)
-	// }
-
-	// close(deliveryChan)
 
 	return nil
 }
