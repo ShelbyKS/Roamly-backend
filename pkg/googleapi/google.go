@@ -4,7 +4,9 @@ import (
 	"context"
 	"fmt"
 	"log"
+	"math"
 	"net/http"
+	"strconv"
 	"strings"
 
 	"github.com/go-resty/resty/v2"
@@ -159,23 +161,87 @@ type GeocodeResponse struct {
 	Status           string   `json:"status"`
 }
 
+//func (c *GoogleApiClient) GetPlaces(ctx context.Context, query map[string]string) ([]Place, error) {
+//	var result GeocodeResponse
+//
+//	query["key"] = c.apiKey
+//	query["language"] = "ru"
+//
+//	_, err := c.client.R().
+//		SetContext(ctx).
+//		SetQueryParams(query).
+//		SetResult(&result).
+//		Get(methodGetPlace)
+//
+//	if err != nil {
+//		return []Place{}, err
+//	}
+//
+//	return result.Results, nil
+//}
+
 func (c *GoogleApiClient) GetPlaces(ctx context.Context, query map[string]string) ([]Place, error) {
 	var result GeocodeResponse
+
+	lat, err := strconv.ParseFloat(query["lat"], 64)
+	if err != nil {
+		return nil, fmt.Errorf("invalid latitude: %v", err)
+	}
+
+	lng, err := strconv.ParseFloat(query["lng"], 64)
+	if err != nil {
+		return nil, fmt.Errorf("invalid longitude: %v", err)
+	}
+
+	radius, err := strconv.ParseFloat(query["radius"], 64)
+	if err != nil {
+		return nil, fmt.Errorf("invalid radius: %v", err)
+	}
 
 	query["key"] = c.apiKey
 	query["language"] = "ru"
 
-	_, err := c.client.R().
+	_, err = c.client.R().
 		SetContext(ctx).
 		SetQueryParams(query).
 		SetResult(&result).
 		Get(methodGetPlace)
 
 	if err != nil {
-		return []Place{}, err
+		return nil, err
 	}
 
-	return result.Results, nil
+	var filteredPlaces []Place
+	for _, place := range result.Results {
+		placeLat := place.Geometry.Location.Lat
+		placeLng := place.Geometry.Location.Lng
+
+		if isWithinRadius(lat, lng, placeLat, placeLng, radius) {
+			filteredPlaces = append(filteredPlaces, place)
+		}
+	}
+
+	return filteredPlaces, nil
+}
+
+func isWithinRadius(lat1, lng1, lat2, lng2, radius float64) bool {
+	const EarthRadius = 6371e3
+
+	lat1Rad := lat1 * math.Pi / 180
+	lng1Rad := lng1 * math.Pi / 180
+	lat2Rad := lat2 * math.Pi / 180
+	lng2Rad := lng2 * math.Pi / 180
+
+	deltaLat := lat2Rad - lat1Rad
+	deltaLng := lng2Rad - lng1Rad
+
+	a := math.Sin(deltaLat/2)*math.Sin(deltaLat/2) +
+		math.Cos(lat1Rad)*math.Cos(lat2Rad)*math.Sin(deltaLng/2)*math.Sin(deltaLng/2)
+	c := 2 * math.Atan2(math.Sqrt(a), math.Sqrt(1-a))
+
+	distance := EarthRadius * c
+
+	return distance <= radius
 }
 
 func (c *GoogleApiClient) GetPlacePhoto(ctx context.Context, reference string) ([]byte, error) {
