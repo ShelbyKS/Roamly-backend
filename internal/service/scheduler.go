@@ -196,10 +196,10 @@ func (s *SchedulerService) generateRequestString(trip model.Trip, places []*mode
 
 	sb.WriteString("\nФОРМАТ JSON ДОЛЖЕН СООТВЕТСТВОВАТЬ СЛЕДУЮЩЕЙ СТРУКТУРЕ: \n" +
 		"type Event struct {\n" +
-		"    PlaceID string\n" +
-		"    TripID uuid.UUID\n" +
-		"    StartTime string\n" +
-		"    EndTime string\n" +
+		"    \"PlaceID\" string\n" +
+		"    \"TripID\" uuid.UUID\n" +
+		"    \"StartTime\" string\n" +
+		"    \"EndTime\" string\n" +
 		"}\n\n" +
 		"НУЖНО ВЕРНУТЬ []Event (массив Event)\n" +
 		//"В ОТВЕТЕ ВЕРНИ ТОЛЬКО СПЛАНИРОВАННОЕ РАСПИСАНИЕ. БЕЗ ЛИШНИХ КОММЕНТАРИЕВ И БЕЗ ФОРМАТИРОВАНИЯ.\n" +
