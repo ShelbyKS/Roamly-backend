@@ -7,6 +7,7 @@ import (
 	"github.com/google/uuid"
 	"strconv"
 	"strings"
+	"sync"
 
 	"github.com/ShelbyKS/Roamly-backend/internal/domain"
 	"github.com/ShelbyKS/Roamly-backend/internal/domain/clients"
@@ -186,51 +187,67 @@ func (service *TripService) getRecommendedPlacesNames(ctx context.Context, area 
 func (service *TripService) GetRecommendedPlacesDomain(ctx context.Context, recommendedPlacesNames []string, area string) ([]*model.Place, error) {
 	var recommendedPlacesDomain []*model.Place
 
+	wg := sync.WaitGroup{}
+	mu := sync.Mutex{}
+
 	for _, recommendedPlace := range recommendedPlacesNames {
-		searchStr := fmt.Sprintf("%s %s", area, recommendedPlace)
-		places, err := service.googleApiClient.FindPlace(ctx, searchStr, []string{
-			"formatted_address",
-			"name",
-			"rating",
-			"geometry",
-			"photo",
-			"place_id",
-		})
-		if err != nil {
-			return nil, fmt.Errorf("fail to find place %s: %w", recommendedPlace, err)
-		}
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
 
-		//todo: сделать какой-то отдельный файл для промптов
-		var prompt strings.Builder
-		prompt.WriteString(fmt.Sprintf("Определи оптимальное время для посещения %s\n", places[0].Name))
-		prompt.WriteString("Напиши только  число - время в минутах")
+			searchStr := fmt.Sprintf("%s %s", area, recommendedPlace)
+			places, err := service.googleApiClient.FindPlace(ctx, searchStr, []string{
+				"formatted_address",
+				"name",
+				"rating",
+				"geometry",
+				"photo",
+				"place_id",
+			})
+			if err != nil {
+				fmt.Println("fail to find place %s: %w", recommendedPlace, err)
+				return
+			}
 
-		recommendedDurationStr, err := service.openAIClient.PostPrompt(ctx, []model.ChatMessage{{
-			Role:    model.RoleUser,
-			Content: prompt.String(),
-		}}, clients.ModelChatGPT4oMini)
+			//todo: сделать какой-то отдельный файл для промптов
+			var prompt strings.Builder
+			prompt.WriteString(fmt.Sprintf("Определи оптимальное время для посещения %s\n", places[0].Name))
+			prompt.WriteString("Напиши только  число - время в минутах")
 
-		if err != nil {
-			return nil, fmt.Errorf("can't get recommended duration: %w", err)
-		}
-		recommendedDurationInt, err := strconv.Atoi(recommendedDurationStr)
-		if err != nil {
-			return nil, fmt.Errorf("recommended duration has wrong format: %w", err)
-		}
+			recommendedDurationStr, err := service.openAIClient.PostPrompt(ctx, []model.ChatMessage{{
+				Role:    model.RoleUser,
+				Content: prompt.String(),
+			}}, clients.ModelChatGPT4oMini)
 
-		placeDomain := model.Place{
-			ID:                          places[0].PlaceID,
-			GooglePlace:                 places[0],
-			RecommendedVisitingDuration: recommendedDurationInt,
-		}
+			if err != nil {
+				fmt.Println("can't get recommended duration: %w", err)
+				return
+			}
+			recommendedDurationInt, err := strconv.Atoi(recommendedDurationStr)
+			if err != nil {
+				fmt.Println("recommended duration has wrong format: %w", err)
+				return
+			}
 
-		_, err = service.placeStorage.CreatePlace(ctx, &placeDomain)
-		if err != nil && !errors.Is(err, domain.ErrPlaceAlreadyExists) {
-			return nil, fmt.Errorf("fail to create place: %s: %w", recommendedPlace, err)
-		}
+			placeDomain := model.Place{
+				ID:                          places[0].PlaceID,
+				GooglePlace:                 places[0],
+				RecommendedVisitingDuration: recommendedDurationInt,
+			}
 
-		recommendedPlacesDomain = append(recommendedPlacesDomain, &placeDomain)
+			_, err = service.placeStorage.CreatePlace(ctx, &placeDomain)
+			if err != nil && !errors.Is(err, domain.ErrPlaceAlreadyExists) {
+				fmt.Println("fail to create place: %s: %w", recommendedPlace, err)
+				return
+			}
+
+			mu.Lock()
+			recommendedPlacesDomain = append(recommendedPlacesDomain, &placeDomain)
+			mu.Unlock()
+		}()
+
 	}
+	wg.Wait()
 
 	return recommendedPlacesDomain, nil
 }
