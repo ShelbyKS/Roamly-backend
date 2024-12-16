@@ -106,12 +106,14 @@ func (s *SchedulerService) AutoScheduleTrip(ctx context.Context, tripID uuid.UUI
 		return model.Trip{}, fmt.Errorf("failed to get trip for schedule: %w", err)
 	}
 
-	timeDistMatrix, err := s.googleApi.GetTimeDistanceMatrix(ctx, trip.GetTripRecommendedPlaceIDs())
+	placesIds, places := trip.GetTopRecommendations()
+
+	timeDistMatrix, err := s.googleApi.GetTimeDistanceMatrix(ctx, placesIds)
 	if err != nil {
 		return model.Trip{}, fmt.Errorf("failed to get time distance matrix: %w", err)
 	}
 
-	prompt := s.generateRequestString(trip, trip.RecommendedPlaces, timeDistMatrix)
+	prompt := s.generateRequestString(trip, places, timeDistMatrix)
 
 	resp, err := s.openAIClient.PostPrompt(ctx, []model.ChatMessage{{
 		Role:    model.RoleUser,
