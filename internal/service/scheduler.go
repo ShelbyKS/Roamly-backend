@@ -77,6 +77,10 @@ func (s *SchedulerService) ScheduleTrip(ctx context.Context, tripID uuid.UUID) (
 		return model.Trip{}, fmt.Errorf("failed to delete current events: %w", err)
 	}
 
+	for _, event := range events {
+		fmt.Println(event)
+	}
+
 	err = s.eventStorage.CreateBatchEvents(ctx, &events)
 	if err != nil {
 		return model.Trip{}, fmt.Errorf("failed to save events: %w", err)
