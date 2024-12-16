@@ -2,7 +2,6 @@ package storage
 
 import (
 	"context"
-
 	"github.com/ShelbyKS/Roamly-backend/internal/domain/model"
 	"github.com/google/uuid"
 )

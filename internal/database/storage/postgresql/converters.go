@@ -330,3 +330,25 @@ func (InviteConverter) ToDomain(invite orm.Invite) model.Invite {
 		Enable: invite.Enable.Bool,
 	}
 }
+
+type ChatMessageConverter struct{}
+
+func (ChatMessageConverter) ToDb(message model.ChatMessage) orm.AIChatMessage {
+	return orm.AIChatMessage{
+		ID:        message.ID,
+		TripID:    message.TripID,
+		Role:      message.Role,
+		Content:   message.Content,
+		CreatedAt: message.CreatedAt,
+	}
+}
+
+func (ChatMessageConverter) ToDomain(message orm.AIChatMessage) model.ChatMessage {
+	return model.ChatMessage{
+		ID:        message.ID,
+		TripID:    message.TripID,
+		Role:      message.Role,
+		Content:   message.Content,
+		CreatedAt: message.CreatedAt,
+	}
+}

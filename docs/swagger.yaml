@@ -1,4 +1,13 @@
 definitions:
+  dto.ChatMessageResponse:
+    properties:
+      content:
+        type: string
+      created_at:
+        type: string
+      role:
+        type: string
+    type: object
   dto.Geometry:
     properties:
       location:
@@ -197,6 +206,11 @@ definitions:
     - login
     - password
     type: object
+  handler.SentMessageRequest:
+    properties:
+      message:
+        type: string
+    type: object
   handler.UpdateEventRequest:
     properties:
       end_time:
@@ -265,6 +279,19 @@ definitions:
   internal_handler_dto.Photo:
     properties:
       photo_reference:
+        type: string
+    type: object
+  model.ChatMessage:
+    properties:
+      content:
+        type: string
+      createdAt:
+        type: string
+      id:
+        type: integer
+      role:
+        type: string
+      tripID:
         type: string
     type: object
   model.Event:
@@ -343,6 +370,10 @@ definitions:
     type: object
   model.Trip:
     properties:
+      ai_chat:
+        items:
+          $ref: '#/definitions/model.ChatMessage'
+        type: array
       area:
         $ref: '#/definitions/model.Place'
       area_id:
@@ -568,6 +599,89 @@ paths:
       summary: Register a new user
       tags:
       - user
+  /api/v1/chat/{trip_id}:
+    get:
+      consumes:
+      - application/json
+      description: Get chat messages by trip
+      parameters:
+      - description: Trip ID
+        in: query
+        name: trip_id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties:
+              items:
+                $ref: '#/definitions/dto.ChatMessageResponse'
+              type: array
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "404":
+          description: Not Found
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Get chat history
+      tags:
+      - chat
+    post:
+      description: Sent message to ai chat
+      parameters:
+      - description: Trip ID
+        in: path
+        name: trip_id
+        required: true
+        type: string
+      - description: Message
+        in: body
+        name: message
+        required: true
+        schema:
+          $ref: '#/definitions/handler.SentMessageRequest'
+      produces:
+      - application/json
+      responses:
+        "204":
+          description: No Content
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "404":
+          description: Not Found
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Sent message
+      tags:
+      - chat
   /api/v1/place:
     get:
       description: Find places by name or location
@@ -1053,6 +1167,39 @@ paths:
       summary: Schedule trip
       tags:
       - trip
+  /api/v1/trip/{trip_id}/user:
+    delete:
+      consumes:
+      - application/json
+      description: Delete user from a specific trip by their IDs
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/dto.TripResponse'
+        "400":
+          description: Bad request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "404":
+          description: Not found
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal server error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Delete user from trip
+      tags:
+      - place
   /api/v1/trip/event:
     delete:
       consumes:

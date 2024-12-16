@@ -95,6 +95,7 @@ func (app *Notifier) websocketHandler(c *gin.Context) {
 
 	sessionToken, err := c.Cookie("session_token")
 	if err != nil {
+		log.Printf("No session token cookie: %v", err)
 		c.JSON(http.StatusUnauthorized, gin.H{"error": "No session token"})
 		c.Abort()
 		return

@@ -99,7 +99,7 @@ func (service *PlaceService) DeletePlace(ctx context.Context, tripID uuid.UUID, 
 	for _, user := range users {
 		cooks, _ := service.sessionStorage.GetTokensByUserID(ctx, user.ID)
 		// cookies = append(cookies, cooks...)
-		var message model.Message
+		var message model.NotifyMessage
 		message.Payload.Action = "trip_places_update"
 		message.Payload.TripID = trip.ID
 		message.Payload.Author = fmt.Sprintf("%d", user.ID)
@@ -164,7 +164,7 @@ func (service *PlaceService) AddPlaceToTrip(ctx context.Context, tripID uuid.UUI
 	for _, user := range users {
 		cooks, _ := service.sessionStorage.GetTokensByUserID(ctx, user.ID)
 		// cookies = append(cookies, cooks...)
-		var message model.Message
+		var message model.NotifyMessage
 		message.Payload.Action = "trip_places_update"
 		message.Payload.TripID = trip.ID
 		message.Payload.Author = fmt.Sprintf("%d", user.ID)
@@ -239,7 +239,10 @@ func (service *PlaceService) DetermineRecommendedDuration(ctx context.Context, p
 	prompt.WriteString(fmt.Sprintf("Определи оптимальное время для посещения %s\n", place.GooglePlace.Name))
 	prompt.WriteString("Напиши только  число - время в минутах")
 
-	recommendedDurationStr, err := service.openAIClient.PostPrompt(ctx, prompt.String(), clients.ModelChatGPT4oMini)
+	recommendedDurationStr, err := service.openAIClient.PostPrompt(ctx, []model.ChatMessage{{
+		Role:    model.RoleUser,
+		Content: prompt.String(),
+	}}, clients.ModelChatGPT4oMini)
 	if err != nil {
 		return fmt.Errorf("can't get recommended duration: %w", err)
 	}

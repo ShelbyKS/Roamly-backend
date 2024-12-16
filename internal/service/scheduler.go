@@ -15,12 +15,12 @@ import (
 )
 
 type SchedulerService struct {
-	openAIClient clients.IChatClient
-	googleApi    clients.IGoogleApiClient
-	tripStorage  storage.ITripStorage
-	eventStorage storage.IEventStorage
-	placeStorage storage.IPlaceStorage
-	sessionStorage storage.ISessionStorage
+	openAIClient    clients.IChatClient
+	googleApi       clients.IGoogleApiClient
+	tripStorage     storage.ITripStorage
+	eventStorage    storage.IEventStorage
+	placeStorage    storage.IPlaceStorage
+	sessionStorage  storage.ISessionStorage
 	messageProducer clients.IMessageProdcuer
 }
 
@@ -34,12 +34,12 @@ func NewShedulerService(
 	messageProducer clients.IMessageProdcuer,
 ) service.ISchedulerService {
 	return &SchedulerService{
-		openAIClient: openAIClient,
-		googleApi:    googleApi,
-		tripStorage:  tripStorage,
-		eventStorage: eventStorage,
-		placeStorage: placeStorage,
-		sessionStorage: sessionStorage,
+		openAIClient:    openAIClient,
+		googleApi:       googleApi,
+		tripStorage:     tripStorage,
+		eventStorage:    eventStorage,
+		placeStorage:    placeStorage,
+		sessionStorage:  sessionStorage,
 		messageProducer: messageProducer,
 	}
 }
@@ -59,7 +59,10 @@ func (s *SchedulerService) ScheduleTrip(ctx context.Context, tripID uuid.UUID) (
 
 	//fmt.Println("PROMT: ", prompt)
 
-	resp, err := s.openAIClient.PostPrompt(ctx, prompt, clients.ModelChatGPT4o)
+	resp, err := s.openAIClient.PostPrompt(ctx, []model.ChatMessage{{
+		Role:    model.RoleUser,
+		Content: prompt,
+	}}, clients.ModelChatGPT4o)
 	if err != nil {
 		return model.Trip{}, fmt.Errorf("failed to get openai response: %w", err)
 	}
@@ -85,7 +88,7 @@ func (s *SchedulerService) ScheduleTrip(ctx context.Context, tripID uuid.UUID) (
 	for _, user := range users {
 		cooks, _ := s.sessionStorage.GetTokensByUserID(ctx, user.ID)
 		// cookies = append(cookies, cooks...)
-		var message model.Message
+		var message model.NotifyMessage
 		message.Payload.Action = "trip_events_update"
 		message.Payload.TripID = trip.ID
 		message.Payload.Author = fmt.Sprintf("%d", user.ID)
@@ -110,7 +113,10 @@ func (s *SchedulerService) AutoScheduleTrip(ctx context.Context, tripID uuid.UUI
 
 	prompt := s.generateRequestString(trip, trip.RecommendedPlaces, timeDistMatrix)
 
-	resp, err := s.openAIClient.PostPrompt(ctx, prompt, clients.ModelChatGPT4o)
+	resp, err := s.openAIClient.PostPrompt(ctx, []model.ChatMessage{{
+		Role:    model.RoleUser,
+		Content: prompt,
+	}}, clients.ModelChatGPT4o)
 	if err != nil {
 		return model.Trip{}, fmt.Errorf("failed to get openai response: %w", err)
 	}
@@ -143,7 +149,7 @@ func (s *SchedulerService) AutoScheduleTrip(ctx context.Context, tripID uuid.UUI
 	users := trip.Users
 	for _, user := range users {
 		cooks, _ := s.sessionStorage.GetTokensByUserID(ctx, user.ID)
-		var message model.Message
+		var message model.NotifyMessage
 		message.Payload.Action = "trip_events_update"
 		message.Payload.TripID = trip.ID
 		message.Payload.Author = fmt.Sprintf("%d", user.ID)

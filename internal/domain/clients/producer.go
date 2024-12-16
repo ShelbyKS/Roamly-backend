@@ -5,5 +5,5 @@ import (
 )
 
 type IMessageProdcuer interface {
-	SendMessage(msg model.Message) error
+	SendMessage(msg model.NotifyMessage) error
 }

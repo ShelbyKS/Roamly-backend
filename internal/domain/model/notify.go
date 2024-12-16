@@ -2,7 +2,7 @@ package model
 
 import "github.com/google/uuid"
 
-type Message struct {
+type NotifyMessage struct {
 	Payload struct {
 		Action  string    `json:"action"`
 		Author  string    `json:"author"`

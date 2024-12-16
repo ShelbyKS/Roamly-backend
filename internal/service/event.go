@@ -64,7 +64,7 @@ func (service *EventService) DeleteEvent(ctx context.Context, eventID uuid.UUID)
 	for _, user := range users {
 		cooks, _ := service.sessionStorage.GetTokensByUserID(ctx, user.ID)
 		// cookies = append(cookies, cooks...)
-		var message model.Message
+		var message model.NotifyMessage
 		message.Payload.Action = "trip_events_update"
 		message.Payload.TripID = tripFound.ID
 		message.Payload.Author = fmt.Sprintf("%d", user.ID)
@@ -101,7 +101,7 @@ func (service *EventService) CreateEvent(ctx context.Context, event model.Event)
 	for _, user := range users {
 		cooks, _ := service.sessionStorage.GetTokensByUserID(ctx, user.ID)
 		// cookies = append(cookies, cooks...)
-		var message model.Message
+		var message model.NotifyMessage
 		message.Payload.Action = "trip_events_update"
 		message.Payload.TripID = event.TripID
 		message.Payload.Author = fmt.Sprintf("%d", user.ID)
@@ -124,7 +124,6 @@ func (service *EventService) UpdateEvent(ctx context.Context, event model.Event)
 		log.Println("START_UPDATING_EVENT: ERR:", err)
 		return model.Event{}, fmt.Errorf("fail to update event in storage: %w", err)
 	}
-	
 
 	updatedEvent, err = service.eventStorage.GetEventByID(ctx, updatedEvent.ID)
 	if errors.Is(err, domain.ErrEventNotFound) {
@@ -144,7 +143,7 @@ func (service *EventService) UpdateEvent(ctx context.Context, event model.Event)
 	for _, user := range users {
 		cooks, _ := service.sessionStorage.GetTokensByUserID(ctx, user.ID)
 		// cookies = append(cookies, cooks...)
-		var message model.Message
+		var message model.NotifyMessage
 		message.Payload.Action = "trip_events_update"
 		message.Payload.TripID = tripFound.ID
 		message.Payload.Author = fmt.Sprintf("%d", user.ID)
@@ -168,7 +167,7 @@ func (service *EventService) DeleteEventsByTrip(ctx context.Context, tripID uuid
 	for _, user := range users {
 		cooks, _ := service.sessionStorage.GetTokensByUserID(ctx, user.ID)
 		// cookies = append(cookies, cooks...)
-		var message model.Message
+		var message model.NotifyMessage
 		message.Payload.Action = "trip_events_update"
 		message.Payload.TripID = tripID
 		message.Payload.Author = fmt.Sprintf("%d", user.ID)
