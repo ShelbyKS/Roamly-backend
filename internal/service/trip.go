@@ -168,7 +168,7 @@ func (service *TripService) getRecommendedPlacesNames(ctx context.Context, area 
 	//todo: сделать какой-то отдельный файл для промптов
 	var prompt strings.Builder
 	prompt.WriteString(fmt.Sprintf("Какие главные достопримечательности нужно посетить в %s\n", area))
-	prompt.WriteString("Без описания, через запятую, 8 штук")
+	prompt.WriteString("Без описания, через запятую, 9 штук")
 
 	recommendedPlacesStr, err := service.openAIClient.PostPrompt(ctx, []model.ChatMessage{{
 		Role:    model.RoleUser,
