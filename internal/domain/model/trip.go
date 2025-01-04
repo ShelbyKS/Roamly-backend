@@ -14,6 +14,9 @@ type Trip struct {
 	RecommendedPlaces []*Place      `json:"recommended_places"`
 	Events            []Event       `json:"events"`
 	AIChat            []ChatMessage `json:"ai_chat"`
+	AccommodationID   string        `json:"accommodation_id"`
+	Accommodation     *Place        `json:"accommodation"`
+	Preference        string        `json:"preference"`
 }
 
 func (trip *Trip) GetTripPlaceIDs() []string {

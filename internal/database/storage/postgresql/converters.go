@@ -62,6 +62,11 @@ func (TripConverter) ToDb(trip model.Trip) orm.Trip {
 		areaDb = PlaceConverter{}.ToDb(*trip.Area)
 	}
 
+	var accommodationDb orm.Place
+	if trip.Accommodation != nil {
+		accommodationDb = PlaceConverter{}.ToDb(*trip.Accommodation)
+	}
+
 	return orm.Trip{
 		ID:                trip.ID,
 		Name:              trip.Name,
@@ -73,6 +78,9 @@ func (TripConverter) ToDb(trip model.Trip) orm.Trip {
 		RecommendedPlaces: tripRecommendedPlaces,
 		Events:            tripEvents,
 		Area:              areaDb,
+		Accommodation:     accommodationDb,
+		AccommodationID:   trip.AccommodationID,
+		Preference:        trip.Preference,
 	}
 }
 
@@ -111,6 +119,7 @@ func (TripConverter) ToDomain(trip orm.Trip) model.Trip {
 	}
 
 	area := PlaceConverter{}.ToDomain(trip.Area)
+	accommodation := PlaceConverter{}.ToDomain(trip.Accommodation)
 
 	return model.Trip{
 		ID:                trip.ID,
@@ -123,6 +132,9 @@ func (TripConverter) ToDomain(trip orm.Trip) model.Trip {
 		Places:            tripPlaces,
 		RecommendedPlaces: tripRecommendedPlaces,
 		Events:            events,
+		AccommodationID:   trip.AccommodationID,
+		Accommodation:     &accommodation,
+		Preference:        trip.Preference,
 	}
 }
 

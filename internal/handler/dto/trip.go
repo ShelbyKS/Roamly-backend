@@ -15,4 +15,6 @@ type TripResponse struct {
 	Places            []PlaceGoogle `json:"places"`
 	RecommendedPlaces []PlaceGoogle `json:"recommended_places"`
 	Events            []GetEvent    `json:"events"`
+	AccommodationID   string        `json:"accommodation_id"`
+	Accommodation     PlaceGoogle   `json:"accommodation"`
 }

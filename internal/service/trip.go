@@ -103,7 +103,31 @@ func (service *TripService) CreateTrip(ctx context.Context, trip model.Trip) (uu
 		}
 	}
 
+	accommodation, err := service.placeStorage.GetPlaceByID(ctx, trip.AccommodationID)
+	if err != nil && !errors.Is(err, domain.ErrPlaceNotFound) {
+		return uuid.Nil, fmt.Errorf("fail to get accommodation from storage: %w", err)
+	}
+
+	if errors.Is(err, domain.ErrPlaceNotFound) {
+		accommodationGoogle, err := service.googleApiClient.GetPlaceByID(ctx, trip.AccommodationID, []string{
+			"formatted_address",
+			"name",
+			"rating",
+			"geometry",
+			"photo",
+		})
+
+		accommodation, err = service.placeStorage.CreatePlace(ctx, &model.Place{
+			ID:          trip.AreaID,
+			GooglePlace: accommodationGoogle,
+		})
+		if err != nil {
+			return uuid.Nil, fmt.Errorf("fail to create accommodation from storage: %w", err)
+		}
+	}
+
 	trip.Area = &area
+	trip.Accommodation = &accommodation
 	trip.ID = uuid.New()
 
 	err = service.tripStorage.CreateTrip(ctx, trip, model.Owner)

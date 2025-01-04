@@ -53,6 +53,7 @@ func (TripConverter) ToDto(trip model.Trip) TripResponse {
 	}
 
 	area := GooglePlaceConverter{}.ToDto(trip.Area.GooglePlace)
+	accommodation := GooglePlaceConverter{}.ToDto(trip.Accommodation.GooglePlace)
 
 	return TripResponse{
 		ID:                trip.ID,
@@ -65,6 +66,8 @@ func (TripConverter) ToDto(trip model.Trip) TripResponse {
 		Places:            places,
 		Events:            events,
 		RecommendedPlaces: recommendedPlaces,
+		AccommodationID:   trip.AccommodationID,
+		Accommodation:     accommodation,
 	}
 }
 

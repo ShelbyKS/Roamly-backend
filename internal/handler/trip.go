@@ -179,10 +179,12 @@ func (h *TripHandler) DeleteTrip(c *gin.Context) {
 }
 
 type CreateTripRequest struct {
-	Name      string `json:"name" form:"name" binding:"required"`
-	StartTime string `json:"start_time" form:"start_time" binding:"required"`
-	EndTime   string `json:"end_time" form:"end_time" binding:"required"`
-	AreaID    string `json:"area_id" form:"area_id" binding:"required"`
+	Name            string `json:"name" form:"name" binding:"required"`
+	StartTime       string `json:"start_time" form:"start_time" binding:"required"`
+	EndTime         string `json:"end_time" form:"end_time" binding:"required"`
+	AreaID          string `json:"area_id" form:"area_id" binding:"required"`
+	AccommodationID string `json:"accommodation_id" form:"accommodation_id"`
+	Preferences     string `json:"preferences" form:"preferences"`
 }
 
 // @Summary Create a new trip
@@ -229,6 +231,8 @@ func (h *TripHandler) CreateTrip(c *gin.Context) {
 				ID: userIDInt,
 			},
 		},
+		AccommodationID: tripReq.AccommodationID,
+		Preference:      tripReq.Preferences,
 	})
 	if err != nil {
 		h.lg.WithError(err).Errorf("failed to create trip")
@@ -249,10 +253,12 @@ func (h *TripHandler) CreateTrip(c *gin.Context) {
 }
 
 type UpdateTripRequest struct {
-	ID        uuid.UUID `json:"id" binding:"required"`
-	Name      string    `json:"name" binding:"required"`
-	StartTime string    `json:"start_time" binding:"required"`
-	EndTime   string    `json:"end_time" binding:"required"`
+	ID              uuid.UUID `json:"id" binding:"required"`
+	Name            string    `json:"name" binding:"required"`
+	StartTime       string    `json:"start_time" binding:"required"`
+	EndTime         string    `json:"end_time" binding:"required"`
+	AccommodationID string    `json:"accommodation_id"`
+	Preferences     string    `json:"preferences"`
 }
 
 // @Summary Update trip
@@ -277,10 +283,12 @@ func (h *TripHandler) UpdateTrip(c *gin.Context) {
 	}
 
 	err = h.tripService.UpdateTrip(c.Request.Context(), model.Trip{
-		ID:        tripReq.ID,
-		Name:      tripReq.Name,
-		StartTime: tripReq.StartTime,
-		EndTime:   tripReq.EndTime,
+		ID:              tripReq.ID,
+		Name:            tripReq.Name,
+		StartTime:       tripReq.StartTime,
+		EndTime:         tripReq.EndTime,
+		AccommodationID: tripReq.AccommodationID,
+		Preference:      tripReq.Preferences,
 	})
 	if err != nil {
 		h.lg.WithError(err).Errorf("failed to update trip with id=%d", tripReq.ID)

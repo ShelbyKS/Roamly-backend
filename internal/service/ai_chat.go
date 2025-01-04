@@ -74,7 +74,7 @@ func (s *AIChatService) SentMessage(ctx context.Context, message model.ChatMessa
 		return fmt.Errorf("failed to get trip %v: %w", message.TripID, err)
 	}
 
-	prompt, err := s.formPromptOverUserMessage(message, trip.Area.GooglePlace.Name)
+	prompt, err := s.formPromptOverUserMessage(message, trip.Area.GooglePlace.Name, trip.Preference)
 	if err != nil {
 		s.sendEventIfFailed(ctx, message, userID)
 		return fmt.Errorf("failed to form prompt over user message: %w", err)
@@ -143,6 +143,7 @@ func (s *AIChatService) sendEventIfFailed(ctx context.Context, message model.Cha
 func (s *AIChatService) formPromptOverUserMessage(
 	userMessage model.ChatMessage,
 	tripArea string,
+	UserPreferences string,
 ) (string, error) {
 	var sb strings.Builder
 
@@ -158,8 +159,8 @@ func (s *AIChatService) formPromptOverUserMessage(
 		"	\"recommended_visiting_time\" integer (кол-во часов)\n" +
 		"}\n" +
 		"НУЖНО ВЕРНУТЬ []Place (массив Place) БЕЗ ЛИШНИХ КОММЕНТАРИЕВ И БЕЗ ФОРМАТИРОВАНИЯ json.\n",
-	//"ЕСЛИ ВОПРОС ПОЛЬЗОВАТЕЛЯ НЕ ОТНОСИТСЯ К ПЛАНИРОВАНИЮ ПОЕЗДКИ, А ТАКЖЕ МЕСТ, ГДЕ МОЖНО ПОКУШАТЬ, ОТВЕТЬ \"FAIL\"",
 	)
+	sb.WriteString(fmt.Sprintf("Так же учитывай предпочтения пользователя: %s", UserPreferences))
 
 	return sb.String(), nil
 }

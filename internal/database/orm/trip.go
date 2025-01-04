@@ -18,6 +18,9 @@ type Trip struct {
 	Events            []Event         `gorm:"constraint:OnDelete:CASCADE;"`
 	Invites           []Invite        `gorm:"foreignKey:TripID;constraint:OnDelete:CASCADE;"`
 	Messages          []AIChatMessage `gorm:"constraint:OnDelete:CASCADE;"`
+	AccommodationID   string
+	Accommodation     Place
+	Preference        string
 }
 
 type TripUsers struct {
