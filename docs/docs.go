@@ -1977,6 +1977,12 @@ const docTemplate = `{
         "dto.TripResponse": {
             "type": "object",
             "properties": {
+                "accommodation": {
+                    "$ref": "#/definitions/dto.PlaceGoogle"
+                },
+                "accommodation_id": {
+                    "type": "string"
+                },
                 "area": {
                     "$ref": "#/definitions/dto.PlaceGoogle"
                 },
@@ -2070,6 +2076,9 @@ const docTemplate = `{
                 "start_time"
             ],
             "properties": {
+                "accommodation_id": {
+                    "type": "string"
+                },
                 "area_id": {
                     "type": "string"
                 },
@@ -2077,6 +2086,9 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "name": {
+                    "type": "string"
+                },
+                "preferences": {
                     "type": "string"
                 },
                 "start_time": {
@@ -2219,6 +2231,9 @@ const docTemplate = `{
                 "start_time"
             ],
             "properties": {
+                "accommodation_id": {
+                    "type": "string"
+                },
                 "end_time": {
                     "type": "string"
                 },
@@ -2226,6 +2241,9 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "name": {
+                    "type": "string"
+                },
+                "preferences": {
                     "type": "string"
                 },
                 "start_time": {
@@ -2412,6 +2430,12 @@ const docTemplate = `{
         "model.Trip": {
             "type": "object",
             "properties": {
+                "accommodation": {
+                    "$ref": "#/definitions/model.Place"
+                },
+                "accommodation_id": {
+                    "type": "string"
+                },
                 "ai_chat": {
                     "type": "array",
                     "items": {
@@ -2444,6 +2468,9 @@ const docTemplate = `{
                     "items": {
                         "$ref": "#/definitions/model.Place"
                     }
+                },
+                "preference": {
+                    "type": "string"
                 },
                 "recommended_places": {
                     "type": "array",

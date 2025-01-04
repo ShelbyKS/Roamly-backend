@@ -81,6 +81,10 @@ definitions:
     type: object
   dto.TripResponse:
     properties:
+      accommodation:
+        $ref: '#/definitions/dto.PlaceGoogle'
+      accommodation_id:
+        type: string
       area:
         $ref: '#/definitions/dto.PlaceGoogle'
       area_id:
@@ -139,11 +143,15 @@ definitions:
     type: object
   handler.CreateTripRequest:
     properties:
+      accommodation_id:
+        type: string
       area_id:
         type: string
       end_time:
         type: string
       name:
+        type: string
+      preferences:
         type: string
       start_time:
         type: string
@@ -239,11 +247,15 @@ definitions:
     type: object
   handler.UpdateTripRequest:
     properties:
+      accommodation_id:
+        type: string
       end_time:
         type: string
       id:
         type: string
       name:
+        type: string
+      preferences:
         type: string
       start_time:
         type: string
@@ -370,6 +382,10 @@ definitions:
     type: object
   model.Trip:
     properties:
+      accommodation:
+        $ref: '#/definitions/model.Place'
+      accommodation_id:
+        type: string
       ai_chat:
         items:
           $ref: '#/definitions/model.ChatMessage'
@@ -392,6 +408,8 @@ definitions:
         items:
           $ref: '#/definitions/model.Place'
         type: array
+      preference:
+        type: string
       recommended_places:
         items:
           $ref: '#/definitions/model.Place'
