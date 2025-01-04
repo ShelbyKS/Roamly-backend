@@ -3,13 +3,13 @@ package googleapi
 import (
 	"context"
 	"fmt"
+	"github.com/go-resty/resty/v2"
 	"log"
 	"math"
 	"net/http"
 	"strconv"
 	"strings"
-
-	"github.com/go-resty/resty/v2"
+	"sync"
 
 	"github.com/ShelbyKS/Roamly-backend/internal/domain/model"
 	"github.com/ShelbyKS/Roamly-backend/pkg/googleapi/dto"
@@ -294,24 +294,139 @@ type DistanceMatrixResponse struct {
 	Status               string   `json:"status"`
 }
 
+//func (c *GoogleApiClient) GetTimeDistanceMatrix(ctx context.Context, placeIDs []string) (model.DistanceMatrix, error) {
+//	// Добавляем префикс "place_id:" к каждому идентификатору
+//	var placeIDsQuery []string
+//	for _, placeID := range placeIDs {
+//		placeIDsQuery = append(placeIDsQuery, "place_id:"+placeID)
+//	}
+//
+//	fmt.Println("LEN: ", len(placeIDsQuery))
+//
+//	placesParams := strings.Join(placeIDsQuery, "|")
+//
+//	params := map[string]string{
+//		"origins":      placesParams,
+//		"destinations": placesParams,
+//		"key":          c.apiKey,
+//	}
+//
+//	params["language"] = "ru"
+//
+//	var result DistanceMatrixResponse
+//
+//	resp, err := c.client.R().
+//		SetContext(ctx).
+//		SetQueryParams(params).
+//		SetResult(&result).
+//		Get(methodGetTimeMatrix)
+//
+//	if err != nil {
+//		return nil, fmt.Errorf("Failed to get call google api method %w", err)
+//	}
+//
+//	if resp.StatusCode() != http.StatusOK {
+//		return nil, fmt.Errorf("error get time distance matrix: received status '%s'", resp.Status())
+//	}
+//
+//	fmt.Println("GOOGLE result: ", result.Status)
+//
+//	parsedMatrix := c.getParsedTimeDistance(placeIDs, result)
+//
+//	return parsedMatrix, nil
+//}
+
+type pair struct {
+	Origin      string
+	Destination string
+}
+
+func generatePairs(placeIDs []string) []pair {
+	var pairs []pair
+	for i, origin := range placeIDs {
+		for j, destination := range placeIDs {
+			if i != j {
+				pairs = append(pairs, pair{origin, destination})
+			}
+		}
+	}
+	return pairs
+}
+
+func splitPairsIntoBatches(pairs []pair, maxBatchSize int) [][]pair {
+	var batches [][]pair
+	for maxBatchSize < len(pairs) {
+		pairs, batches = pairs[maxBatchSize:], append(batches, pairs[:maxBatchSize])
+	}
+	return append(batches, pairs)
+}
+
 func (c *GoogleApiClient) GetTimeDistanceMatrix(ctx context.Context, placeIDs []string) (model.DistanceMatrix, error) {
-	// Добавляем префикс "place_id:" к каждому идентификатору
-	var placeIDsQuery []string
-	for _, placeID := range placeIDs {
-		placeIDsQuery = append(placeIDsQuery, "place_id:"+placeID)
+	const maxBatchSize = 10
+
+	pairs := generatePairs(placeIDs)
+
+	batches := splitPairsIntoBatches(pairs, maxBatchSize)
+
+	var wg sync.WaitGroup
+	errChan := make(chan error, len(batches))
+	resultsChan := make(chan map[pair]map[string]float64, len(batches))
+
+	for _, batch := range batches {
+		wg.Add(1)
+		go func(batch []pair) {
+			defer wg.Done()
+			result, err := c.fetchBatchDistances(ctx, batch)
+			if err != nil {
+				errChan <- err
+				return
+			}
+			resultsChan <- result
+		}(batch)
 	}
 
-	fmt.Println("LEN: ", len(placeIDsQuery))
+	wg.Wait()
+	close(errChan)
+	close(resultsChan)
 
-	placesParams := strings.Join(placeIDsQuery, "|")
+	if len(errChan) > 0 {
+		return nil, <-errChan
+	}
+
+	results := make(map[pair]map[string]float64)
+	for result := range resultsChan {
+		for p, metrics := range result {
+			results[p] = metrics
+		}
+	}
+
+	finalMatrix := make(model.DistanceMatrix)
+	for _, origin := range placeIDs {
+		finalMatrix[origin] = make(map[string]map[string]float64)
+		for _, destination := range placeIDs {
+			if origin != destination {
+				metrics := results[pair{origin, destination}]
+				finalMatrix[origin][destination] = metrics
+			}
+		}
+	}
+
+	return finalMatrix, nil
+}
+
+func (c *GoogleApiClient) fetchBatchDistances(ctx context.Context, batch []pair) (map[pair]map[string]float64, error) {
+	var origins, destinations []string
+	for _, p := range batch {
+		origins = append(origins, "place_id:"+p.Origin)
+		destinations = append(destinations, "place_id:"+p.Destination)
+	}
 
 	params := map[string]string{
-		"origins":      placesParams,
-		"destinations": placesParams,
+		"origins":      strings.Join(origins, "|"),
+		"destinations": strings.Join(destinations, "|"),
 		"key":          c.apiKey,
+		"language":     "ru",
 	}
-
-	params["language"] = "ru"
 
 	var result DistanceMatrixResponse
 
@@ -322,18 +437,30 @@ func (c *GoogleApiClient) GetTimeDistanceMatrix(ctx context.Context, placeIDs []
 		Get(methodGetTimeMatrix)
 
 	if err != nil {
-		return nil, fmt.Errorf("Failed to get call google api method %w", err)
+		return nil, fmt.Errorf("failed to call google api: %w", err)
 	}
 
-	if resp.StatusCode() != http.StatusOK {
-		return nil, fmt.Errorf("error get time distance matrix: received status '%s'", resp.Status())
+	if resp.StatusCode() != 200 {
+		return nil, fmt.Errorf("error getting time distance matrix: status '%s'", resp.Status())
 	}
 
-	fmt.Println("GOOGLE result: ", result.Status)
+	if len(result.Rows) == 0 {
+		return nil, fmt.Errorf("invalid response: no rows")
+	}
 
-	parsedMatrix := c.getParsedTimeDistance(placeIDs, result)
+	distances := make(map[pair]map[string]float64)
+	for i, row := range result.Rows {
+		for j, element := range row.Elements {
+			origin := strings.TrimPrefix(origins[i], "place_id:")
+			destination := strings.TrimPrefix(destinations[j], "place_id:")
+			distances[pair{origin, destination}] = map[string]float64{
+				"distance": float64(element.Distance.Value),
+				"duration": float64(element.Duration.Value),
+			}
+		}
+	}
 
-	return parsedMatrix, nil
+	return distances, nil
 }
 
 func (c *GoogleApiClient) getParsedTimeDistance(placeIDs []string, response DistanceMatrixResponse) model.DistanceMatrix {
@@ -343,7 +470,6 @@ func (c *GoogleApiClient) getParsedTimeDistance(placeIDs []string, response Dist
 		result[origin] = make(map[string]map[string]float64)
 
 		for j, destination := range placeIDs {
-			// Извлекаем значение расстояния в километрах и времени в минутах
 			distanceKm := float64(response.Rows[i].Elements[j].Distance.Value) / 1000.0
 			durationMin := float64(response.Rows[i].Elements[j].Duration.Value) / 60.0
 
