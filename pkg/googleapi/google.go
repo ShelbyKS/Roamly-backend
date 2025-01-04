@@ -410,6 +410,7 @@ func (c *GoogleApiClient) GetTimeDistanceMatrix(ctx context.Context, placeIDs []
 			}
 		}
 	}
+	log.Println(finalMatrix)
 
 	return finalMatrix, nil
 }
